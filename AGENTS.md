@@ -17,6 +17,22 @@ This file is the project's committed home for project-intrinsic agent knowledge:
 - Question asking for a *number of pupils* ("Wie viele Schülerinnen gab es total in Bern?") is answered by code, not the model: `aggregate_pupils` + `render_pupil_totals` group `tools.extract_quantities` over the whole routed pool (`Index.pool`), keep boys and girls apart, and only sum sheets that state one unambiguous figure. `answer_source` is then `aggregate`. Numbers the aggregate computes are admitted to `check_numbers` solely through its `extra=` argument; keep that exception confined to the aggregate.
 - `tools.extract_quantities` is the one parser for pupil counts and 1799 money; its pattern tables encode transcription realities that cost real time to rediscover (count before the sex word, the "(Knaben/Mädchen)" questionnaire header, `Mägdchen`/`Mägdlein`, `Knaben und 21 Mädchen`). Extend those tables instead of adding a second extractor, and take test strings from real rows in `data/out/stapfer_answers.parquet`.
 
+## Data questions (`src/archai/dataq.py`)
+
+- Questions that count, sum, average or list over records go through one general engine, never a per-question code
+  path: Apertus plans, reads and phrases; code validates every plan value against the data, verifies every quote and
+  number, applies the counting policy (`resolve`) and does all arithmetic. Add a new kind of question by extending the
+  plan vocabulary or a verification rule, not by adding a branch for it.
+- Apertus labels figures inconsistently from run to run (season, catechism, "and more", skipped answers). Whatever the
+  text itself settles is set by code in `verify_figure` (season from the sub-question's wording, `_OTHER_GROUP`, ages
+  via `NOT_PUPILS_AFTER`, the sex a quote names); keep moving judgements there rather than adding prompt rules.
+- Reference figures: `src/archai/data_eval.py` holds the hand-checked answers (1799 Bern: 9 schools, 782 to 836 "and
+  more" pupils in winter without catechism; Bümpliz and Oberbottigen are today's Bern only). Brunngasse's figures may
+  be past ones ("sonst ... darunter waren"), so both readings are accepted. Run it after any change to dataq or to the
+  routing; it measures run-to-run variance, which the unit tests (fake Apertus) cannot.
+- Do not put a data/lookup label into the dynamic rewrite prompt (`qa.DYNAMIC`): it cost consultation retrieval
+  (top-1 7-8 of 20 down to 4-6 over three A/B runs). The engine's own planner decides (`{"task": "lookup"}`).
+
 ## Corpus statistics and the Superset datasource
 
 - `src/archai/stats.py` owns the corpus aggregates and their SQL; `tests/test_stats.py` re-derives every figure it returns with pandas, so copy that pattern for a new aggregate instead of asserting SQL against itself. `statssql.py` (the Apache Superset datasource, `make statssql`) consumes the same SQL: it builds its DuckDB tables from `stats.aggregate_sql()` / `SECTION` / `EMPTY` / `TRIVIAL` / `PLAIN`, so a new aggregate belongs in `stats.py` and never as fresh SQL in `statssql.py`.

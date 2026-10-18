@@ -279,9 +279,9 @@ def dynamic_route(q, idx, rules):
         if not problems or rnd == 1:
             break
         feedback = "\nYour previous request had problems: " + " | ".join(problems) + ". Reply again with a corrected request."
-    r["rewrite"] = {"rounds": rounds}
-    if not rounds or "failed" in rounds[-1]:
+    if not rounds or "failed" in rounds[-1]:  # also a first call that failed (timeout, no key): no route was built
         return None
+    r["rewrite"] = {"rounds": rounds}
     last = rounds[-1]
     if last.get("dataset") == "none" or (last.get("dataset") == "stapfer" and not last.get("sections")):
         return None  # no verdict / no question chosen: the validated 9-intent rewrite routes this one instead
@@ -563,12 +563,12 @@ def confidence(out, path=OUT / "confidence_model.json"):
 # carries one is marked answer_source "aggregate" and never comes from the model, which must not calculate.
 AGG_SOURCES_MAX = 120  # more retrieved sources than this and a single total stops being auditable in one answer
 
-_FEMALE_SEX = re.compile(r"sch(?:ue|u)lerinn|m(?:ae|a)d(?:chen|gen|lein|li)|meitli|filles?|t(?:oe|o)chter|ecolieres?|\bgirls?\b")
-_MALE_SEX = re.compile(r"\bknab|\bbuben?\b|garcons?|sohne\b|ecoliers?|\bboys?\b")
+_FEMALE_SEX = re.compile(r"sch(?:ue|u)lerinn|m(?:ae|a)d(?:chen|gen|lein|li)|m(?:ae|a)gd(?:chen|lein|li)|meitli|filles?|t(?:oe|o)chter|ecolieres?|\bgirls?\b")
+_MALE_SEX = re.compile(r"\bknab|\bkaben\b|\bbuben?\b|garcons?|sohne\b|ecoliers?|\bboys?\b")
 _GENERIC_SEX = re.compile(r"sch(?:ue|u)ler|schulkind|\bkind(?:er)?\b|pupils?|\bchildren\b|\beleves?\b|\benfants?\b")
 _COUNT_WORD = re.compile(r"wie\s*viele?|wieviele?|how\s*many|combien|total|\bsum(?:me)?\b|insgesamt|zusammen|(?:gesamt)?zahl|anzahl|\bnombre\b")
 _PUPIL_WORD = re.compile(r"sch(?:ue|u)ler|schulkind|\bkind(?:er)?\b|\bknab|\bbuben?\b|\bm(?:ae|a)d|\bmeitli|\btochter|"
-                         r"pupils?|\bchildren\b|\bkids?\b|\bboys?\b|\bgirls?\b|\beleves?\b|\becoliers?\b|\becolieres?\b|"
+                         r"pupils?|\bstudents?\b|\bscholars?\b|\bchildren\b|\bkids?\b|\bboys?\b|\bgirls?\b|\beleves?\b|\becoliers?\b|\becolieres?\b|"
                          r"\bgarcons?\b|\bfilles?\b|\benfants?\b")
 
 
@@ -824,9 +824,19 @@ def _answer(idx, q, k=6, use_llm=True, rewrite="off"):
                 "cited": [], "answer_source": "invalid_input", "citation_ok": True}
     hits, r = idx.search(q, k, rewrite if use_llm else "off")
     out = {"question": q, "route": r}
-    # a count question is answered from the whole routed pool (all schools of the place), not from the top k passages
+    # a count, total, average or list over records ("how many schools / pupils in Bern?") is stated by no passage:
+    # the data engine plans it with Apertus, reads and verifies each record, and computes it in code (archai.dataq)
+    from . import dataq
+    if dataq.is_data_question(q, r):
+        res = dataq.answer(idx, q, r, use_llm)
+        if res:
+            out.update(res)
+            return out
+    # without Apertus: the regex aggregate over the whole routed pool (all schools of the place), not the top k
     if "pupils" in r["intents"] and is_pupil_count_question(q) and 0 < int(r.get("filtered_pool") or 0) <= AGG_SOURCES_MAX:
         pool = idx.pool(r)
+        if hasattr(idx, "P"):  # the pupil questions only ("80 Knaben sollen kommen" in I.3 is not an attendance figure)
+            pool = [h for h in pool if h["qno"].startswith(("III.12", FREE))] or pool
         agg = aggregate_pupils(pool, q)
         if agg:
             text = render_pupil_totals(agg, q)

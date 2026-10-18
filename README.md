@@ -42,7 +42,10 @@ raw SQL/CSV ──► ingest (streaming SQL parser) ──► clean (markup → 
             ──► Apertus agent: plan tools ─► deterministic tools ─► compose ─► validate (grounding)
             ──► export records.jsonl/csv (one schema, provenance on every record) ──► metrics.json
             ──► Q&A: Apertus query rewrite (validated) + rule router → hybrid TF-IDF → Apertus answer with [n] citations
-                 → citation + number check (extractive fallback); pupil counts summed in code (qa.aggregate_pupils)
+                 → citation + number check (extractive fallback)
+    data questions (count/sum/average/list over records) ──► archai.dataq: Apertus plans → code validates and selects
+                 → Apertus reads and labels every figure with its quote → code verifies, applies the counting policy and
+                 computes → Apertus phrases → number check (no key: qa.aggregate_pupils, rules school counts)
 any new table ──► onboard: profile → Apertus column mapping (validated) → transform → privacy screen → validate
 ```
 Deterministic tools (`src/archai/tools.py`): `clean_markup`, `normalize_dates` (1799 month names: Hornung, Merz, …; French dates),

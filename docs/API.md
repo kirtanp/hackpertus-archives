@@ -36,8 +36,39 @@ Body: `{"question": "Wie viele Kinder besuchten die Schule in Hörndli?"}` (2–
 Example `cite`: `BAR B0 1000/1483, Nr. 1421, fol. 228-229v, S. 2, Frage III.12`.
 Consultations cite the linked dossier signature (e.g. `E6100C#1998/106#1039*`) or the metadata row.
 
-### Pupil totals (`answer_source: aggregate`)
-A question that asks for a number of pupils ("Wie viele Schülerinnen gab es total in Bern?") is answered by
+### Data questions (`answer_source: aggregate`, `data_plan`)
+A question that counts, sums, averages, compares or lists over many records ("how many schools / pupils in Bern?",
+"average age of the teachers in Hinwil", "which schools in Lausanne teach Latin?", "consultations per department in
+1984") is stated by no single passage. `archai.dataq` answers it with Apertus at every step and code checking each:
+1. **plan**: Apertus writes a data plan (dataset, unit, filters, measure, operation, condition, grouping) over the
+   fields that exist, or answers that the question is a lookup of one record; code keeps only values that occur in the
+   data (`data_plan.dropped` lists the rest) and sends a plan back once when it can tell it is wrong (a count of
+   girls planned as a count of schools; `data_plan.revised`). Pay is listed per school unless a total is asked.
+2. **select**: code selects the records from the metadata; a 1799 place and today's municipality of the same name are
+   listed apart (Bümpliz is in today's Bern).
+3. **read** (measures only the answer text holds): Apertus lists and labels every figure of each record, with its
+   quote; the reader gets whole answers, the school's metadata and the questionnaire wording, packed by size (Apertus
+   1.5 serves a 262k-token context), and old number words annotated with their value ("zwey und achtzig [=82]").
+   Code keeps a figure only if its quote is in the record and its number in the quote; code sets what the text settles
+   (season from the sub-question's wording, catechism classes, ages, the sex the quote names) and gives one correction
+   round naming each failure, including an answer that holds a number but was skipped; a second round re-reads only
+   the sheets still incomplete. Pay: the period (yearly, quarterly "fronfästlich", ...) is read from the sheet's words,
+   payments in kind (Mütt, Klafter, ...) are kept as their own measure, an assistant's pay and the items or instalments
+   of a stated total are left out.
+4. **compute**: code applies the counting policy (one season, winter first; never another group or the past; girls'
+   and boys' schools from the metadata) and counts, sums, averages, groups. Ranges stay ranges; currencies, measures
+   in kind and periods are never added together.
+5. **answer**: Apertus phrases the result; `check_numbers` rejects any number that is neither in a cited source nor
+   computed. The audit listing (every record, its value and citation, what was left out and why) follows the summary.
+
+The engine is tried for a question about a place with several schools, a pupil or school count, or data wording
+("how many", "which", "average", ...) without a place, except "which consultation ..." (one record, found by the
+search). It steps aside (`route.data_engine.reason`) when its planner reads the question as a lookup, the plan
+selects nothing, or more than `dataq.MAX_READ` records would have to be read; the normal answer path then runs.
+Measured by `python -m archai.data_eval` (`data/out/data_eval.json`): hand-checked questions, each run three times.
+
+### Pupil totals without Apertus
+Without a key, a question that asks for a number of pupils ("Wie viele Schülerinnen gab es total in Bern?") is answered by
 `archai.qa.aggregate_pupils`, not by the model: `archai.tools.extract_quantities` reads the counts out of the retrieved
 answers, the counts are grouped by sheet and by sex, and only unambiguous figures are summed. The answer lists every
 sheet with its own value and citation, names the sheets outside the total with the reason (a range, several figures, no
