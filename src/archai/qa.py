@@ -101,7 +101,7 @@ def route(q, gazetteer):
     gz = set(gazetteer)
     trigger = lambda t: any(re.fullmatch(rf"(?:{rx})\w*", t, re.I) for rx, _ in INTENTS.values())
     toks = [t for t in toks if not trigger(t)]  # "Lohn" is also a village: question words are not places
-    places = {t for t in toks if t in gz} | {a + " " + b for a, b in zip(toks, toks[1:]) if a + " " + b in gz}
+    places = {t for t in toks if t in gz} | {a + " " + b for a, b in zip(toks, toks[1:], strict=False) if a + " " + b in gz}
     if not places:  # historical spellings vary (Hörndli/Hörnli): fuzzy-match capitalised words only
         import difflib
         caps = [_ascii(w) for w in re.findall(r"\b[A-ZÄÖÜÉÈ][\wäöüéèàç-]{3,}", q)]

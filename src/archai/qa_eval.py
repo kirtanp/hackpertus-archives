@@ -110,13 +110,19 @@ def summarise(rows):
     return rep
 
 
+def mode_runner(idx, mode):
+    """Per-case callable for one evaluation mode. `mode` is bound now, as a default argument, so the pool can never
+    run a callable that reads a loop variable which has already moved on to the next mode."""
+    return lambda c, mode=mode: run_case(idx, c, mode)
+
+
 def main(workers=4):
     idx = qa.Index()
     cases = stapfer_cases(idx) + [{"q": q, "dataset": "consultation", "style": "para", "gold": [g]} for q, g in CONSULTATIONS]
     rows = []
     for m in MODES:
         with ThreadPoolExecutor(workers if m != "off" else 1) as ex:
-            rows += list(ex.map(lambda c: run_case(idx, c, m), cases))
+            rows += list(ex.map(mode_runner(idx, m), cases))
     n_st = sum(c["dataset"] == "stapfer" for c in cases)
     n_pl = len({c["place"] for c in cases if c["dataset"] == "stapfer"})
     rep = {"scope": f"{len(cases)} questions: {n_st} templated Stapfer questions ({n_pl} sampled places, seed 3; 6 intents; "
