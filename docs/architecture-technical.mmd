@@ -1,0 +1,59 @@
+%% ArchAI - technical architecture map. Audience: engineers reading this repository.
+%% Names the real modules, the real HTTP surface and the real data stores.
+%% Exactly one edge enters Apertus, from the batch pipeline, so it stays short and
+%% never runs the width of the canvas; the qa.py caller is stated in that node's text.
+%% Render: mmdr -i docs/architecture-technical.mmd -o docs/architecture-technical.png -e png
+flowchart LR
+
+  APERTUS{{"archai.llm - Apertus LLM<br/>OpenAI-compatible endpoint<br/>APERTUS_BASE_URL, APERTUS_MODEL<br/>hosted gateway or local llama.cpp<br/>qa.py writes its answer here too"}}:::llm
+
+  RAW(["Raw dumps, not in this repo<br/>Stapfer transcriptions<br/>federal consultations<br/>OLR archive units"])
+
+  PIPE["archai.pipeline<br/>batch stages<br/>ingest_stapfer<br/>ingest_consultations<br/>ingest_olr<br/>clean_stapfer<br/>link_consultations<br/>apertus_enrich<br/>apertus_agent<br/>export, evaluate"]:::svc
+
+  TOOLS["archai.tools - deterministic tools<br/>clean_markup, normalize_dates<br/>lookup_place, parse_signature<br/>lookup_archive_unit<br/>extract_quantities, verify_in_source"]:::svc
+
+  CORPUS[("data/out/stapfer_answers.parquet<br/>92,524 answers<br/>2,250 sheets<br/>committed corpus")]:::store
+
+  RECORDS[("data/out/records.jsonl<br/>2,819 records total<br/>2,250 Stapfer,<br/>569 consultations<br/>provenance kept")]:::store
+
+  QA["archai.qa - answer path<br/>route, then TF-IDF Index.search<br/>aggregate_pupils sums in code<br/>Apertus writes the sentence<br/>check_numbers grounds every digit<br/>against the cited source"]:::svc
+
+  STATS["archai.stats<br/>DuckDB aggregates over the corpus<br/>aggregate_sql() is the SQL<br/>that GET /api/stats runs"]:::svc
+
+  STATSSQL["archai.statssql<br/>make statssql<br/>reuses<br/>stats.aggregate_sql()<br/>no endpoint imports it"]:::svc
+
+  APP["app.py - FastAPI<br/>POST /api/ask<br/>GET /api/stats<br/>GET /api/health<br/>GET /api/places<br/>POST /api/game/round<br/>GET /api/metrics<br/>GET /api/record/{id}<br/>GET /<br/>serves records.jsonl"]:::svc
+
+  DUCK[("data/out/stapfer_stats.duckdb<br/>13 relations, gitignored<br/>derived build artifact")]:::store
+
+  SUPERSET["Apache Superset 6.1<br/>separate application, deploy/superset<br/>DuckDB datasource via duckdb-engine<br/>read_only, venv or compose or container"]:::app
+
+  READER(["Reader in the browser<br/>cited answer, map, game"]):::agent
+
+  DASHBOARD(["Analyst<br/>corpus dashboard"]):::agent
+
+  RAW --> PIPE
+  PIPE --> TOOLS
+  PIPE --> CORPUS
+  PIPE --> RECORDS
+  PIPE -. "Apertus API" .-> APERTUS
+  CORPUS --> QA
+  CORPUS --> STATS
+  QA --> APP
+  STATS --> APP
+  STATS --> STATSSQL
+  STATSSQL --> DUCK
+  DUCK --> SUPERSET
+  APP --> READER
+  SUPERSET --> DASHBOARD
+
+  classDef llm    fill:#ffe0b2,stroke:#b46504,stroke-width:2px
+  classDef store  fill:#e3f2fd,stroke:#1565c0
+  classDef svc    fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
+  classDef app    fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+  classDef reader fill:#eceff1,stroke:#546e7a
+  class CORPUS,RECORDS,DUCK store
+  class PIPE,TOOLS,QA,STATS,STATSSQL,APP svc
+  class SUPERSET app
+  class READER,DASHBOARD reader
