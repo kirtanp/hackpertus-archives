@@ -4,11 +4,18 @@ This file is the project's committed home for project-intrinsic agent knowledge:
 
 - Add durable project-specific notes here as they are discovered through real work.
 
-## Corpus statistics
+## Working in this repository
 
-- `src/archai/stats.py` is the only place that queries the corpus with DuckDB, and `tests/test_stats.py` re-derives every figure it returns with pandas: copy that pattern for new aggregates instead of asserting SQL against itself.
-- `data/out/stapfer_answers.parquet` is committed and present in CI, so a test may read it directly without building the pipeline.
-- DuckDB cannot open an in-memory database read-only ("Cannot launch in-memory database in read-only mode") and a read-only connection still allows `COPY ... TO` on the filesystem, so `src/archai/stats.py` opens read-only over an empty catalog in the system temp directory *and* refuses any statement that is not SELECT/WITH.
+- Run the tests the way the Makefile and CI do: `make test` (= `PYTHONPATH=src .venv/bin/python -m pytest -q tests`). CI (`.github/workflows/tests.yml`) additionally boots `app.py` and greps the JSON of `/api/ask` for a citation signature, so a change that drops `sources[]` breaks it even when the tests pass.
+- Everything in `src/archai` reads `data/out/` relative to the *working directory*: run from the repository root (`app.py` `chdir`s to its own root itself). The venv is `.venv`; `make setup` builds it.
+- `data/out/` is committed but *generated* from the 3.6 GB raw dumps that are not in the repository. Changing a pipeline stage (`ingest`, `stapfer_clean`, `enrich`, `tools`) leaves the committed outputs stale; regenerating them needs the raw data (README, "Rebuild from the raw data"). Do not hand-edit `data/out/`.
+- Lint with `ruff check src tests` (config lives in `pyproject.toml`, which is deliberately lint-only). CI does not run ruff.
+
+## Q&A answer path (`src/archai/qa.py`)
+
+- The path is deterministic-first: rule router (`route`) → hybrid TF-IDF (`Index.search`) → Apertus answer → `check_numbers` grounds every digit against the cited source. The model is never told to calculate; do not relax that prompt.
+- Question asking for a *number of pupils* ("Wie viele Schülerinnen gab es total in Bern?") is answered by code, not the model: `aggregate_pupils` + `render_pupil_totals` group `tools.extract_quantities` over the whole routed pool (`Index.pool`), keep boys and girls apart, and only sum sheets that state one unambiguous figure. `answer_source` is then `aggregate`. Numbers the aggregate computes are admitted to `check_numbers` solely through its `extra=` argument; keep that exception confined to the aggregate.
+- `tools.extract_quantities` is the one parser for pupil counts and 1799 money; its pattern tables encode transcription realities that cost real time to rediscover (count before the sex word, the "(Knaben/Mädchen)" questionnaire header, `Mägdchen`/`Mägdlein`, `Knaben und 21 Mädchen`). Extend those tables instead of adding a second extractor, and take test strings from real rows in `data/out/stapfer_answers.parquet`.
 
 ## Maintaining this file
 
