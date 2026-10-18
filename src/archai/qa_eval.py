@@ -10,7 +10,7 @@ from pathlib import Path
 from . import qa, llm
 
 OUT = Path("data/out")
-MODES = ["off", "gaps", "apertus"]
+MODES = ["off", "apertus", "dynamic"]  # "gaps" measured earlier (71.6% on paraphrases) and retired
 TEMPLATES = {  # intent: [(style, question)]; "rules" = wording the regex router knows
     "pupils": [("rules", "Wie viele Kinder besuchten die Schule in {p}?"), ("para", "How many kids went to class in {p}?"),
                ("para", "Combien d'écoliers fréquentaient l'école de {p}?"), ("para", "Wie gross war die Klasse in {p}?")],
@@ -25,6 +25,23 @@ TEMPLATES = {  # intent: [(style, question)]; "rules" = wording the regex router
     "schedule": [("rules", "Wurde in {p} auch im Winter Schule gehalten?"), ("para", "During which months was school held in {p}?"),
                  ("para", "À quelle saison l'école était-elle ouverte à {p}?"), ("para", "Wann ging man in {p} zum Unterricht?")],
 }
+NEW_SECTIONS = {  # questionnaire sections the 9 fixed intents never covered (or only as a whole): (style, question)
+    "III.11.d": [("new_section", "Wie alt war der Lehrer in {p}?"), ("new_section", "How old was the schoolmaster in {p}?"), ("new_section", "Quel âge avait le régent de {p} ?")],
+    "III.11.h": [("new_section", "Hatte der Schulmeister in {p} neben dem Lehramt noch andere Arbeit?"), ("new_section", "Did the teacher in {p} have another job besides teaching?"),
+                 ("new_section", "Le régent de {p} avait-il un autre emploi à côté de l'école ?")],
+    "III.11.e": [("new_section", "Hatte der Lehrer in {p} Frau und Kinder?"), ("new_section", "Did the teacher in {p} have a family?"), ("new_section", "Le régent de {p} avait-il une famille ?")],
+    "III.11.a": [("new_section", "Wer hat den Schulmeister in {p} bestellt?"), ("new_section", "Who appointed the teacher in {p}?"), ("new_section", "Qui a nommé le régent de {p} ?")],
+    "I.4": [("new_section", "Welche Schulen lagen in der Nähe von {p}?"), ("new_section", "Which other schools were near {p}?"), ("new_section", "Quelles écoles voisines y avait-il près de {p} ?")],
+    "II.10": [("new_section", "Waren die Kinder in {p} in Klassen eingeteilt?"), ("new_section", "Were the pupils in {p} divided into classes?"), ("new_section", "Les enfants de {p} étaient-ils répartis en classes ?")],
+}
+CONSULTATIONS_YEAR = [  # hand-written, the year checked against the record
+    ("Which consultation in 1984 dealt with data protection?", "consultation:418"),
+    ("Welche Vernehmlassung von 1991 betraf die Krankenversicherung?", "consultation:543"),
+    ("What did the 1978 consultation on drink-driving propose?", "consultation:256"),
+    ("Quelle consultation de 1987 portait sur la violence des spectateurs lors des matchs ?", "consultation:477"),
+    ("Welche Vernehmlassung gab es 1970 zum Steuerabkommen mit Deutschland?", "consultation:54"),
+    ("Which consultation in 1991 proposed lowering the age of majority?", "consultation:557"),
+]
 CONSULTATIONS = [  # (question, gold doc_id) — paraphrases written by hand from the titles, avoiding the title wording
     ("Which consultation proposed changing the 1905 food law?", "consultation:262"),
     ("When did the government consult on reforming the army's organisation?", "consultation:368"),
@@ -70,7 +87,18 @@ def stapfer_cases(idx, n_places=10, seed=3):
                 continue
             for style, t in tpls:
                 cases.append({"q": t.format(p=name), "dataset": "stapfer", "intent": intent, "place": a, "style": style, "gold": sorted(gold)})
+        for sec, tpls in NEW_SECTIONS.items():  # gold = that place's passages in exactly this section
+            gold = {p["id"] for p in idx.P if p["kind"] == "stapfer" and a in p["places"] and (p["qno"] == sec or p["qno"].startswith(sec + "."))}
+            if not gold:
+                continue
+            for style, t in tpls:
+                cases.append({"q": t.format(p=name), "dataset": "stapfer", "intent": None, "section": sec, "place": a, "style": style, "gold": sorted(gold)})
     return cases
+
+
+def all_cases(idx):
+    return (stapfer_cases(idx) + [{"q": q, "dataset": "consultation", "style": "para", "gold": [g]} for q, g in CONSULTATIONS]
+            + [{"q": q, "dataset": "consultation", "style": "year", "gold": [g]} for q, g in CONSULTATIONS_YEAR])
 
 
 def run_case(idx, c, mode):
@@ -80,7 +108,7 @@ def run_case(idx, c, mode):
     gold = set(c["gold"])
     return {"q": c["q"], "mode": mode, "dataset": c["dataset"], "style": c["style"], "intent": c.get("intent"),
             "hit1": bool(ids[:1]) and ids[0] in gold, "hit6": any(i in gold for i in ids),
-            "intent_ok": (c.get("intent") or "consultation") in r["intents"],
+            "intent_ok": None if c.get("section") else (c.get("intent") or "consultation") in r["intents"],
             "place_ok": c.get("place") in r["places"] if c["dataset"] == "stapfer" else None,
             "rewrite_called": "rewrite" in r, "rewrite_failed": "failed" in r.get("rewrite", {}),
             "route": {k: v for k, v in r.items() if k != "rewrite"}, "rewrite": r.get("rewrite"), "seconds": round(time.time() - t0, 2)}
@@ -92,7 +120,7 @@ def summarise(rows):
         if not n:
             return None
         out = {"cases": n, "hit_at_1": round(sum(r["hit1"] for r in rs) / n, 3), "hit_at_6": round(sum(r["hit6"] for r in rs) / n, 3),
-               "intent_correct": round(sum(r["intent_ok"] for r in rs) / n, 3)}
+               **({"intent_correct": round(sum(r["intent_ok"] for r in io) / len(io), 3)} if (io := [r for r in rs if r["intent_ok"] is not None]) else {})}
         pl = [r for r in rs if r["place_ok"] is not None]
         if pl:
             out["place_correct"] = round(sum(r["place_ok"] for r in pl) / len(pl), 3)
@@ -106,7 +134,9 @@ def summarise(rows):
         rep[m] = {"all": agg(rm),
                   "stapfer_rules_wording": agg([r for r in rm if r["dataset"] == "stapfer" and r["style"] == "rules"]),
                   "stapfer_paraphrased": agg([r for r in rm if r["dataset"] == "stapfer" and r["style"] == "para"]),
-                  "consultations_paraphrased": agg([r for r in rm if r["dataset"] == "consultation"])}
+                  "stapfer_new_sections": agg([r for r in rm if r["dataset"] == "stapfer" and r["style"] == "new_section"]),
+                  "consultations_paraphrased": agg([r for r in rm if r["dataset"] == "consultation" and r["style"] == "para"]),
+                  "consultations_with_year": agg([r for r in rm if r["dataset"] == "consultation" and r["style"] == "year"])}
     return rep
 
 
@@ -118,22 +148,26 @@ def mode_runner(idx, mode):
 
 def main(workers=4):
     idx = qa.Index()
-    cases = stapfer_cases(idx) + [{"q": q, "dataset": "consultation", "style": "para", "gold": [g]} for q, g in CONSULTATIONS]
+    cases = all_cases(idx)
     rows = []
     for m in MODES:
         with ThreadPoolExecutor(workers if m != "off" else 1) as ex:
             rows += list(ex.map(mode_runner(idx, m), cases))
     n_st = sum(c["dataset"] == "stapfer" for c in cases)
     n_pl = len({c["place"] for c in cases if c["dataset"] == "stapfer"})
-    rep = {"scope": f"{len(cases)} questions: {n_st} templated Stapfer questions ({n_pl} sampled places, seed 3; 6 intents; "
-                    f"1 rules-wording + 3 paraphrases each, DE/FR/EN) + {len(CONSULTATIONS)} hand-written consultation paraphrases",
+    n_new = sum(c.get("style") == "new_section" for c in cases)
+    rep = {"scope": f"{len(cases)} questions: {n_st} templated Stapfer questions ({n_pl} sampled places, seed 3; 6 intents x "
+                    f"1 rules-wording + 3 paraphrases, and {n_new} on 6 sections the fixed intents do not cover; DE/FR/EN) + "
+                    f"{len(CONSULTATIONS)} hand-written consultation paraphrases + {len(CONSULTATIONS_YEAR)} with a year",
            "caveat": "paraphrases were written to avoid the rule keywords, so rules-only scores on them are a floor, not typical use",
            "model": llm.MODEL,
            "gold": "Stapfer: passages of that place in the intent's questionnaire sections (database, not a model); consultations: the consultation the question was written from",
            "metric_definitions": {"hit_at_1": "top passage is a gold passage", "hit_at_6": "a gold passage is among the 6 passages Apertus answers from",
                                   "intent_correct": "router intent includes the asked intent", "place_correct": "router place is the asked place"},
            "modes": {"off": "rules only (deployed before)", "gaps": "Apertus rewrites only when the rules find no intent or no place; rules win",
-                     "apertus": "Apertus rewrites every question; its intents win, rules are the fallback"},
+                     "apertus": "Apertus rewrites every question into one of 9 fixed intents; its intents win, rules are the fallback",
+                     "dynamic": "Apertus picks dataset, questionnaire sections, places and years from the real questionnaire, code validates; "
+                                "one feedback round on unknown places or empty results; out-of-scope questions declined"},
            "results": summarise(rows)}
     json.dump(rep, open(OUT / "qa_eval.json", "w"), indent=1, ensure_ascii=False)
     with open(OUT / "qa_eval_cases.jsonl", "w", encoding="utf-8") as f:
@@ -187,13 +221,12 @@ def answers(workers=4):
     print(json.dumps(rep, indent=1, ensure_ascii=False))
 
 
-def confidence_data(workers=4, modes=("apertus", "off")):
+def confidence_data(workers=4, modes=("dynamic", "off")):
     """One pass over all questions per mode: every answer with its confidence signals and a correctness label (do the cited
     sources include a gold source?). Rules-only answers ("off") add realistic wrong answers to learn from. The Apertus-mode
     rows also give the answer report (number check, not-found handling) — see answer_report()."""
     idx = qa.Index()
-    cases = stapfer_cases(idx) + [{"q": q, "dataset": "consultation", "style": "para", "gold": [g]} for q, g in CONSULTATIONS] \
-        + [{"q": q, "dataset": "unanswerable", "style": "off_topic", "gold": []} for q in UNANSWERABLE]
+    cases = all_cases(idx) + [{"q": q, "dataset": "unanswerable", "style": "off_topic", "gold": []} for q in UNANSWERABLE]
     def one(c, mode):
         o = qa._answer(idx, c["q"], 6, True, mode)
         row = {"q": c["q"], "mode": mode, "dataset": c["dataset"], "style": c["style"], "answer_source": o["answer_source"],
@@ -216,11 +249,11 @@ def confidence_data(workers=4, modes=("apertus", "off")):
 
 def answer_report(rows):
     """qa_answer_check.json from the Apertus-mode rows (same content as answers())."""
-    rows = [r for r in rows if r["mode"] == "apertus"]
+    rows = [r for r in rows if r["mode"] != "off"]  # the deployed mode
     un = [r for r in rows if r["dataset"] == "unanswerable"]; ra = [r for r in rows if r["dataset"] != "unanswerable"]
     n = len(ra)
-    rep = {"scope": f"full answers (Apertus rewrite + Apertus 70B answer) for the {n} retrieval-eval questions",
-           "answers": n, "accepted": sum(r["answer_source"] == "apertus" for r in ra),
+    rep = {"scope": f"full answers (dynamic Apertus rewrite + Apertus 70B answer, pupil totals by code) for the {n} retrieval-eval questions",
+           "answers": n, "accepted": sum(r["answer_source"] == "apertus" for r in ra), "aggregate": sum(r["answer_source"] == "aggregate" for r in ra),
            "rejected_number_not_in_cited_source": sum(r["reason"] == "number_not_in_cited_source" for r in ra),
            "rejected_uncited_or_no_information": sum(r["reason"] == "uncited_or_no_information" for r in ra),
            "declined_as_not_in_sources": sum(r["answer_source"] == "not_found" for r in ra),
@@ -279,7 +312,7 @@ def _fit(rows, features, bins=5, save=True):
              "meaning": "estimated chance that the cited sources answer the question"}
     if save:
         (OUT / "confidence_model.json").write_text(json.dumps(model, indent=1))
-    rep = {"scope": f"{len(y)} answers ({sum(r['mode'] == 'apertus' for r in rows)} with Apertus rewriting, {sum(r['mode'] == 'off' for r in rows)} rules-only) "
+    rep = {"scope": f"{len(y)} answers ({sum(r['mode'] != 'off' for r in rows)} with dynamic Apertus rewriting, {sum(r['mode'] == 'off' for r in rows)} rules-only) "
                     f"to the retrieval-eval and unanswerable questions; label = a cited source is a gold source",
            "base_rate_correct": round(float(y.mean()), 3), "auc": round(float(roc_auc_score(y, p)), 3), "brier": round(float(brier_score_loss(y, p)), 3),
            "expected_calibration_error": round(float(ece), 3), "reliability": rel,

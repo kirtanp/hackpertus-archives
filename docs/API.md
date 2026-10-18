@@ -54,35 +54,16 @@ One record of `data/out/records.jsonl`, e.g. `/api/record/stapfer:transkription:
 none of the numbers is an overall accuracy.
 
 ## Query rewriting (`QA_REWRITE`)
-Before retrieval, Apertus maps the question to the router's fields (intents, place, search keywords in the sources'
-languages). Its output is validated: unknown intents are dropped and the place must match the gazetteer.
-`QA_REWRITE=apertus` (default): Apertus intents win, rules are the fallback, places from both are kept.
-`gaps`: Apertus only fills what the rules missed. `off`: rules only. The response's `route.rewrite` shows what Apertus
-returned; `route.intents_from` / `places_from` say who decided. Accuracy of each mode: `data/out/qa_eval.json`
-(`PYTHONPATH=src python -m archai.qa_eval`, needs Apertus).
-
-## `GET /api/stats`
-Aggregates over the whole corpus in SQL (DuckDB, `src/archai/stats.py`), not over the passages retrieved for one place: the parquet is scanned with `read_parquet` and never loaded into pandas.
-Query parameters are `query` (`all` default, or `sections`, `documents`, `pages`, `sheets`, `markup`, `content`), `section` (questionnaire number such as `III.12`, matching the section and its sub-questions) and `page` (answers whose `page_start`..`page_end` covers it).
-The connection is opened read-only over an empty catalog in the system temp directory, and every statement is a SELECT, so neither the corpus nor `data/out` is ever written.
-A `section` filter also matches its sub-questions (`IV.16` includes `IV.16.B.c`) and a `page` filter matches answers whose page range covers that page.
-An unsupported `query` or a malformed `section`/`page` returns `400`; an absent corpus returns `503`.
-Every response carries `corpus` (file, engine, rows, columns) and `scope` (rows counted, filters, plain-language description) so a whole-corpus figure cannot be read as a per-place one, plus `blocks` with the requested aggregates.
-
-| Block | Meaning |
-|---|---|
-| `sections` | answers per questionnaire section (`question_no` first two parts: `III.11.b` -> `III.11`) |
-| `documents` | answers counted and distinct sheets (`doc_id`) represented |
-| `pages` | answers per page within the transcription |
-| `sheets` | sheet-size histogram (`answers_per_sheet`, `pages_per_sheet`) plus min/median/max |
-| `markup` | answers carrying transcription markup, unbalanced markup, uncertain readings, margin notes, editor comments |
-| `content` | per section: `answers`, `empty`, `trivial` (fewer than 3 characters after trimming), `non_empty` |
-
-```bash
-curl 'localhost:8791/api/stats?query=sections'               # answers per questionnaire section
-curl 'localhost:8791/api/stats?query=content&section=IV.16'  # non-empty vs empty/trivial in IV.16
-curl 'localhost:8791/api/stats?query=pages&page=1'           # answers on page 1, with the scope they cover
-```
+`dynamic` (default): Apertus reads the real Stapfer questionnaire (60 questions, German/French) and returns the dataset,
+the question numbers that answer the question, the places, years and search keywords. Code validates every pick:
+question numbers must exist, places must match the gazetteer, years 1960–1991, a year written in the question is read
+by code. One feedback round: if a place is unknown (Apertus gets the closest gazetteer names) or the place's sheets do
+not answer the chosen questions (Apertus gets the list they do answer), it revises once. If nothing matches, the search
+widens step by step — related questions, then the whole sheet — and `route.fallback` says so; it never switches to a
+different place. When Apertus chooses no question, or calls the question unrelated, the validated 9-intent rewrite
+(`apertus`) routes it instead; the answer step, not the rewrite, decides whether the archives answer it.
+`route` shows `dataset`, `sections`, `places`, `years`, `routed_by` and `rewrite.rounds`.
+Other modes: `apertus` (9 fixed intents), `off` (rules only). Measured in `data/out/qa_eval.json`.
 
 ## `GET /api/places`
 One point per geocoded Stapfer sheet (2,249): `id, name` (1799), `today` (municipality), `school, type, lang, conf`

@@ -64,6 +64,7 @@ def passages():
                 f'{d["consultation_start"] or "?"} bis {d["consultation_end"] or "?"}; Adressaten: {", ".join(d["addressees"])}. '
                 + " ".join(f'Dossier {u["signature"]}: {u["title"]} ({(u["begin"] or "?")[:4]}-{(u["end"] or "?")[:4]}).' for u in units))
         P.append({"id": d["doc_id"], "doc_id": d["doc_id"], "kind": "consultation", "qno": "", "places": set(), "text": text,
+                  "year": int(d["year"]) if str(d.get("year") or "").isdigit() else None,
                   "cite": "; ".join(u["signature"] for u in units) or f'Metadatenbank Vernehmlassungen Nr. {d["provenance"]["row_nr"]}',
                   "url": units[0]["url"] if units else d["provenance"]["source_dataset"], "facsimile": None})
     for rec in onboarded_records():
@@ -155,6 +156,138 @@ def rewrite_query(q, gazetteer):
     return {"intents": intents, "places": places, "keywords": kw, "place_raw": place}, meta
 
 
+_CATALOGUE = {}
+
+
+def questionnaire():
+    """The Stapfer questionnaire as answered in the data: question number -> (German, French) text."""
+    if "q" not in _CATALOGUE:
+        import pandas as pd
+        a = pd.read_parquet(OUT / "stapfer_answers.parquet", columns=["question_no", "question_de", "question_fr"])
+        a = a.dropna(subset=["question_no"]).drop_duplicates("question_no")
+        _CATALOGUE["q"] = {r.question_no: (str(r.question_de or ""), str(r.question_fr or "")) for r in a.itertuples()
+                           if not str(r.question_no).startswith("zusatz")}
+    return _CATALOGUE["q"]
+
+
+DYNAMIC = """You turn a user's question into a search request over Swiss archives. Choose the dataset first:
+- "stapfer": schools in 1799 (pupils, teachers, pay, books, schoolhouse, lessons, villages). Example: "Wie viele Kinder in Hörnli?"
+- "consultation": Swiss federal consultations (Vernehmlassungen) 1960-1991 on laws, ordinances, treaties, e.g. health
+  insurance, data protection, taxes, the army. Example: "Which consultation in 1984 dealt with data protection?"
+{other_line}- "none": ONLY for questions unrelated to both (sport results, weather, recipes, people of today, general knowledge).
+Reply with JSON only:
+{{"dataset": "stapfer" | "consultation"{other_opt} | "none",
+ "sections": ["for stapfer: question numbers from the questionnaire below that answer the question, most relevant first, max 4"],
+ "places": ["villages or towns the question names, as written, max 5"],
+ "years": [from, to] copied from the question, or null,
+ "keywords": ["ALWAYS 3-6 search words, mostly German (the sources are mostly German) plus French, as the source would phrase them"]}}
+Stapfer questionnaire (number: German / French):
+{catalogue}{feedback}
+Question: {q}"""
+
+
+def _valid_sections(raw, catalogue):
+    out = []
+    for x in raw if isinstance(raw, list) else []:
+        x = str(x).strip().rstrip(".")
+        if x in catalogue or any(k.startswith(x + ".") for k in catalogue):  # "III.12" covers III.12.a/b
+            out.append(x)
+    return list(dict.fromkeys(out))[:4]
+
+
+def _valid_places(raw, gazetteer):
+    import difflib
+    ok, unknown = [], []
+    for x in raw if isinstance(raw, list) else []:
+        if not isinstance(x, str) or not x.strip():
+            continue
+        a = _ascii(x.strip())
+        hit = [a] if a in gazetteer else difflib.get_close_matches(a, gazetteer, n=1, cutoff=0.85)
+        (ok if hit else unknown).append(hit[0] if hit else x.strip())
+    return list(dict.fromkeys(ok))[:5], unknown
+
+
+def _derive_intents(dataset, sections):
+    """The fixed intents follow from the chosen sections, so the pupil total and the confidence score keep working."""
+    if dataset == "consultation":
+        return ["consultation"]
+    if dataset == "other":
+        return ["other_dataset"]
+    out = []
+    for k, (_, secs) in INTENTS.items():
+        if secs and any(s.startswith(tuple(secs)) or any(x.startswith(s) for x in secs) for s in sections):
+            out.append(k)
+    return out
+
+
+def dynamic_route(q, idx, rules):
+    """Apertus picks dataset, questionnaire sections, places and years from the real questionnaire; code validates every
+    pick. One feedback round when a place is unknown or nothing matches: Apertus is told why and revises.
+    Returns (route, expanded query) or None when Apertus gives nothing usable."""
+    import difflib
+    pub = published()
+    cat = idx.catalogue
+    catalogue = "\n".join(f"  {k}: {de[:70]} / {fr[:50]}" for k, (de, fr) in cat.items())
+    base = dict(other_opt=' | "other"' if pub else "", catalogue=catalogue,
+                other_line=('- "other": ' + "; ".join(d["description"] for d in pub) + "\n") if pub else "")
+    feedback, rounds = "", []
+    for rnd in range(2):
+        obj, meta = llm.chat_json(DYNAMIC.format(**base, feedback=feedback, q=q), schema={"sections": list, "keywords": list}, max_tokens=220)
+        if not isinstance(obj, dict):
+            rounds.append({"round": rnd, "failed": meta.get("errors")})
+            break
+        ds = obj.get("dataset") if obj.get("dataset") in ("stapfer", "consultation", "other", "none") else "stapfer"
+        if ds == "other" and not pub:
+            ds = "stapfer"
+        if ds == "stapfer" and rules["intents"] == ["consultation"] and not (obj.get("places") or rules["places"]):
+            ds = "consultation"  # "vernehmlass…", "Bundesgesetz": the rules' unambiguous consultation words win over a guess
+        if ds == "none" and (rules["intents"] or rules["places"]):  # safety net: never decline what the rules can route
+            ds = "consultation" if rules["intents"] == ["consultation"] else "stapfer"
+            obj = dict(obj, sections=obj.get("sections") or [], places=obj.get("places") or rules["places"])
+            rounds_note = "none_overridden_by_rules"
+        else:
+            rounds_note = None
+        secs = _valid_sections(obj.get("sections"), cat) if ds == "stapfer" else []
+        places, unknown = _valid_places(obj.get("places"), idx.gaz) if ds == "stapfer" else ([], [])
+        yrs = obj.get("years")
+        years = sorted(int(y) for y in yrs[:2]) if ds == "consultation" and isinstance(yrs, list) and len(yrs) >= 1 and all(str(y).isdigit() for y in yrs[:2]) else None
+        if ds == "consultation" and not years:  # a year written in the question is read by code
+            ys = sorted({int(y) for y in re.findall(r"\b(19[6-9]\d)\b", q) if 1960 <= int(y) <= 1991})
+            years = [ys[0], ys[-1]] if ys else None
+        if years and len(years) == 1:
+            years = [years[0], years[0]]
+        if years and not (1960 <= years[0] <= 1991 or 1960 <= years[-1] <= 1991):
+            years = None
+        kw = [k.strip() for k in obj.get("keywords", []) if isinstance(k, str) and k.strip()][:6]
+        r = {"intents": _derive_intents(ds, secs), "places": places, "sections": secs, "dataset": ds, "years": years,
+             "rule_intents": rules["intents"], "routed_by": "apertus-dynamic"}
+        rounds.append({"round": rnd, "dataset": ds, "note": rounds_note, "sections": secs, "places": places, "unknown_places": unknown,
+                       "years": years, "keywords": kw, "dropped_sections": [x for x in obj.get("sections") or [] if str(x).strip().rstrip(".") not in secs]})
+        if ds == "none":  # only a hint: the answer step decides whether the archives answer it
+            break
+        problems = []
+        for u in unknown:
+            near = difflib.get_close_matches(_ascii(u), idx.gaz, n=3, cutoff=0.6)
+            problems.append(f'the place "{u}" is not in the gazetteer' + (f"; closest names: {', '.join(near)}" if near else "; leave it out if no listed name fits"))
+        if ds == "stapfer" and not secs:
+            problems.append("you chose no question number; choose at least one from the questionnaire that answers the question")
+        if ds in ("stapfer", "consultation") and not kw:
+            problems.append("you gave no keywords; give 3-6 search words in German and French")
+        if ds == "stapfer" and not problems and places and secs and not idx.chosen_only(r).any():
+            have = idx.present_sections(places)
+            problems.append(f"the sheets of {', '.join(places)} answer none of {secs}; they answer: {', '.join(have[:40])}")
+        if not problems or rnd == 1:
+            break
+        feedback = "\nYour previous request had problems: " + " | ".join(problems) + ". Reply again with a corrected request."
+    r["rewrite"] = {"rounds": rounds}
+    if not rounds or "failed" in rounds[-1]:
+        return None
+    last = rounds[-1]
+    if last.get("dataset") == "none" or (last.get("dataset") == "stapfer" and not last.get("sections")):
+        return None  # no verdict / no question chosen: the validated 9-intent rewrite routes this one instead
+    return r, q + " " + " ".join(rounds[-1].get("keywords", []))
+
+
 def needs_rewrite(r):
     return not r["intents"] or (r["intents"] != ["consultation"] and not r["places"])
 
@@ -168,8 +301,12 @@ class Index:
         self.Xc, self.Xw = self.vc.fit_transform(texts), self.vw.fit_transform(texts)
         self.gaz = sorted(set().union(*[p["places"] for p in self.P]) - {""})
         self.kind = np.array([p["kind"] for p in self.P]); self.qno = np.array([p["qno"] for p in self.P])
+        self.year = np.array([p.get("year") or 0 for p in self.P])
+        self.catalogue = questionnaire()
 
     def mask(self, r):
+        if r.get("sections") is not None:  # dynamic route: sections chosen from the questionnaire itself
+            return self._mask_dynamic(r)
         m = np.ones(len(self.P), bool)
         if r["intents"] == ["consultation"]:
             return self.kind == "consultation"
@@ -192,12 +329,75 @@ class Index:
                 r["fallback"] = "no IV.16 answer for this place; using IV.13/IV.14"
         return m
 
+    def _at(self, places):
+        return np.array([bool(p["places"] & set(places)) for p in self.P])
+
+    def _mask_dynamic(self, r):
+        """Sections and places chosen by the dynamic rewrite. If nothing matches, widen step by step and say so:
+        first the same place with any section, never a different place."""
+        ds = r.get("dataset")
+        if ds == "consultation":
+            m = self.kind == "consultation"
+            if r.get("years"):
+                lo, hi = r["years"]
+                ym = m & (self.year >= lo) & (self.year <= hi)
+                if ym.any():
+                    return ym
+                r["fallback"] = f"no consultation dated {lo}-{hi}; searched all consultations"
+            return m
+        if ds == "other":
+            return self.kind == "onboarded"
+        if ds == "none":  # a hint, not a verdict: search everything and let the answer step decide
+            return np.ones(len(self.P), bool)
+        m = self.kind == "stapfer"
+        free = np.array([q.startswith(FREE) for q in self.qno])  # sheets that answer in prose carry the content here
+        secs = tuple(r["sections"])
+        if not secs:
+            return m & self._at(r["places"]) if r["places"] else m
+        tiers = [("chosen", secs), ("related", self._related(secs, r["intents"]))]
+        at = self._at(r["places"]) if r["places"] else np.ones(len(self.P), bool)
+        for name, ss in tiers:
+            mm = m & at & (np.array([q.startswith(ss) for q in self.qno]) | free)
+            if mm.any():
+                if name != "chosen":
+                    r["fallback"] = "the sheets do not answer the chosen questions; searched the related questions"
+                return mm
+        r["fallback"] = "the sheets answer none of the related questions; searched the whole sheet"
+        return m & at
+
+    def _related(self, secs, intents):
+        """Parent questions of the chosen sub-questions, plus the sections of the intents they belong to (with the pay
+        fallback to the school-fund questions, as in the intent route)."""
+        out = {".".join(x.split(".")[:2]) for x in secs} | set(secs)
+        for k in intents:
+            out |= set(INTENTS[k][1] or [])
+        if "salary" in intents:
+            out |= {"IV.13", "IV.14"}
+        return tuple(sorted(out))
+
+    def chosen_only(self, r):
+        """Mask of exactly the chosen sections (no widening): decides whether the feedback round is needed."""
+        at = self._at(r["places"]) if r["places"] else np.ones(len(self.P), bool)
+        return (self.kind == "stapfer") & at & np.array([q.startswith(tuple(r["sections"])) for q in self.qno])
+
+    def present_sections(self, places):
+        """Questionnaire sections the sheets of these places actually answer (for the rewrite's feedback round)."""
+        at = self._at(places)
+        return sorted({q for q, a in zip(self.qno, at, strict=False) if a and q and not q.startswith("zusatz")})
+
     def search(self, q, k=6, rewrite="off"):
         """rewrite: "off" = rules only; "gaps" = Apertus fills what the rules missed (rules win);
         "apertus" = Apertus intents win, rules are the fallback. Places: exact gazetteer match from rules first."""
         r = route(q, self.gaz)
         qx = q
-        if rewrite != "off" and (rewrite == "apertus" or needs_rewrite(r)):
+        if rewrite == "dynamic":
+            dyn = dynamic_route(q, self, r)
+            if dyn:
+                r, qx = dyn
+                rewrite = "done"
+            else:  # Apertus unavailable or unusable: the validated single-shot rewrite, then the rules
+                rewrite = "apertus"
+        if rewrite in ("gaps", "apertus") and (rewrite == "apertus" or needs_rewrite(r)):
             rw, meta = rewrite_query(q, self.gaz)
             r["rewrite"] = rw or {"failed": meta.get("errors")}
             if rw:
@@ -216,6 +416,9 @@ class Index:
                     r["intents"] = ["consultation"]
                 qx = q + " " + " ".join(rw["keywords"])  # query expansion in the sources' languages
         s = 0.5 * linear_kernel(self.vc.transform([qx]), self.Xc).ravel() + 0.5 * linear_kernel(self.vw.transform([qx]), self.Xw).ravel()
+        if r.get("sections"):  # Apertus lists sections most relevant first: a small boost in that order
+            for rank, sec in enumerate(r["sections"]):
+                s = s + np.array([q == sec or q.startswith(sec + ".") for q in self.qno]) * 0.05 * (len(r["sections"]) - rank)
         m = self.mask(r)
         r["filtered_pool"] = int(m.sum())
         if m.any():

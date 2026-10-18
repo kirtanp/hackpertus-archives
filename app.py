@@ -15,7 +15,7 @@ from pydantic import BaseModel, Field
 from archai import qa, llm, stats
 
 OUT = ROOT / "data" / "out"
-REWRITE = os.environ.get("QA_REWRITE", "apertus")  # off | gaps | apertus; measured in data/out/qa_eval.json
+REWRITE = os.environ.get("QA_REWRITE", "dynamic")  # dynamic | apertus | gaps | off; measured in data/out/qa_eval.json
 state = {"idx": None, "error": None, "seconds": None}
 RECORDS = {}
 PLACES = []  # one point per geocoded Stapfer sheet, for the map
