@@ -52,6 +52,17 @@ Deterministic tools (`src/archai/tools.py`): `clean_markup`, `normalize_dates` (
 Robustness: idempotent/resumable stages, run manifest with output hashes, retries + JSON repair + schema checks,
 circuit breaker → deterministic-only output if Apertus is unreachable, schema-invalid records quarantined, unit tests.
 
+### Diagrams
+The flow above is also available as two rendered diagrams, one per audience.
+
+![Technical architecture: pipeline stages, answer path, API endpoints and data stores](docs/architecture-technical.png)
+*Technical - an engineering map of the batch pipeline and its stages, the answer path, the HTTP surface and the Superset datasource.*
+
+![Overview: from historic surveys to a cited answer and dashboards](docs/architecture-overview.png)
+*Overview - a plain-language story from historic archive to cited answer and dashboard, with no module names, filenames, HTTP paths or table names.*
+
+Mermaid sources: [`docs/architecture-technical.mmd`](docs/architecture-technical.mmd) and [`docs/architecture-overview.mmd`](docs/architecture-overview.mmd), re-rendered with `mmdr -i docs/architecture-technical.mmd -o docs/architecture-technical.png -e png`.
+
 ## Rebuild from the raw data
 Only needed to regenerate `data/out` from the opendata.swiss downloads (3.6 GB, not in this repository).
 ```bash
