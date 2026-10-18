@@ -1,5 +1,5 @@
 {
- "scope": "230 questions: 216 templated Stapfer questions (9 sampled places, seed 3; 6 intents; 1 rules-wording + 3 paraphrases each, DE/FR/EN) + 14 hand-written consultation paraphrases",
+ "scope": "380 questions: 360 templated Stapfer questions (9 sampled places, seed 3; 6 intents x 1 rules-wording + 3 paraphrases, and 144 on 6 sections the fixed intents do not cover; DE/FR/EN) + 14 hand-written consultation paraphrases + 6 with a year",
  "caveat": "paraphrases were written to avoid the rule keywords, so rules-only scores on them are a floor, not typical use",
  "model": "apertus-v1-5-70b",
  "gold": "Stapfer: passages of that place in the intent's questionnaire sections (database, not a model); consultations: the consultation the question was written from",
@@ -12,19 +12,20 @@
  "modes": {
   "off": "rules only (deployed before)",
   "gaps": "Apertus rewrites only when the rules find no intent or no place; rules win",
-  "apertus": "Apertus rewrites every question; its intents win, rules are the fallback"
+  "apertus": "Apertus rewrites every question into one of 9 fixed intents; its intents win, rules are the fallback",
+  "dynamic": "Apertus picks dataset, questionnaire sections, places and years from the real questionnaire, code validates; one feedback round on unknown places or empty results; out-of-scope questions declined"
  },
  "results": {
   "off": {
    "all": {
-    "cases": 230,
-    "hit_at_1": 0.3,
-    "hit_at_6": 0.426,
-    "intent_correct": 0.274,
-    "place_correct": 0.995,
+    "cases": 380,
+    "hit_at_1": 0.245,
+    "hit_at_6": 0.418,
+    "intent_correct": 0.292,
+    "place_correct": 0.997,
     "apertus_calls": 0,
     "apertus_failures": 0,
-    "seconds_median": 0.09
+    "seconds_median": 0.11
    },
    "stapfer_rules_wording": {
     "cases": 54,
@@ -46,6 +47,15 @@
     "apertus_failures": 0,
     "seconds_median": 0.09
    },
+   "stapfer_new_sections": {
+    "cases": 144,
+    "hit_at_1": 0.153,
+    "hit_at_6": 0.389,
+    "place_correct": 1.0,
+    "apertus_calls": 0,
+    "apertus_failures": 0,
+    "seconds_median": 0.11
+   },
    "consultations_paraphrased": {
     "cases": 14,
     "hit_at_1": 0.071,
@@ -54,59 +64,27 @@
     "apertus_calls": 0,
     "apertus_failures": 0,
     "seconds_median": 0.09
-   }
-  },
-  "gaps": {
-   "all": {
-    "cases": 230,
-    "hit_at_1": 0.783,
-    "hit_at_6": 0.796,
-    "intent_correct": 0.843,
-    "place_correct": 0.995,
-    "apertus_calls": 131,
-    "apertus_failures": 0,
-    "seconds_median": 0.92
    },
-   "stapfer_rules_wording": {
-    "cases": 54,
-    "hit_at_1": 1.0,
-    "hit_at_6": 1.0,
+   "consultations_with_year": {
+    "cases": 6,
+    "hit_at_1": 0.333,
+    "hit_at_6": 0.833,
     "intent_correct": 1.0,
-    "place_correct": 1.0,
     "apertus_calls": 0,
-    "apertus_failures": 0,
-    "seconds_median": 0.12
-   },
-   "stapfer_paraphrased": {
-    "cases": 162,
-    "hit_at_1": 0.772,
-    "hit_at_6": 0.772,
-    "intent_correct": 0.778,
-    "place_correct": 0.994,
-    "apertus_calls": 126,
-    "apertus_failures": 0,
-    "seconds_median": 1.0
-   },
-   "consultations_paraphrased": {
-    "cases": 14,
-    "hit_at_1": 0.071,
-    "hit_at_6": 0.286,
-    "intent_correct": 1.0,
-    "apertus_calls": 5,
     "apertus_failures": 0,
     "seconds_median": 0.09
    }
   },
   "apertus": {
    "all": {
-    "cases": 230,
-    "hit_at_1": 0.952,
-    "hit_at_6": 0.974,
+    "cases": 380,
+    "hit_at_1": 0.642,
+    "hit_at_6": 0.784,
     "intent_correct": 1.0,
     "place_correct": 1.0,
-    "apertus_calls": 230,
+    "apertus_calls": 380,
     "apertus_failures": 0,
-    "seconds_median": 1.17
+    "seconds_median": 1.16
    },
    "stapfer_rules_wording": {
     "cases": 54,
@@ -128,6 +106,15 @@
     "apertus_failures": 0,
     "seconds_median": 1.17
    },
+   "stapfer_new_sections": {
+    "cases": 144,
+    "hit_at_1": 0.146,
+    "hit_at_6": 0.472,
+    "place_correct": 1.0,
+    "apertus_calls": 144,
+    "apertus_failures": 0,
+    "seconds_median": 1.12
+   },
    "consultations_paraphrased": {
     "cases": 14,
     "hit_at_1": 0.214,
@@ -135,7 +122,75 @@
     "intent_correct": 1.0,
     "apertus_calls": 14,
     "apertus_failures": 0,
-    "seconds_median": 1.33
+    "seconds_median": 1.06
+   },
+   "consultations_with_year": {
+    "cases": 6,
+    "hit_at_1": 0.667,
+    "hit_at_6": 1.0,
+    "intent_correct": 1.0,
+    "apertus_calls": 6,
+    "apertus_failures": 0,
+    "seconds_median": 1.11
+   }
+  },
+  "dynamic": {
+   "all": {
+    "cases": 380,
+    "hit_at_1": 0.924,
+    "hit_at_6": 0.984,
+    "intent_correct": 1.0,
+    "place_correct": 1.0,
+    "apertus_calls": 380,
+    "apertus_failures": 0,
+    "seconds_median": 1.27
+   },
+   "stapfer_rules_wording": {
+    "cases": 54,
+    "hit_at_1": 1.0,
+    "hit_at_6": 1.0,
+    "intent_correct": 1.0,
+    "place_correct": 1.0,
+    "apertus_calls": 54,
+    "apertus_failures": 0,
+    "seconds_median": 1.34
+   },
+   "stapfer_paraphrased": {
+    "cases": 162,
+    "hit_at_1": 0.932,
+    "hit_at_6": 0.988,
+    "intent_correct": 1.0,
+    "place_correct": 1.0,
+    "apertus_calls": 162,
+    "apertus_failures": 0,
+    "seconds_median": 1.29
+   },
+   "stapfer_new_sections": {
+    "cases": 144,
+    "hit_at_1": 0.958,
+    "hit_at_6": 1.0,
+    "place_correct": 1.0,
+    "apertus_calls": 144,
+    "apertus_failures": 0,
+    "seconds_median": 1.26
+   },
+   "consultations_paraphrased": {
+    "cases": 14,
+    "hit_at_1": 0.357,
+    "hit_at_6": 0.786,
+    "intent_correct": 1.0,
+    "apertus_calls": 14,
+    "apertus_failures": 0,
+    "seconds_median": 1.16
+   },
+   "consultations_with_year": {
+    "cases": 6,
+    "hit_at_1": 0.5,
+    "hit_at_6": 0.833,
+    "intent_correct": 1.0,
+    "apertus_calls": 6,
+    "apertus_failures": 0,
+    "seconds_median": 1.06
    }
   }
  }
