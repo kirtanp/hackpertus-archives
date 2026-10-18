@@ -1,0 +1,33 @@
+{
+ "dataset": "test-consultations-apertus",
+ "scope": "consultations.csv (569 rows, sha256 c6a4ccc5f4ee…)",
+ "source_url": "https://opendata.swiss/de/dataset/federal-consultations-1960-1991",
+ "licence": "terms as stated on opendata.swiss",
+ "records": 569,
+ "schema_invalid": 0,
+ "mapping_source": "apertus",
+ "mapping_notes": [
+  "title: 'doc_id' dropped (not readable text (an id or code))",
+  "signature: 'federal_gazette_ref' dropped (values do not look like archive signatures)",
+  "title: Apertus proposal empty after validation — heuristic used"
+ ],
+ "apertus_mapping": {
+  "status": "ok",
+  "seconds": 4.4,
+  "model": "apertus-v1-5-70b"
+ },
+ "coverage": {
+  "title": 1.0,
+  "text": 1.0,
+  "dates": 1.0,
+  "places": 0.0,
+  "places_geocoded": 0.0,
+  "persons": 0.0,
+  "archive_signature": 0.0
+ },
+ "records_with_privacy_flags": {},
+ "pii_masked": false,
+ "enriched": 20,
+ "published_to_qa": false,
+ "seconds": 40.5
+}

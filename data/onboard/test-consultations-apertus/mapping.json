@@ -1,0 +1,44 @@
+{
+ "source": "apertus",
+ "id": "doc_id",
+ "title": [
+  "title"
+ ],
+ "text": [
+  "title",
+  "department",
+  "department_abbr",
+  "office",
+  "addressees",
+  "document_types"
+ ],
+ "dates": [
+  "year",
+  "consultation_start",
+  "consultation_end",
+  "consultation_start_raw"
+ ],
+ "places": [],
+ "persons": [],
+ "organisations": [
+  "department",
+  "department_abbr",
+  "office"
+ ],
+ "signature": null,
+ "url": "provenance.source_dataset",
+ "coordinates": null,
+ "language": "de",
+ "kind": "federal_consultation",
+ "description": "Metadata record of a federal consultation in Switzerland from 1960 to 1991, including document ID, title, department, consultation dates, and federal gazette reference.",
+ "validation_notes": [
+  "title: 'doc_id' dropped (not readable text (an id or code))",
+  "signature: 'federal_gazette_ref' dropped (values do not look like archive signatures)",
+  "title: Apertus proposal empty after validation — heuristic used"
+ ],
+ "apertus": {
+  "status": "ok",
+  "seconds": 4.4,
+  "model": "apertus-v1-5-70b"
+ }
+}

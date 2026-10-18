@@ -1,0 +1,16 @@
+name: tests
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12", cache: pip}
+      - run: pip install -r requirements.txt
+      - run: PYTHONPATH=src python -m pytest -q tests
+      - name: app starts and answers (extractive, no key)
+        run: |
+          uvicorn app:app --port 8791 &
+          for i in $(seq 1 60); do curl -sf localhost:8791/api/health | grep -q '"ready":true' && break; sleep 2; done
+          curl -sf localhost:8791/api/ask -H 'Content-Type: application/json' -d '{"question":"Wie viele Kinder besuchten die Schule in Hörndli?"}' | grep -q "1421"

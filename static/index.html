@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ArchAI – Swiss Archives Q&amp;A</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f7f4ee;--panel:#fffdf9;--ink:#1f1d1a;--muted:#6b665d;--line:#e4ddd0;--accent:#9b2c2c;--accent-soft:#f4e3e0;--hl:#fff3c4;--good:#2f6f4a;--good-soft:#e3efe6}
+@media (prefers-color-scheme:dark){:root{--bg:#161513;--panel:#1f1d1a;--ink:#ece8e1;--muted:#a39d92;--line:#35322c;--accent:#e07b6f;--accent-soft:#3a2522;--hl:#4a3f17;--good:#7cc49a;--good-soft:#1f3328}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 Inter,system-ui,sans-serif}
+.wrap{max-width:1120px;margin:0 auto;padding:32px 16px 64px}
+header h1{font:600 30px/1.2 "Source Serif 4",Georgia,serif;margin:0 0 6px}
+header p{margin:0;color:var(--muted);max-width:720px}
+.status{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);margin-top:12px}
+.dot{width:8px;height:8px;border-radius:50%;background:#c9a227}.dot.ok{background:#3c8d5a}.dot.err{background:var(--accent)}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:24px;margin-top:28px;align-items:start}
+@media (max-width:880px){.grid{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:20px}
+.stack>*+*{margin-top:16px}
+form{display:flex;gap:8px}
+input{flex:1;min-width:0;font:inherit;padding:12px 14px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
+input:focus{outline:2px solid var(--accent);outline-offset:-1px}
+button{font:inherit;font-weight:600;padding:0 18px;border:0;border-radius:8px;background:var(--accent);color:#fff;cursor:pointer}
+button:disabled{opacity:.5;cursor:wait}
+.examples{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.chip{font-size:13px;padding:5px 10px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--ink);font-weight:400}
+.chip:hover{border-color:var(--accent);color:var(--accent)}
+.chip b{font-size:10px;color:var(--muted);margin-right:4px;font-weight:600}
+h2{font:600 13px/1 Inter,sans-serif;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 14px}
+#answer{white-space:pre-wrap;font:17px/1.65 "Source Serif 4",Georgia,serif}
+.cite{color:var(--accent);font:600 13px Inter,sans-serif;cursor:pointer;text-decoration:none;padding:0 1px}
+.meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
+.tag{font-size:12px;padding:2px 8px;border-radius:4px;background:var(--accent-soft);color:var(--ink)}
+.src{border-top:1px solid var(--line);padding:12px 0;scroll-margin-top:16px;transition:background .4s}
+.src:first-child{border-top:0}
+.src.hl{background:var(--hl)}
+.src .n{font-weight:600;color:var(--accent);margin-right:6px}
+.src .sig{font-weight:600}
+.src .txt{color:var(--muted);font-size:14px;margin:4px 0}
+.src a{color:var(--accent);font-size:13px;margin-right:12px}
+.hidden{display:none}
+.err{color:var(--accent)}
+/* data sources */
+.ds{border-top:1px solid var(--line);padding:12px 0}
+.ds:first-of-type{border-top:0;padding-top:0}
+.ds h3{font-size:14px;margin:0;display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.role{font-size:11px;font-weight:600;padding:1px 7px;border-radius:999px;background:var(--good-soft);color:var(--good);white-space:nowrap}
+.role.aux{background:var(--accent-soft);color:var(--ink)}
+.ds p{margin:4px 0 0;font-size:13px;color:var(--muted)}
+.ds a{color:var(--accent)}
+.notused{font-size:12px;color:var(--muted);margin-top:12px;padding-top:12px;border-top:1px dashed var(--line)}
+/* results */
+.results{margin-top:32px}
+.results>p{color:var(--muted);margin:-6px 0 18px;max-width:760px;font-size:14px}
+.group{margin-top:22px}
+.group h3{font:600 18px/1.3 "Source Serif 4",Georgia,serif;margin:0}
+.group .scope{font-size:12px;color:var(--muted);margin:2px 0 10px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:4px}
+.big{font:600 26px/1.15 "Source Serif 4",Georgia,serif;font-variant-numeric:tabular-nums}
+.what{font-size:14px}
+.dir{font-size:11px;color:var(--muted)}
+.raw{margin-top:auto;padding-top:8px;font:12px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--muted);overflow-wrap:anywhere}
+#map{height:380px;border-radius:8px;border:1px solid var(--line);z-index:0}
+.mapnote{font-size:13px;color:var(--muted);margin:10px 0 0;display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+.key{display:inline-flex;align-items:center;gap:5px}
+.key i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.pin{background:#2e8b3e;color:#fff;border:2px solid #fff;border-radius:999px;font:600 11px/18px Inter,sans-serif;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.45);white-space:nowrap;padding:0 5px}
+.maphead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.maphead h2{margin:0}
+.tabs{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.tab{background:transparent;color:var(--ink);font-weight:500;padding:6px 12px;border-radius:0;font-size:13px}
+.tab.on{background:var(--accent);color:#fff}
+.filters{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.filters input,.filters select{font:13px Inter,sans-serif;padding:7px 9px;border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--ink)}
+.filters input{flex:1 1 180px}
+.filters button{background:transparent;color:var(--accent);font-weight:500;font-size:13px;padding:0 8px}
+.thennow{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--muted);margin-top:10px}
+.thennow input{flex:1;accent-color:var(--accent)}
+#game{margin-top:14px;border-top:1px solid var(--line);padding-top:14px}
+.gbar{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:8px}
+.clue{border-left:3px solid var(--accent);padding:4px 0 4px 10px;margin:8px 0;font:15px/1.5 "Source Serif 4",Georgia,serif}
+.clue b{display:block;font:600 11px Inter,sans-serif;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.reveal{background:var(--good-soft);border-radius:8px;padding:12px 14px;margin-top:10px;font-size:14px}
+.reveal .pts{font:600 24px "Source Serif 4",Georgia,serif}
+.reveal a{color:var(--accent)}
+.gactions{display:flex;gap:8px;margin-top:12px;align-items:center;flex-wrap:wrap}
+.gactions button{padding:9px 16px}
+.ghint{font-size:13px;color:var(--muted)}
+.leaflet-container.guessing{cursor:crosshair}
+.leaflet-popup-content{font:13px/1.45 Inter,sans-serif}
+.leaflet-popup-content a{color:#9b2c2c}
+.disclaimer{margin-top:22px;font-size:13px;color:var(--muted);border-left:3px solid var(--accent);padding:4px 0 4px 12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>ArchAI — Deciphering Swiss archives</h1>
+    <p>Ask the Stapfer-Enquête 1799 school survey or the Federal Consultations 1960–1991. Each answer cites archive signatures and pages and links to the original record. Answers are written by Apertus, or are extractive when it isn't available.</p>
+    <div class="status"><span class="dot" id="dot"></span><span id="status">Connecting…</span></div>
+  </header>
+
+  <div class="grid">
+    <main class="stack">
+      <div class="card">
+        <form id="f"><input id="q" placeholder="Ask in German, French or English…" autocomplete="off"><button id="go">Ask</button></form>
+        <div class="examples" id="ex"></div>
+      </div>
+      <div class="card hidden" id="res">
+        <h2>Answer</h2>
+        <div id="answer"></div>
+        <div class="meta" id="meta"></div>
+      </div>
+      <div class="card" id="mapcard">
+        <div class="maphead"><h2 id="maptitle">Map of the schools</h2>
+          <div class="tabs"><button type="button" class="tab on" data-mode="explore">Explore</button><button type="button" class="tab" data-mode="game">Guess the school</button></div></div>
+        <div class="filters">
+          <input id="fname" placeholder="Find a school or village…" autocomplete="off">
+          <select id="flang"><option value="">All languages</option><option value="de">German</option><option value="fr">French</option><option value="it">Italian</option></select>
+          <select id="fconf"><option value="">All confessions</option><option value="Reformiert">Reformed</option><option value="Katholisch">Catholic</option></select>
+          <select id="ftype"><option value="">All school types</option></select>
+          <select id="fpup"><option value="">Any number of pupils</option><option value="0-19">Fewer than 20 pupils</option><option value="20-49">20–49 pupils</option><option value="50-99">50–99 pupils</option><option value="100-100000">100+ pupils</option><option value="none">Pupils not stated</option></select>
+          <button type="button" id="freset">Reset</button>
+        </div>
+        <div id="map"></div>
+        <div class="thennow"><span>Today</span><input type="range" id="tn" min="0" max="100" value="0" aria-label="Fade between today's map and the 1850s Dufour map"><span>Then (Dufour map 1845–1865)</span></div>
+        <div class="mapnote"><span class="key"><i style="background:#d33"></i>school in the survey</span><span class="key"><i style="background:#2e8b3e"></i>cited in this answer</span><span id="mapnote"></span></div>
+        <div id="game" class="hidden"></div>
+      </div>
+      <div class="card hidden" id="srcs">
+        <h2>Sources</h2>
+        <div id="list"></div>
+      </div>
+    </main>
+    <aside class="card">
+      <h2>Data used</h2>
+      <div id="datasets">Loading…</div>
+      <div class="notused"><b>Not used:</b> the handwritten page scans (records only reference the scan file and link to the archive viewer) and the raw dumps, which this demo doesn't need.</div>
+    </aside>
+  </div>
+
+  <section class="results">
+    <h2>Measured results</h2>
+    <p>What the pipeline measured, in plain words. Each group says what it was measured on. The small grey line under each figure is the exact value from <code>metrics.json</code>.</p>
+    <div id="metrics">Loading…</div>
+    <p class="disclaimer">Each figure holds only for the scope written above it. None of them is an overall accuracy.</p>
+  </section>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+const EX=[["DE","Wie viele Kinder besuchten die Schule in Hörndli?"],["DE","Was verdiente der Schulmeister in Fischenthal?"],
+["FR","Quel est le salaire du régent à Lausanne?"],["FR","Quels livres utilise-t-on à l'école de Moudon?"],
+["EN","Which consultation dealt with Arbeitsvermittlung und Personalverleih?"],["EN","What was taught at the school in Hörndli?"]];
+const $=id=>document.getElementById(id), esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+$("ex").innerHTML=EX.map(([l,q])=>`<button type="button" class="chip" data-q="${esc(q)}"><b>${l}</b>${esc(q)}</button>`).join("");
+$("ex").onclick=e=>{const b=e.target.closest(".chip");if(b){$("q").value=b.dataset.q;ask()}};
+$("f").onsubmit=e=>{e.preventDefault();ask()};
+
+async function health(){
+  try{const h=await (await fetch("/api/health")).json();
+    $("dot").className="dot "+(h.error?"err":h.ready?"ok":"");
+    $("status").textContent=h.error?"Index error: "+h.error:h.ready?`Ready · ${h.records.toLocaleString()} records · ${h.apertus_configured?"Apertus "+h.model:"extractive mode (no Apertus key)"}`:"Building search index…";
+    if(h.ready)loadPlaces();
+    if(!h.ready&&!h.error)setTimeout(health,4000);
+  }catch{$("status").textContent="Server unreachable";setTimeout(health,5000)}
+}
+health();
+
+async function ask(){
+  const q=$("q").value.trim(); if(q.length<2)return;
+  $("go").disabled=true;$("go").textContent="…";
+  try{
+    const r=await fetch("/api/ask",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({question:q})});
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.detail||r.statusText);
+    render(d);
+  }catch(e){$("res").classList.remove("hidden");$("srcs").classList.add("hidden");$("answer").innerHTML=`<span class="err">${esc(e.message)}</span>`;$("meta").innerHTML=""}
+  finally{$("go").disabled=false;$("go").textContent="Ask"}
+}
+
+function render(d){
+  $("res").classList.remove("hidden");$("srcs").classList.remove("hidden");
+  $("answer").innerHTML=esc(d.answer).replace(/\[(\d+)\]/g,(m,n)=>n<=d.sources.length?`<a class="cite" data-n="${n}">[${n}]</a>`:m);
+  const r=d.route||{};
+  $("meta").innerHTML=[`answer: ${d.answer_source}`,...(r.intents||[]).map(i=>"intent: "+i),...(r.places||[]).map(p=>"place: "+p),
+    r.filtered_pool!=null?`pool: ${r.filtered_pool}`:null,r.fallback?"fallback: "+r.fallback:null].filter(Boolean).map(t=>`<span class="tag">${esc(t)}</span>`).join("");
+  $("list").innerHTML=d.sources.map((s,i)=>`<div class="src" id="s${i+1}"><div><span class="n">[${i+1}]</span><span class="sig">${esc(s.cite)}</span></div>
+    <div class="txt">${esc(s.text.length>420?s.text.slice(0,420)+"…":s.text)}</div>
+    <a href="${esc(s.url)}" target="_blank" rel="noopener">Open in archive viewer ↗</a><a href="/api/record/${encodeURIComponent(s.doc_id)}" target="_blank">Record JSON</a></div>`).join("")||"<p>No sources.</p>";
+  showOnMap(d);
+}
+// ---- map: swisstopo Dufour map (1845–1865) over today's map, as on stapferenquete.ch ----
+const map=L.map("map",{preferCanvas:true,minZoom:7,maxBounds:[[45.6,5.6],[48.0,10.8]]}).setView([46.82,8.23],8);
+const ST="https://wmts.geo.admin.ch/1.0.0/", SWT='© <a href="https://www.swisstopo.admin.ch" target="_blank">swisstopo</a>';
+L.tileLayer(ST+"ch.swisstopo.pixelkarte-farbe/default/current/3857/{z}/{x}/{y}.jpeg",{maxZoom:17,attribution:"Today "+SWT}).addTo(map);
+const dufour=L.tileLayer(ST+"ch.swisstopo.hiks-dufour/default/current/3857/{z}/{x}/{y}.png",{maxNativeZoom:16,maxZoom:17,opacity:0,attribution:"Dufour map 1845–1865 "+SWT}).addTo(map);  // colour map by default; slider fades in the 1850s
+$("tn").oninput=e=>dufour.setOpacity(e.target.value/100);
+const allLayer=L.layerGroup().addTo(map), citedLayer=L.layerGroup().addTo(map), gameLayer=L.layerGroup().addTo(map);
+let PLACES=[], FILTERED=[], placesLoaded=false, mode="explore";
+const asc=t=>(t||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();
+function loadPlaces(){
+  if(placesLoaded)return; placesLoaded=true;
+  fetch("/api/places").then(r=>r.json()).then(ps=>{
+    PLACES=ps;
+    const types={};ps.forEach(p=>{const t=p.type||"Type not recorded";types[t]=(types[t]||0)+1});
+    $("ftype").innerHTML+=Object.entries(types).sort((a,b)=>b[1]-a[1]).map(([t,c])=>`<option value="${esc(t)}">${esc(t)} (${c})</option>`).join("");
+    applyFilters();
+  }).catch(()=>{placesLoaded=false});
+}
+function applyFilters(){
+  const q=asc($("fname").value.trim()),lang=$("flang").value,conf=$("fconf").value,type=$("ftype").value,pup=$("fpup").value;
+  const [lo,hi]=pup&&pup!=="none"?pup.split("-").map(Number):[0,0];
+  FILTERED=PLACES.filter(p=>(!q||asc(p.name).includes(q)||asc(p.today).includes(q)||asc(p.school).includes(q))
+    &&(!lang||p.lang===lang)&&(!conf||p.conf===conf)&&(!type||(p.type||"Type not recorded")===type)
+    &&(!pup||(pup==="none"?p.pupils==null:p.pupils!=null&&p.pupils>=lo&&p.pupils<=hi)));
+  allLayer.clearLayers();
+  if(mode==="explore")FILTERED.forEach(p=>L.circleMarker([p.lat,p.lon],{radius:4,color:"#7a1f1f",weight:1,fillColor:"#d33",fillOpacity:.85})
+    .bindPopup(`<b>${esc(p.school||p.name)}</b><br>${esc(p.name)} (1799) · today ${esc(p.today||"–")}<br>`+
+      [p.type,p.conf==="Reformiert"?"Reformed":p.conf==="Katholisch"?"Catholic":null,p.pupils!=null?`up to ${p.pupils} pupils stated`:null].filter(Boolean).map(esc).join(" · ")+
+      `<br><a href="${esc(p.url)}" target="_blank" rel="noopener">Open sheet in archive viewer ↗</a>`).addTo(allLayer));
+  $("mapnote").textContent=`${FILTERED.length.toLocaleString("en")} of ${PLACES.length.toLocaleString("en")} sheets shown`;
+  if(q&&FILTERED.length&&FILTERED.length<=40&&mode==="explore")map.fitBounds(L.latLngBounds(FILTERED.map(p=>[p.lat,p.lon])).pad(.4),{maxZoom:13});
+  if(mode==="game"&&G.state==="start")gameStart();
+}
+["fname","flang","fconf","ftype","fpup"].forEach(id=>$(id).addEventListener("input",applyFilters));
+$("freset").onclick=()=>{["fname","flang","fconf","ftype","fpup"].forEach(id=>$(id).value="");applyFilters()};
+function showOnMap(d){
+  citedLayer.clearLayers();
+  if(mode!=="explore")setMode("explore");
+  const at={};
+  d.sources.forEach((s,i)=>{if(s.geo){const k=s.geo.lat+","+s.geo.lon;(at[k]=at[k]||{g:s.geo,n:[],s:[]}).n.push(i+1);at[k].s.push(s)}});
+  const pts=Object.values(at);
+  if(!pts.length){$("maptitle").textContent="Map of the schools";map.setView([46.82,8.23],8);return}
+  pts.forEach(p=>L.marker([p.g.lat,p.g.lon],{icon:L.divIcon({className:"",html:`<div class="pin">${p.n.join(",")}</div>`,iconSize:null,iconAnchor:[10,10]}),zIndexOffset:1000})
+    .bindPopup(`<b>${esc(p.g.name)}</b><br>`+p.s.map((s,j)=>`[${p.n[j]}] ${esc(s.cite)}`).join("<br>")+`<br><a href="${esc(p.s[0].url)}" target="_blank" rel="noopener">Open sheet in archive viewer ↗</a>`).addTo(citedLayer));
+  map.fitBounds(L.latLngBounds(pts.map(p=>[p.g.lat,p.g.lon])).pad(.6),{maxZoom:13});
+  $("maptitle").textContent="Where the cited schools are";
+}
+
+// ---- game: "Guess the school" — clues are the teacher's own 1799 answers, place names masked ----
+const ROUNDS=5, G={state:"start",round:0,score:0,played:[],cur:null,guess:null,results:[]};
+const km=(a,b)=>{const R=6371,r=x=>x*Math.PI/180,dl=r(b[0]-a[0]),dn=r(b[1]-a[1]);const h=Math.sin(dl/2)**2+Math.cos(r(a[0]))*Math.cos(r(b[0]))*Math.sin(dn/2)**2;return 2*R*Math.asin(Math.sqrt(h))};
+const points=d=>Math.round(1000*Math.exp(-d/30));
+const best=()=>{try{return +localStorage.getItem("archai-best")||0}catch{return 0}};
+const saveBest=v=>{try{if(v>best())localStorage.setItem("archai-best",v)}catch{}};
+function setMode(m){
+  mode=m; document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("on",t.dataset.mode===m));
+  $("game").classList.toggle("hidden",m!=="game"); gameLayer.clearLayers();
+  if(m==="game"){citedLayer.clearLayers();$("maptitle").textContent="Guess the school";map.setView([46.82,8.23],8);gameStart()}
+  else{$("maptitle").textContent="Map of the schools";$("map").classList.remove("guessing")}
+  applyFilters();
+}
+document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>setMode(t.dataset.mode));
+function gameStart(){
+  Object.assign(G,{state:"start",round:0,score:0,played:[],cur:null,guess:null,results:[]}); gameLayer.clearLayers();
+  $("game").innerHTML=`<p style="margin:0 0 6px"><b>Where was this school?</b> Read what a teacher wrote in 1799, then click the map where you think the school was.
+    ${ROUNDS} rounds, up to 1,000 points each: the closer, the more points.</p>
+    <p class="ghint">Rounds are drawn from the ${FILTERED.length.toLocaleString("en")} sheets that match your filters. Place names in the clues are blacked out (▇▇▇). Best score on this device: ${best().toLocaleString("en")}.</p>
+    <div class="gactions"><button type="button" id="gstart" ${FILTERED.length?"":"disabled"}>Start game</button></div>`;
+  $("gstart").onclick=nextRound;
+}
+async function nextRound(){
+  G.round++; G.guess=null; G.state="loading"; gameLayer.clearLayers(); map.setView([46.82,8.23],8);
+  $("game").innerHTML=`<p class="ghint">Opening an archive box…</p>`;
+  try{
+    const r=await fetch("/api/game/round",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({ids:FILTERED.length<PLACES.length?FILTERED.map(p=>p.id):[],exclude:G.played})});
+    const g=await r.json(); if(!r.ok)throw new Error(g.detail||r.statusText);
+    G.cur=g; G.played.push(g.id); G.state="guess"; $("map").classList.add("guessing");
+    $("game").innerHTML=`<div class="gbar"><span>Round ${G.round} of ${ROUNDS}</span><span>Score ${G.score.toLocaleString("en")}</span></div>`+
+      g.clues.map(c=>`<div class="clue"><b>${esc(c.topic)} · Frage ${esc(c.question_no)}</b>${esc(c.text)}</div>`).join("")+
+      `<div class="gactions"><button type="button" id="gconfirm" disabled>Confirm guess</button><span class="ghint" id="ghint">Click the map to place your guess. Language of the sheet: ${esc({de:"German",fr:"French",it:"Italian"}[g.language]||g.language)}.</span></div>`;
+    $("gconfirm").onclick=reveal;
+  }catch(e){$("game").innerHTML=`<p class="err">${esc(e.message)}</p><div class="gactions"><button type="button" id="gback">Back</button></div>`;$("gback").onclick=gameStart}
+}
+map.on("click",e=>{
+  if(mode!=="game"||G.state!=="guess")return;
+  G.guess=[e.latlng.lat,e.latlng.lng]; gameLayer.clearLayers();
+  L.circleMarker(G.guess,{radius:8,color:"#fff",weight:2,fillColor:"#1f5fbf",fillOpacity:1}).addTo(gameLayer);
+  $("gconfirm").disabled=false; $("ghint").textContent="Happy with it? Confirm, or click again to move your guess.";
+});
+function reveal(){
+  const r=G.cur.reveal, truth=[r.lat,r.lon], d=km(G.guess,truth), pts=points(d);
+  G.score+=pts; G.state="reveal"; G.results.push({d,pts}); $("map").classList.remove("guessing");
+  L.polyline([G.guess,truth],{color:"#1f5fbf",weight:2,dashArray:"5 5"}).addTo(gameLayer);
+  L.marker(truth,{icon:L.divIcon({className:"",html:`<div class="pin">here</div>`,iconSize:null,iconAnchor:[14,10]}),zIndexOffset:1000}).addTo(gameLayer);
+  map.fitBounds(L.latLngBounds([G.guess,truth]).pad(.35),{maxZoom:12});
+  const verdict=d<5?"Spot on!":d<20?"Very close.":d<60?"Right region.":d<120?"Same part of the country.":"Far off — the Helvetic Republic was bigger than it looks.";
+  const last=G.round>=ROUNDS;
+  $("game").innerHTML=`<div class="gbar"><span>Round ${G.round} of ${ROUNDS}</span><span>Score ${G.score.toLocaleString("en")}</span></div>
+    <div class="reveal"><div class="pts">+${pts.toLocaleString("en")} points</div><div>${verdict} You were <b>${d<1?"under 1":Math.round(d)} km</b> away.</div>
+    <div style="margin-top:8px"><b>Then:</b> ${esc(r.school||r.name_1799)}, ${esc(r.name_1799)} (1799)${r.teacher?` · teacher ${esc(r.teacher)}`:""}${r.pupils?` · up to ${r.pupils} pupils stated`:""}<br>
+    <b>Now:</b> municipality of ${esc(r.municipality_today||"–")}<br>
+    <span class="ghint">${esc(r.signature)} · <a href="${esc(r.url)}" target="_blank" rel="noopener">open the original sheet ↗</a></span></div></div>
+    <div class="gactions"><button type="button" id="gnext">${last?"See final score":"Next round"}</button><span class="ghint">Drag the slider under the map to see the place in the 1850s.</span></div>`;
+  $("gnext").onclick=last?finish:nextRound;
+}
+function finish(){
+  const prev=best(); saveBest(G.score); G.state="done"; gameLayer.clearLayers();
+  const max=ROUNDS*1000, title=G.score>=4000?"Archivist of the Republic":G.score>=2500?"Seasoned school inspector":G.score>=1200?"Travelling schoolmaster":"New pupil";
+  $("game").innerHTML=`<div class="reveal"><div class="pts">${G.score.toLocaleString("en")} / ${max.toLocaleString("en")}</div>
+    <div>Rank: <b>${title}</b>${G.score>prev?" · new best on this device!":` · best: ${Math.max(prev,G.score).toLocaleString("en")}`}</div>
+    <div class="ghint" style="margin-top:6px">${G.results.map((x,i)=>`Round ${i+1}: ${Math.round(x.d)} km, ${x.pts} pts`).join(" · ")}</div></div>
+    <div class="gactions"><button type="button" id="gagain">Play again</button><button type="button" class="tab" id="gexplore" style="border:1px solid var(--line);border-radius:8px">Back to the map</button></div>`;
+  $("gagain").onclick=()=>{gameStart();nextRound()}; $("gexplore").onclick=()=>setMode("explore");
+}
+$("answer").onclick=e=>{const a=e.target.closest(".cite");if(!a)return;const el=$("s"+a.dataset.n);el.scrollIntoView({behavior:"smooth",block:"center"});el.classList.add("hl");setTimeout(()=>el.classList.remove("hl"),1600)};
+
+// ---- formatting: headline figures are derived from the exact metrics.json value shown underneath ----
+const n=v=>Number(v).toLocaleString("en");
+const pct=v=>`${+(v*100).toFixed(2)}%`;
+const of=(a,b)=>`${n(a)} of ${n(b)}`;
+const raw=(...kv)=>kv.map(([k,v])=>`${k} = ${typeof v==="object"?JSON.stringify(v):v}`).join("<br>");
+const tile=(big,what,rawhtml,dir)=>`<div class="tile"><div class="big">${esc(big)}</div><div class="what">${esc(what)}</div>${dir?`<div class="dir">${esc(dir)}</div>`:""}<div class="raw">${rawhtml}</div></div>`;
+const group=(title,scope,tiles)=>`<div class="group"><h3>${esc(title)}</h3><div class="scope">Measured on: ${esc(scope)}</div><div class="tiles">${tiles.join("")}</div></div>`;
+const LOW="lower is better";
+
+function datasets(m){
+  const s=m.stapfer||{},l=m.linking||{},b=m.bern_reference||{};
+  const ds=(name,role,cls,text,url)=>`<div class="ds"><h3><span>${name}</span><span class="role ${cls}">${role}</span></h3><p>${text} ${url?`<a href="${url}" target="_blank" rel="noopener">Source ↗</a>`:""}</p></div>`;
+  $("datasets").innerHTML=
+    ds("Stapfer-Enquête 1799","Main data","",`${n(s.documents)} handwritten school-survey sheets, transcribed (${n(s.answers)} answers), with teachers, schools and places. Answers questions about schools in 1799.`,"https://opendata.swiss/de/dataset/stapfer-enquete-schule-in-der-schweiz-1799")+
+    ds("Federal Consultations 1960–1991","Main data","",`${n(l.consultations)} federal consultations with ${n(l.archive_refs_with_signature)} archive references. Answers questions about laws and consultations.`,"https://opendata.swiss/de/dataset/federal-consultations-1960-1991")+
+    ds("Archive Database (Swiss Federal Archives)","Lookup only","aux",`Used to link each consultation's archive signature to its dossier (${of(l.linked_to_olr,l.archive_refs_with_signature)} linked). Not searched on its own.`,"https://opendata.swiss/de/dataset/swiss-archives-archive-database-of-the-swiss-federal-archives")+
+    ds("Uni Bern reference export","Evaluation only","aux",`The University of Bern's own export of the survey, used to check our cleaned Stapfer text. Not shown in answers.`,null);
+}
+
+function results(m){
+  const b=m.bern_reference||{},s=m.stapfer||{},l=m.linking||{},x=m.export||{},a=m.apertus_agent||{};
+  const e=(m.apertus_enrichment||{})["apertus_enrichment.apertus-v1-5-70b.jsonl"]||{};
+  let h="";
+  if(b.scope)h+=group("Does our text match the Uni Bern reference?",b.scope,[
+    tile(pct(b.answers_matched),"of reference answers found in our data",raw(["answers_matched",b.answers_matched])),
+    tile(pct(b.signature_exact_match),"of archive signatures are identical",raw(["signature_exact_match",b.signature_exact_match])),
+    tile(pct(b["text_similarity_ge_0.95"]),"of answer texts are at least 95% similar",raw(["text_similarity_ge_0.95",b["text_similarity_ge_0.95"]])),
+    tile(pct(b.text_exact_after_normalisation),"of answer texts are identical once case, markup and spacing are normalised",raw(["text_exact_after_normalisation",b.text_exact_after_normalisation]))]);
+  if(s.scope)h+=group("Is every sheet traceable to the original?",s.scope,[
+    tile(of(s.documents_with_archive_signature,s.documents),"sheets have an archive signature",raw(["documents_with_archive_signature",s.documents_with_archive_signature],["documents",s.documents])),
+    tile(of(s.documents_with_facsimile_ref,s.documents),"sheets point to their page scan",raw(["documents_with_facsimile_ref",s.documents_with_facsimile_ref])),
+    tile(of(s.documents_with_geocoded_place,s.documents),"sheets are placed on a map (coordinates)",raw(["documents_with_geocoded_place",s.documents_with_geocoded_place])),
+    tile(of(s.documents_with_page_markers,s.documents),"sheets have page numbers, so answers can cite a page",raw(["documents_with_page_markers",s.documents_with_page_markers]))]);
+  if(s.scope)h+=group("How clean is the text?",s.scope,[
+    tile(pct(s.structural_error_rate_answers),"of answers have broken markup in the source transcription (flagged, kept as is)",raw(["structural_error_rate_answers",s.structural_error_rate_answers]),LOW),
+    tile(pct(s.structural_error_rate_documents),"of sheets contain at least one such answer",raw(["structural_error_rate_documents",s.structural_error_rate_documents]),LOW),
+    tile(of(s.answers_with_leftover_markup_after_cleaning,s.answers),"answers still contain markup after cleaning",raw(["answers_with_leftover_markup_after_cleaning",s.answers_with_leftover_markup_after_cleaning]),LOW),
+    tile(of(s.documents_with_uncertain_readings,s.documents),`sheets where the transcribers marked a reading as uncertain (${n(s.uncertain_readings_distinct)} readings)`,raw(["documents_with_uncertain_readings",s.documents_with_uncertain_readings],["uncertain_readings_distinct",s.uncertain_readings_distinct]))]);
+  if(l.scope||x.scope)h+=group("Are the datasets connected and usable by AI?",[l.scope,x.scope].filter(Boolean).join(" · "),[
+    tile(of(l.linked_to_olr,l.archive_refs_with_signature),"consultation archive references linked to their dossier in the Archive Database",raw(["linked_to_olr",l.linked_to_olr],["link_rate",l.link_rate])),
+    tile(n(x.records),"records in one shared format (Stapfer + consultations)",raw(["records",x.records])),
+    tile(n(x.schema_invalid),"records failing the format check",raw(["schema_invalid",x.schema_invalid]),LOW)]);
+  if(e.scope)h+=group("How well does Apertus 70B extract names and places?",e.scope,[
+    tile(pct(e.teacher_surname_recall_vs_db),`of teachers' surnames found (${n(e.teacher_names_scored)} checked against hand-entered Bern tables)`,raw(["teacher_surname_recall_vs_db",e.teacher_surname_recall_vs_db],["teacher_names_scored",e.teacher_names_scored])),
+    tile(pct(e.school_place_recall_vs_db),`of school places found (${n(e.places_scored)} checked)`,raw(["school_place_recall_vs_db",e.school_place_recall_vs_db],["places_scored",e.places_scored])),
+    tile(pct(e.unsupported_entity_rate),`of extracted names don't appear literally in the source (${n(e.entities_checked)} checked; a hallucination proxy)`,raw(["unsupported_entity_rate",e.unsupported_entity_rate]),LOW),
+    tile(`${e.seconds_per_doc_median} s`,"median time per sheet",raw(["seconds_per_doc_median",e.seconds_per_doc_median]))]);
+  if(a.scope)h+=group("How well does the Apertus tool agent plan its work?",a.scope,[
+    tile(pct(a.valid_plan_rate),"of plans were valid",raw(["valid_plan_rate",a.valid_plan_rate])),
+    tile(pct(a.planner_recall_of_required_tools),"of the required tools Apertus chose by itself (the rest run anyway)",raw(["planner_recall_of_required_tools",a.planner_recall_of_required_tools])),
+    tile(n(a.tool_execution_errors),"tool calls failed",raw(["tool_execution_errors",a.tool_execution_errors]),LOW),
+    tile(pct(a.unsupported_entity_rate),`of output names not literally in the source (${n(a.entities_checked)} checked)`,raw(["unsupported_entity_rate",a.unsupported_entity_rate]),LOW)]);
+  const q=m.qa_retrieval;
+  if(q&&q.results){
+    const R=q.results,off=R.off,ap=R.apertus,cmp=(g,k)=>`${pct(off[g][k])} → ${pct(ap[g][k])}`;
+    h+=group("Does Apertus query rewriting find the right sources?",q.scope+". "+q.caveat,[
+      tile(cmp("stapfer_paraphrased","hit_at_1"),`paraphrased school questions where the top source is right: rules only → with Apertus (${ap.stapfer_paraphrased.cases} questions)`,
+        raw(["results.off.stapfer_paraphrased.hit_at_1",off.stapfer_paraphrased.hit_at_1],["results.apertus.stapfer_paraphrased.hit_at_1",ap.stapfer_paraphrased.hit_at_1])),
+      tile(cmp("stapfer_rules_wording","hit_at_1"),`questions in wording the rules already know: unchanged (${ap.stapfer_rules_wording.cases} questions)`,
+        raw(["results.off.stapfer_rules_wording.hit_at_1",off.stapfer_rules_wording.hit_at_1],["results.apertus.stapfer_rules_wording.hit_at_1",ap.stapfer_rules_wording.hit_at_1])),
+      tile(cmp("consultations_paraphrased","hit_at_6"),`paraphrased consultation questions where the right consultation is among the 6 sources (${ap.consultations_paraphrased.cases} questions)`,
+        raw(["results.off.consultations_paraphrased.hit_at_6",off.consultations_paraphrased.hit_at_6],["results.apertus.consultations_paraphrased.hit_at_6",ap.consultations_paraphrased.hit_at_6])),
+      tile(`${ap.all.seconds_median} s`,`median search time per question with the Apertus rewrite (rules only: ${off.all.seconds_median} s; ${ap.all.apertus_failures} failed calls of ${ap.all.apertus_calls})`,
+        raw(["results.apertus.all.seconds_median",ap.all.seconds_median],["results.apertus.all.apertus_failures",ap.all.apertus_failures]),LOW)]);
+  }
+  const c=m.qa_answer_check;
+  if(c)h+=group("Are the numbers in Apertus' answers backed by the cited source?",c.scope+". Check: "+c.number_check_definition,[
+    tile(of(c.accepted,c.answers),"answers shown as written by Apertus",raw(["accepted",c.accepted],["answers",c.answers])),
+    tile(n(c.rejected_number_not_in_cited_source),"answers stopped because a number was not in the source it cited (all checked by hand: real errors)",raw(["rejected_number_not_in_cited_source",c.rejected_number_not_in_cited_source]),LOW),
+    tile(n(c.rejected_uncited_or_no_information),"answers stopped for missing citations or a blanket \"no information\" (the cited passages are shown instead)",raw(["rejected_uncited_or_no_information",c.rejected_uncited_or_no_information]),LOW)]);
+  $("metrics").innerHTML=h;
+}
+fetch("/api/metrics").then(r=>r.json()).then(({metrics:m})=>{datasets(m);results(m)})
+  .catch(()=>{$("metrics").textContent="Metrics unavailable";$("datasets").textContent="Unavailable"});
+</script>
+</body>
+</html>

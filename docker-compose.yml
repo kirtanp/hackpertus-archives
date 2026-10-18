@@ -1,0 +1,10 @@
+# docker compose up  ->  http://localhost:8791   (put APERTUS_API_KEY in .env, see .env.example; optional)
+services:
+  archai:
+    build: .
+    ports: ["127.0.0.1:8791:7860"]
+    env_file:
+      - path: .env
+        required: false
+    mem_limit: 2500m
+    restart: unless-stopped

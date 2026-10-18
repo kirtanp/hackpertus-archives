@@ -1,0 +1,434 @@
+[
+ {
+  "name": "doc_id",
+  "empty_rate": 0.0,
+  "distinct": 569,
+  "mean_length": 15.8,
+  "roles": [
+   "unique_id"
+  ],
+  "rates": {
+   "date": 0.0,
+   "numeric": 0.0,
+   "signature": 0.0,
+   "url": 0.0
+  },
+  "samples": [
+   "consultation:1",
+   "consultation:2",
+   "consultation:3"
+  ]
+ },
+ {
+  "name": "dataset",
+  "empty_rate": 0.0,
+  "distinct": 1,
+  "mean_length": 31.0,
+  "roles": [
+   "category"
+  ],
+  "rates": {
+   "date": 0.0,
+   "numeric": 0.0,
+   "signature": 0.0,
+   "url": 0.0
+  },
+  "samples": [
+   "federal-consultations-1960-1991"
+  ]
+ },
+ {
+  "name": "title",
+  "empty_rate": 0.0,
+  "distinct": 558,
+  "mean_length": 81.0,
+  "roles": [
+   "long_text"
+  ],
+  "rates": {
+   "date": 0.0,
+   "numeric": 0.0,
+   "signature": 0.0,
+   "url": 0.0
+  },
+  "samples": [
+   "Vorentwurf zu einem Bundesgesetz über das Filmwesen",
+   "(Eisenbahngesetz)",
+   "Teilrevision des Bundesgesetzes über Jagd- und Vogelschutz vom 10.6.1925"
+  ]
+ },
+ {
+  "name": "type",
+  "empty_rate": 0.002,
+  "distinct": 10,
+  "mean_length": 14.1,
+  "roles": [
+   "category"
+  ],
+  "rates": {
+   "date": 0.0,
+   "numeric": 0.0,
+   "signature": 0.0,
+   "url": 0.0
+  },
+  "samples": [
+   "Bundesgesetz",
+   "unbekannt",
+   "Völkerrechtlicher Vertrag"
+  ]
+ },
+ {
+  "name": "department",
+  "empty_rate": 0.005,
+  "distinct": 24,
+  "mean_length": 44.8,
+  "roles": [
+   "category"
+  ],
+  "rates": {
+   "date": 0.0,
+   "numeric": 0.0,
+   "signature": 0.0,
+   "url": 0.0
+  },
+  "samples": [
+   "Eidgenössisches Departement des Innern",
+   "Eidgenössisches Post- und Eisenbahndepartement",
+   "Eidgenössisches Justiz- und Polizeidepartement"
+  ]
+ },
+ {
+  "name": "department_abbr",
+  "empty_rate": 0.005,
+  "distinct": 20,
+  "mean_length": 3.5,
+  "roles": [
+   "category"
+  ],
+  "rates": {
+   "date": 0.0,
+   "numeric": 0.0,
+   "signature": 0.0,
+   "url": 0.0
+  },
+  "samples": [
+   "EDI",
+   "PED",
+   "JPD"
+  ]
+ },
+ {
+  "name": "office",
+  "empty_rate": 0.794,
+  "distinct": 48,
+  "mean_length": 22.5,
+  "roles": [],
+  "rates": {
+   "date": 0.0,
+   "numeric": 0.0,
+   "signature": 0.0,
+   "url": 0.0
+  },
+  "samples": [
+   "Amt für Gewässerschutz",
+   "BIGA",
+   "Eidg.. Amt für Mass und Gewicht"
+  ]
+ },
+ {
+  "name": "year",
+  "empty_rate": 0.0,
+  "distinct": 31,
+  "mean_length": 4.0,
+  "roles": [
+   "date"
+  ],
+  "rates": {
+   "date": 1.0,
+   "numeric": 1.0,
+   "signature": 0.0,
+   "url": 0.0
+  },
+  "samples": [
+   "1960",
+   "1961",
+   "1963"
+  ]
+ },
+ {
+  "name": "consultation_start",
+  "empty_rate": 0.051,
+  "distinct": 490,
+  "mean_length": 10.0,
+  "roles": [
+   "date"
+  ],
+  "rates": {
+   "date": 1.0,
+   "numeric": 0.0,
+   "signature": 0.0,
+   "url": 0.0
+  },
+  "samples": [
+   "1966-04-20",
+   "1969-11-17",
+   "1969-12-22"
+  ]
+ },
+ {
+  "name": "consultation_end",
+  "empty_rate": 0.04,
+  "distinct": 359,
+  "mean_length": 10.0,
+  "roles": [
+   "date"
+  ],
+  "rates": {
+   "date": 1.0,
+   "numeric": 0.0,
+   "signature": 0.0,
+   "url": 0.0
+  },
+  "samples": [
+   "1966-06-30",
+   "1969-03-01",
+   "1968-09-15"
+  ]
+ },
+ {
+  "name": "consultation_start_raw",
+  "empty_rate": 0.049,
+  "distinct": 491,
+  "mean_length": 10.0,
+  "roles": [
+   "date"
+  ],
+  "rates": {
+   "date": 0.997,
+   "numeric": 0.0,
+   "signature": 0.0,
+   "url": 0.0
+  },
+  "samples": [
+   "20.04.1966",
+   "17.11.1969",
+   "22.12.1969"
+  ]
+ },
+ {
+  "name": "consultation_end_raw",
+  "empty_rate": 0.04,
+  "distinct": 359,
+  "mean_length": 10.0,
+  "roles": [
+   "date"
+  ],
+  "rates": {
+   "date": 1.0,
+   "numeric": 0.0,
+   "signature": 0.0,
+   "url": 0.0
+  },
+  "samples": [
+   "30.06.1966",
+   "01.03.1969",
+   "15.9.1968"
+  ]
+ },
+ {
+  "name": "federal_gazette_ref",
+  "empty_rate": 0.404,
+  "distinct": 162,
+  "mean_length": 9.1,
+  "roles": [],
+  "rates": {
+   "date": 0.0,
+   "numeric": 0.0,
+   "signature": 0.0,
+   "url": 0.0
+  },
+  "samples": [
+   "II/44/1191",
+   "II/53/1641",
+   "II/34/174"
+  ]
+ },
+ {
+  "name": "federal_council_protocol_ref",
+  "empty_rate": 0.965,
+  "distinct": 20,
+  "mean_length": 18.4,
+  "roles": [
+   "date",
+   "unique_id",
+   "category"
+  ],
+  "rates": {
+   "date": 1.0,
+   "numeric": 0.0,
+   "signature": 0.0,
+   "url": 0.0
+  },
+  "samples": [
+   "29.11.1960 (2021)",
+   "19.02.1960 (299)",
+   "20.05.1960 (879)"
+  ]
+ },
+ {
+  "name": "addressees",
+  "empty_rate": 0.0,
+  "distinct": 249,
+  "mean_length": 71.7,
+  "roles": [
+   "long_text"
+  ],
+  "rates": {
+   "date": 0.0,
+   "numeric": 0.0,
+   "signature": 0.0,
+   "url": 0.0
+  },
+  "samples": [
+   "['Kantonen', 'zuständige kulturelle und wirtschaftliche Verbände']",
+   "[]",
+   "['kantonale Departemente', 'denen das Jagdwesen untersteht', 'interessierte Verb"
+  ]
+ },
+ {
+  "name": "document_types",
+  "empty_rate": 0.0,
+  "distinct": 61,
+  "mean_length": 16.9,
+  "roles": [],
+  "rates": {
+   "date": 0.0,
+   "numeric": 0.0,
+   "signature": 0.0,
+   "url": 0.0
+  },
+  "samples": [
+   "[]",
+   "['Kreisschreiben', 'Antworten']",
+   "['Kreisschreiben', 'Adressatenliste', 'Antworten', 'Varia']"
+  ]
+ },
+ {
+  "name": "provenance.source_dataset",
+  "empty_rate": 0.0,
+  "distinct": 1,
+  "mean_length": 65.0,
+  "roles": [
+   "url",
+   "long_text",
+   "category"
+  ],
+  "rates": {
+   "date": 0.0,
+   "numeric": 0.0,
+   "signature": 0.0,
+   "url": 1.0
+  },
+  "samples": [
+   "https://opendata.swiss/de/dataset/federal-consultations-1960-1991"
+  ]
+ },
+ {
+  "name": "provenance.source_file",
+  "empty_rate": 0.0,
+  "distinct": 1,
+  "mean_length": 43.0,
+  "roles": [
+   "category"
+  ],
+  "rates": {
+   "date": 0.0,
+   "numeric": 0.0,
+   "signature": 0.0,
+   "url": 0.0
+  },
+  "samples": [
+   "Metadatenbank-Vernehmlassungen-OGD-V1-3.csv"
+  ]
+ },
+ {
+  "name": "provenance.row_nr",
+  "empty_rate": 0.0,
+  "distinct": 569,
+  "mean_length": 2.8,
+  "roles": [
+   "unique_id"
+  ],
+  "rates": {
+   "date": 0.0,
+   "numeric": 1.0,
+   "signature": 0.0,
+   "url": 0.0
+  },
+  "samples": [
+   "1",
+   "2",
+   "3"
+  ]
+ },
+ {
+  "name": "provenance.linked_dataset",
+  "empty_rate": 0.0,
+  "distinct": 1,
+  "mean_length": 95.0,
+  "roles": [
+   "url",
+   "long_text",
+   "category"
+  ],
+  "rates": {
+   "date": 0.0,
+   "numeric": 0.0,
+   "signature": 0.0,
+   "url": 1.0
+  },
+  "samples": [
+   "https://opendata.swiss/de/dataset/swiss-archives-archive-database-of-the-swiss-f"
+  ]
+ },
+ {
+  "name": "n_archive_refs",
+  "empty_rate": 0.0,
+  "distinct": 15,
+  "mean_length": 1.0,
+  "roles": [
+   "category"
+  ],
+  "rates": {
+   "date": 0.0,
+   "numeric": 1.0,
+   "signature": 0.0,
+   "url": 0.0
+  },
+  "samples": [
+   "0",
+   "1",
+   "5"
+  ]
+ },
+ {
+  "name": "n_linked",
+  "empty_rate": 0.0,
+  "distinct": 15,
+  "mean_length": 1.0,
+  "roles": [
+   "category"
+  ],
+  "rates": {
+   "date": 0.0,
+   "numeric": 1.0,
+   "signature": 0.0,
+   "url": 0.0
+  },
+  "samples": [
+   "0",
+   "1",
+   "5"
+  ]
+ }
+]

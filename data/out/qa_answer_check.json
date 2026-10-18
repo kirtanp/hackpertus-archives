@@ -1,0 +1,10 @@
+{
+ "scope": "full answers (Apertus rewrite + Apertus 70B answer) for the 230 retrieval-eval questions",
+ "answers": 230,
+ "accepted": 185,
+ "rejected_number_not_in_cited_source": 6,
+ "rejected_uncited_or_no_information": 39,
+ "llm_unavailable": 0,
+ "number_check_definition": "every number written in digits in a sentence must occur in the sources that sentence cites (as shown to the model, digits or FR/DE number words) or in the question; numbers the answer writes as words are not checked",
+ "review": "all 6 number rejections checked by hand: 4 computed or inferred numbers (sums such as 17 + 22 = 39, a feast day read as a date), 2 numbers cited to the wrong source"
+}

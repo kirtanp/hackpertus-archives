@@ -1,0 +1,37 @@
+{
+ "dataset": "test-consultations-heuristic",
+ "stages": [
+  {
+   "stage": "acquire",
+   "seconds": 0.01,
+   "rows": 569,
+   "sha256": "c6a4ccc5f4ee106d2da023fc3f07a04bb87fd4228b35b996af785eafdce4878c"
+  },
+  {
+   "stage": "profile",
+   "seconds": 0.03,
+   "columns": 22
+  },
+  {
+   "stage": "map",
+   "seconds": 0.03,
+   "source": "heuristic",
+   "notes": 0
+  },
+  {
+   "stage": "transform",
+   "seconds": 0.06,
+   "records": 569
+  },
+  {
+   "stage": "privacy",
+   "seconds": 0.09,
+   "masked": false
+  },
+  {
+   "stage": "validate",
+   "seconds": 0.1,
+   "invalid": 0
+  }
+ ]
+}

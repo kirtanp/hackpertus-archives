@@ -1,0 +1,12 @@
+# pipeline
+pandas==3.0.6
+pyarrow==26.0.0
+numpy==2.5.4
+scikit-learn==1.9.1
+openpyxl==3.1.5
+# web demo
+fastapi==0.143.5
+uvicorn[standard]==0.54.0
+pydantic==2.14.1
+# tests
+pytest==9.1.1

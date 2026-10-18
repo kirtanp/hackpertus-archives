@@ -1,0 +1,280 @@
+{
+ "bern_reference": {
+  "scope": "University of Bern reference export: 14801 rows over 2245 sheets (12047 question answers, 2754 sheet-level fields not compared)",
+  "sheets_found": 1.0,
+  "answers_matched": 1.0,
+  "signature_exact_match": 1.0,
+  "text_similarity_median": 1.0,
+  "text_exact_after_normalisation": 0.8169,
+  "text_similarity_ge_0.95": 0.9982,
+  "text_similarity_lt_0.80": 0.0002,
+  "normalisation": "lowercase, HTML entities decoded, page markers / gap marks / dashes removed, whitespace collapsed",
+  "note": "carried over from the last run with the Uni Bern reference file"
+ },
+ "stapfer": {
+  "scope": "Stapfer-Enquête, all transcriptions in the open-data SQL dump",
+  "documents": 2250,
+  "answers": 92524,
+  "documents_with_text": 2250,
+  "documents_with_archive_signature": 2250,
+  "documents_with_facsimile_ref": 2248,
+  "documents_with_geocoded_place": 2249,
+  "documents_with_teacher": 2230,
+  "structural_error_rate_documents": 0.0787,
+  "structural_error_definition": "share of documents whose raw transcription has >=1 unbalanced markup pair (source-side issue, kept and flagged)",
+  "structural_error_rate_answers": 0.0029,
+  "structural_error_rate_answers_definition": "share of answers whose raw text has >=1 unbalanced markup pair (source-side; flagged, text kept)",
+  "answers_with_leftover_markup_after_cleaning": 1,
+  "documents_with_uncertain_readings": 205,
+  "uncertain_readings_distinct": 534,
+  "uncertain_readings_definition": "transcriber-marked probable readings #..## (Editionsregeln §15), counted once per distinct answer text",
+  "dash_marks_restored": 6397,
+  "dash_marks_note": "edition markup °-°° is a dash/filler line (verified on facsimiles); earlier versions mis-counted it as an illegible gap",
+  "documents_with_page_markers": 2128,
+  "language_detected": {
+   "de": 1737,
+   "fr": 510,
+   "it": 3
+  }
+ },
+ "linking": {
+  "consultations": 569,
+  "archive_refs_with_signature": 858,
+  "linked_to_olr": 857,
+  "scope": "Federal Consultations 1960-1991 x OLR archive database (exact signature match)",
+  "link_rate": 0.9988,
+  "consultations_with_any_archive_ref": 329,
+  "consultations_with_linked_dossier": 329,
+  "start_date_parsed": 540,
+  "start_date_present": 541
+ },
+ "export": {
+  "records": 2819,
+  "schema_invalid": 0,
+  "apertus_merged": 2261,
+  "scope": "unified records.jsonl (Stapfer documents + consultations)"
+ },
+ "apertus_enrichment": {
+  "apertus_enrichment.apertus-v1-5-70b.jsonl": {
+   "scope": "apertus-v1-5-70b on a random sample (seed 7) of 2250 Stapfer documents, input truncated to 1800 chars",
+   "json_valid_rate": 0.996,
+   "teacher_surname_recall_vs_db": 0.974,
+   "teacher_names_scored": 1064,
+   "school_place_recall_vs_db": 0.921,
+   "places_scored": 1303,
+   "unsupported_entity_rate": 0.011,
+   "unsupported_entity_definition": "person/place strings whose tokens do not all occur in the input text (proxy for hallucination; also catches normalised spellings)",
+   "entities_checked": 20406,
+   "legibility_flag_on_docs_with_uncertain_readings": {
+    "good": 176,
+    "partly_illegible": 28,
+    "NaN": 1
+   },
+   "seconds_per_doc_median": 3.8,
+   "note": "gold = hand-entered teacher/place tables of the Uni Bern Stapfer database (independent of the transcription text)"
+  },
+  "apertus_enrichment.apertus-v1-5-8b.jsonl": {
+   "scope": "apertus-v1-5-8b on a random sample (seed 7) of 60 Stapfer documents, input truncated to 1800 chars",
+   "json_valid_rate": 1.0,
+   "teacher_surname_recall_vs_db": 1.0,
+   "teacher_names_scored": 23,
+   "school_place_recall_vs_db": 0.971,
+   "places_scored": 34,
+   "unsupported_entity_rate": 0.053,
+   "unsupported_entity_definition": "person/place strings whose tokens do not all occur in the input text (proxy for hallucination; also catches normalised spellings)",
+   "entities_checked": 472,
+   "legibility_flag_on_docs_with_uncertain_readings": {
+    "partly_illegible": 9
+   },
+   "seconds_per_doc_median": 1.6,
+   "note": "gold = hand-entered teacher/place tables of the Uni Bern Stapfer database (independent of the transcription text)"
+  },
+  "apertus_enrichment.jsonl": {
+   "scope": "apertus-v1.5-8b-text-q4_k_m on a random sample (seed 7) of 42 Stapfer documents, input truncated to 1800 chars",
+   "json_valid_rate": 1.0,
+   "teacher_surname_recall_vs_db": 1.0,
+   "teacher_names_scored": 16,
+   "school_place_recall_vs_db": 0.957,
+   "places_scored": 23,
+   "unsupported_entity_rate": 0.028,
+   "unsupported_entity_definition": "person/place strings whose tokens do not all occur in the input text (proxy for hallucination; also catches normalised spellings)",
+   "entities_checked": 287,
+   "legibility_flag_on_docs_with_uncertain_readings": {
+    "partly_illegible": 7
+   },
+   "seconds_per_doc_median": 51.85,
+   "note": "gold = hand-entered teacher/place tables of the Uni Bern Stapfer database (independent of the transcription text)"
+  }
+ },
+ "apertus_agent": {
+  "scope": "Apertus tool-agent (plan -> deterministic tools -> compose -> validate) on 80 records (60 Stapfer, 20 consultations)",
+  "prompt_version": "agent-v3",
+  "valid_plan_rate": 0.988,
+  "plan_truncated_rate": 0.087,
+  "mean_tool_calls_planned": 4.61,
+  "unknown_tool_calls": 0,
+  "planner_recall_of_required_tools": 0.686,
+  "planner_recall_definition": "share of tools the deterministic baseline policy requires that Apertus also chose on its own",
+  "tool_execution_errors": 3,
+  "tool_errors_by_origin": {
+   "apertus": 3
+  },
+  "tool_errors_note": "errors on Apertus-planned calls are mostly wrong argument names; baseline calls always run as well",
+  "compose_valid_rate": 1.0,
+  "unsupported_entity_rate": 0.111,
+  "entities_checked": 406,
+  "seconds_per_record_median": 7.9
+ },
+ "qa_retrieval": {
+  "scope": "230 questions: 216 templated Stapfer questions (9 sampled places, seed 3; 6 intents; 1 rules-wording + 3 paraphrases each, DE/FR/EN) + 14 hand-written consultation paraphrases",
+  "caveat": "paraphrases were written to avoid the rule keywords, so rules-only scores on them are a floor, not typical use",
+  "model": "apertus-v1-5-70b",
+  "gold": "Stapfer: passages of that place in the intent's questionnaire sections (database, not a model); consultations: the consultation the question was written from",
+  "metric_definitions": {
+   "hit_at_1": "top passage is a gold passage",
+   "hit_at_6": "a gold passage is among the 6 passages Apertus answers from",
+   "intent_correct": "router intent includes the asked intent",
+   "place_correct": "router place is the asked place"
+  },
+  "modes": {
+   "off": "rules only (deployed before)",
+   "gaps": "Apertus rewrites only when the rules find no intent or no place; rules win",
+   "apertus": "Apertus rewrites every question; its intents win, rules are the fallback"
+  },
+  "results": {
+   "off": {
+    "all": {
+     "cases": 230,
+     "hit_at_1": 0.3,
+     "hit_at_6": 0.426,
+     "intent_correct": 0.274,
+     "place_correct": 0.995,
+     "apertus_calls": 0,
+     "apertus_failures": 0,
+     "seconds_median": 0.09
+    },
+    "stapfer_rules_wording": {
+     "cases": 54,
+     "hit_at_1": 1.0,
+     "hit_at_6": 1.0,
+     "intent_correct": 1.0,
+     "place_correct": 1.0,
+     "apertus_calls": 0,
+     "apertus_failures": 0,
+     "seconds_median": 0.11
+    },
+    "stapfer_paraphrased": {
+     "cases": 162,
+     "hit_at_1": 0.086,
+     "hit_at_6": 0.259,
+     "intent_correct": 0.0,
+     "place_correct": 0.994,
+     "apertus_calls": 0,
+     "apertus_failures": 0,
+     "seconds_median": 0.09
+    },
+    "consultations_paraphrased": {
+     "cases": 14,
+     "hit_at_1": 0.071,
+     "hit_at_6": 0.143,
+     "intent_correct": 0.643,
+     "apertus_calls": 0,
+     "apertus_failures": 0,
+     "seconds_median": 0.09
+    }
+   },
+   "gaps": {
+    "all": {
+     "cases": 230,
+     "hit_at_1": 0.783,
+     "hit_at_6": 0.796,
+     "intent_correct": 0.843,
+     "place_correct": 0.995,
+     "apertus_calls": 131,
+     "apertus_failures": 0,
+     "seconds_median": 0.92
+    },
+    "stapfer_rules_wording": {
+     "cases": 54,
+     "hit_at_1": 1.0,
+     "hit_at_6": 1.0,
+     "intent_correct": 1.0,
+     "place_correct": 1.0,
+     "apertus_calls": 0,
+     "apertus_failures": 0,
+     "seconds_median": 0.12
+    },
+    "stapfer_paraphrased": {
+     "cases": 162,
+     "hit_at_1": 0.772,
+     "hit_at_6": 0.772,
+     "intent_correct": 0.778,
+     "place_correct": 0.994,
+     "apertus_calls": 126,
+     "apertus_failures": 0,
+     "seconds_median": 1.0
+    },
+    "consultations_paraphrased": {
+     "cases": 14,
+     "hit_at_1": 0.071,
+     "hit_at_6": 0.286,
+     "intent_correct": 1.0,
+     "apertus_calls": 5,
+     "apertus_failures": 0,
+     "seconds_median": 0.09
+    }
+   },
+   "apertus": {
+    "all": {
+     "cases": 230,
+     "hit_at_1": 0.952,
+     "hit_at_6": 0.974,
+     "intent_correct": 1.0,
+     "place_correct": 1.0,
+     "apertus_calls": 230,
+     "apertus_failures": 0,
+     "seconds_median": 1.17
+    },
+    "stapfer_rules_wording": {
+     "cases": 54,
+     "hit_at_1": 1.0,
+     "hit_at_6": 1.0,
+     "intent_correct": 1.0,
+     "place_correct": 1.0,
+     "apertus_calls": 54,
+     "apertus_failures": 0,
+     "seconds_median": 1.2
+    },
+    "stapfer_paraphrased": {
+     "cases": 162,
+     "hit_at_1": 1.0,
+     "hit_at_6": 1.0,
+     "intent_correct": 1.0,
+     "place_correct": 1.0,
+     "apertus_calls": 162,
+     "apertus_failures": 0,
+     "seconds_median": 1.17
+    },
+    "consultations_paraphrased": {
+     "cases": 14,
+     "hit_at_1": 0.214,
+     "hit_at_6": 0.571,
+     "intent_correct": 1.0,
+     "apertus_calls": 14,
+     "apertus_failures": 0,
+     "seconds_median": 1.33
+    }
+   }
+  }
+ },
+ "qa_answer_check": {
+  "scope": "full answers (Apertus rewrite + Apertus 70B answer) for the 230 retrieval-eval questions",
+  "answers": 230,
+  "accepted": 185,
+  "rejected_number_not_in_cited_source": 6,
+  "rejected_uncited_or_no_information": 39,
+  "llm_unavailable": 0,
+  "number_check_definition": "every number written in digits in a sentence must occur in the sources that sentence cites (as shown to the model, digits or FR/DE number words) or in the question; numbers the answer writes as words are not checked",
+  "review": "all 6 number rejections checked by hand: 4 computed or inferred numbers (sums such as 17 + 22 = 39, a feast day read as a date), 2 numbers cited to the wrong source"
+ }
+}

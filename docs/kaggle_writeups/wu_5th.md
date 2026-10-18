@@ -1,0 +1,202 @@
+# [5th] Synthetic Data via Back-Translation
+https://www.kaggle.com/competitions/deep-past-initiative-machine-translation/discussion/684847
+
+# Comment
+Thank you to the organizers for hosting this competition. The two key elements of our approach were extracting ~20K transliteration–translation pairs from published scholarly PDFs using a VLM-based pipeline, and generating synthetic data via pseudo-labeling and back-translation.
+
+# Solution summary
+- Model: ByT5 variants (best submission: ByT5-xl)
+- Data: 
+  - PDF data: ~20K transliteration–translation pairs extracted from AKT series and other scholarly PDFs with a VLM-based pipeline
+  - EvaCun (ORACC Akkadian Parallel Corpus)
+  - Synthetic data generated via pseudo-labeling and back-translation
+- Training pipeline:
+  - stage1: CPT on transliterations from published_test.csv → FT on EvaCun → FT on PDF data
+  - stage2: Synthetic data generation via pseudo-labeling and back-translation
+  - stage3: FT on synthetic data from EvaCun checkpoint → Final FT on PDF data with tablet context
+- Inference: CTranslate2 with weight-averaged fold models and beam search (no ensemble in test time)
+
+# Data Preparation
+
+Initially, we fine-tuned in two stages — first on [EvaCun (ORACC Akkadian Parallel Corpus)](https://zenodo.org/records/17220688), then on PDF-extracted data — so we describe the preparation for each below. 
+
+## PDF Extraction Pipeline
+
+Competition `train.csv` has only 1,561 Akkadian–English pairs. We built ~20,251 pairs by extracting transliteration–translation pairs directly from the AKT series and other published scholarly PDFs (20 volumes total) using a VLM-based 4-phase pipeline: Detect excavation numbers → Link references → Extract pairs → Translate to English. `train.csv` was only used as reference within the pipeline (linking and few-shot).
+
+| Volume | Language | Pairs |
+| --- | --- | --- |
+| AKT 1–4 | Turkish / German | 1,924 |
+| AKT 5, 6A–6E, 8, 12 | English | 9,202 |
+| AKT 7A–7B, 9A, 10, 11A–11B | Turkish | 6,517 |
+| Larsen 2002 (PIHANS 96) | English | 1,199 |
+| ICK 4 (1998) | German | 1,415 |
+| **Total** |  | **~20,251** |
+
+### Phase 1: Detect excavation numbers
+
+PDF pages are rendered to PNG images and sent to Qwen 3.5 Plus (397B) to detect excavation numbers (tablet headings like `"Kt. 86/k 39"`, `"I 427"`) and their page numbers.
+
+### Phase 2: Link references
+
+Detected excavation numbers are matched against the `published_texts.csv` to retrieve known transliterations and against `train.csv` to retrieve known English translations. Both are provided to the VLM as reference in Phase 3. Matching handles notation variants by trying multiple alias formats (e.g., `"Kt n/k 594"` ↔ `"Kt. n/k 594"`, museum numbers, pipe-separated aliases).
+
+### Phase 3: Extract pairs
+
+For each excavation number, the VLM is given the page image(s) where it appears along with the linked references as context, and extracts transliteration line-by-line and translation by the grouping defined in the PDF (e.g., lines 1–3 grouped together, line 4 alone). We chose this granularity because we expected the test data to be segmented at these same group boundaries.
+
+The PDFs have two distinct layouts, so we prepared separate extraction prompts for each:
+
+- Side-by-side: transliteration and translation appear in parallel columns on the same page (English volumes: AKT 5, 6, 8, 12, Larsen)
+- Sequential: transliteration block followed by translation block below (Turkish/German volumes: AKT 1–4, 7, 9–11, ICK 4)
+
+### Example: AKT 12, Kt. 86/k 39 (side-by-side)
+
+ 
+
+```json
+{
+  "transliteration_lines": {
+    "1": "[ ]-ši-nim",
+    "2": "Šu-Sú-in : lu i-na GÁ[N]",
+    "3": "lu i-na a-lim",
+    "5": "i-ta-áb-ši : ša A-[mur]-A-š[ùr]",
+    "6": "E-mu-a ù-lá ṭá-hu",
+    "7": "A-mur-A-šùr ù E-mu-a",
+    "8": "zi-zu-ú-[ma] : a-hu-um",
+    "9": "a-na a-hi-im a-n[a KÙ.B]",
+    "10": "ù-lá i-tù-[ar]",
+     "...": "..."
+  },
+  "translation_ranges": {
+    "1": "If silver of",
+    "2-4": "Šū-Suen proves to be either in the countryside (Anatolia) or in the City, is belongs to Amur-Aššur,",
+    "5-10": "Emua is not entitled to it. Amur-Aššur and Emua have divided (the inheritance) and they will not raise claims against each other for silver."
+    "...": "..."
+  }
+}
+```
+
+### Example: AKT 9A, Kt. c/k 1249 (sequential)
+
+ 
+
+```json
+{
+  "transliteration_lines": {
+    "1": "15 GÍN KÙ.BABBAR",
+    "2": "i-ṣé-er",
+    "3": "Ḫa-šu-i-li",
+    "4": "Šu-Ištar i-šu a-na",
+    "5": "ku-bu-ur ú-ṭí-tim",
+    "6": "i-ša-qal",
+    "7": "šu-ma lá iš-qúl",
+    "8": "2/3 GÍN 15 ŠE.TA",
+    "...": "..."
+  },
+  "translation_ranges": {
+    "1-4": "Šu-Ištar'ın, Ḫaššuli'nin üzerinde 15 šeḳel gümüšü vardır.",
+    "4-6": "(Ḫaššuli) hububatın olgunlaşmasında ödeyecek.",
+    "...": "..."
+  }
+}
+```
+
+In practice, tablet records often span multiple pages. To handle this, the target page and subsequent context pages are stitched into a single image before sending to the VLM. Some source PDFs had misordered pages, so we manually fixed the page order before running the extraction pipeline. For example, in AKT 1 we observed page sequences such as 73, 76, 77, 78, 79, 78, 79, 74, suggesting page ordering and duplication issues in the source PDF.
+
+After extraction, a validation step checks for inconsistencies (e.g., transliteration present but translation missing, uncovered line ranges). Failed records are re-sent to the VLM with a description of what went wrong, prompting it to correct the extraction.
+
+### Phase 4: Translate to English
+
+Turkish/German volumes are translated to English using Gemini 3.1 Flash Lite with similar few-shot examples retrieved by Levenshtein distance on transliterations from `train.csv`.
+
+### Postprocessing
+- Quality filter: remove pairs with translation/transliteration length ratio outside [0.3, 4.0]
+
+### API Cost
+- Approximately 15$ for the entire extraction process, OpenRouter is used as the API gateway.
+
+## EvaCun(ORACC Akkadian Parallel Corpus) Preparation
+
+### Used Files
+- 45k transliteration-translation pairs from ranscription_train.txt, transcription_val.txt, english_train.txt, english_val.txt.
+
+### Preprocessing
+
+In addition to the standard preprocessing used for the competition dataset, we applied an extra normalization step to the **transliteration side** of EvaCun: immediately repeated consecutive words were collapsed into a single token. This was motivated by the fact that the transliterations occasionally contain local repetition artifacts that are unlikely to be meaningful for translation and can introduce unnecessary noise during training.
+
+For example, the transliteration
+
+`ša LUGAL be-lí iš-pur-an-ni ma-a gul-la-a-te ša KÁ ša šap-la tim-me ša É-hi-il-la-na-te É-hi-il-la-na-te ma-a im-ma-te im-ma-te ú-šá-ra-qu`
+
+was normalized to
+
+`ša LUGAL be-lí iš-pur-an-ni ma-a gul-la-a-te ša KÁ ša šap-la tim-me ša É-hi-il-la-na-te ma-a im-ma-te ú-šá-ra-qu`
+
+# Training Pipeline
+
+Training on ByT5 variants (best submission used byt5-xl):
+
+**Stage 1: Build base models**
+
+1. Continued pre-training — T5 span corruption on transliterations from `published_texts.csv`.
+2. Fine-tuning on EvaCun. 
+3. Fine-tuning on PDF data.
+
+A reverse model (English → Akkadian) is also trained with the same pipeline by swapping transliteration and translation.
+
+**Stage 2: Synthetic Data Generation**
+
+Using the reverse model from Stage 1, we generate additional training pairs:
+
+- Pseudo-label: translate `published_texts.csv` transliterations to English with the forward model using beam search.
+- Back-translation: first generate 10,000 translation-like English sentences with Qwen3.5-27B, using translations from both `train.csv` and the PDF-extracted data as few-shot examples, and then back-translate them into Akkadian with the reverse model.
+
+The generated dataset is [here](https://www.kaggle.com/datasets/yukiokumura1/deep-past-challenge-back-translated-synthetic-data)
+
+We additionally tested scaling this back-translation data to 100,000 examples. Relative to training with 10,000 examples, this resulted in a -0.1 change on the public leaderboard but a +0.3 improvement on the private leaderboard.
+
+**Stage 3: Final training**
+
+Starting from the Stage 1 EvaCun checkpoint:
+
+1. Fine-tuning on Stage 2 data.
+2. Fine-tuning on PDF data with context — previous lines of the same tablet are prepended to the input(max 2 previous lines):
+
+prompt format:
+```
+[context]   [sep]   [/context]  
+```
+
+# Inference
+
+We convert trained models to CTranslate2 format, achieving ~5x speedup over HuggingFace inference. CTranslate2 also enables ByT5-xxl inference on Kaggle's dual T4 GPUs via `int8_float32` quantization and tensor parallelism (we patched CTranslate2's source to fix a bug in its TP implementation). Note that `int8_float32` quantization degrades LB score by ~-0.1. xxl was not used in our best submission due to insufficient training time (We changed the training dataset in the last day of the competition).
+
+We average weights from multiple CV fold models into a single model before inference. At inference time, we use `line_start` from `test.csv` to prepend context from previous lines of the same tablet, matching the training format. Decoding is done with beam search.
+
+# CV Strategy
+
+We used 25% of `train.csv` as a hold-out set. The split was stratified by the transliteration/translation length ratio to preserve the distribution of examples with different source–target length characteristics.
+
+In practice, validation loss (token-level cross entropy loss) was reasonably well correlated with LB score, so we treated it as the main offline metric throughout development. As a result, we prioritized changes that reliably improved validation loss, and used the hold-out set for checkpoint selection and ablation comparison.
+
+# Ablation Study
+
+All models in the ablation study are ByT5-xl trained with the same parameters (e.g., learning rate, batch size, number of steps)
+
+| Model | CPT | EvaCun | Synthetic data | Tablet context | Private LB | Public LB |
+|---|:---:|:---:|:---:|:---:|---:|---:|
+| PDF data only | | | | | 35.4 | 35.1 |
+| + CPT | ✓ | | | | 38.9 | 38.0 |
+| + EvaCun | ✓ | ✓ | | | 39.7 | 38.7 |
+| + tablet context | ✓ | ✓ | | ✓ | 39.8 | 39.2 |
+| + synthetic data | ✓ | ✓ | ✓ | ✓ | 40.7 | 40.2 |
+| + 4 fold weight average | ✓ | ✓ | ✓ | ✓ | 40.8 | 40.1 |
+
+# What Didn't Work
+
+- ReRanking
+  - LGBM reranker — Reranked beam search candidates using features such as beam confidence and reverse model score. Improved CV by ~+0.2 but had no effect on LB.
+  - Fine-tuned LLM listwise reranker — Reranked beam search candidates with a fine-tuned LLM. No improvement on CV and LB.
+- Other back-translation strategies — We kept back-translation as a clearly separate training phase from the main fine-tuning stages, and generated synthetic data with beam search using the reverse model. Sampling-based generation for back-translation did not work well. We also tried tagged back-translation, where competition data and back-translated data were jointly trained with explicit tags to distinguish the two sources, but this also failed to improve performance.
+- Decoding-time ensemble — We tried decoding-time ensembling with per-step logit averaging. It gave some improvement early on when combining lower-scoring models, but the benefit disappeared as the models got stronger. In particular, ensembles of models around the 37.x level no longer improved results.

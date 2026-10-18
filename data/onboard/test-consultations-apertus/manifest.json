@@ -1,0 +1,43 @@
+{
+ "dataset": "test-consultations-apertus",
+ "stages": [
+  {
+   "stage": "acquire",
+   "seconds": 0.01,
+   "rows": 569,
+   "sha256": "c6a4ccc5f4ee106d2da023fc3f07a04bb87fd4228b35b996af785eafdce4878c"
+  },
+  {
+   "stage": "profile",
+   "seconds": 0.03,
+   "columns": 22
+  },
+  {
+   "stage": "map",
+   "seconds": 4.46,
+   "source": "apertus",
+   "notes": 3
+  },
+  {
+   "stage": "transform",
+   "seconds": 4.53,
+   "records": 569
+  },
+  {
+   "stage": "privacy",
+   "seconds": 4.57,
+   "masked": false
+  },
+  {
+   "stage": "enrich",
+   "seconds": 40.5,
+   "requested": 20,
+   "enriched": 20
+  },
+  {
+   "stage": "validate",
+   "seconds": 40.52,
+   "invalid": 0
+  }
+ ]
+}
