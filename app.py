@@ -12,7 +12,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
-from archai import qa, llm
+from archai import qa, llm, stats
 
 OUT = ROOT / "data" / "out"
 REWRITE = os.environ.get("QA_REWRITE", "apertus")  # off | gaps | apertus; measured in data/out/qa_eval.json
@@ -151,6 +151,17 @@ def record(record_id: str):
 def metrics():
     return {"metrics": json.loads((OUT / "metrics.json").read_text()),
             "bern_eval": json.loads((OUT / "bern_eval.json").read_text())}
+
+
+@app.get("/api/stats")
+def corpus_stats(query: str = "all", section: str | None = None, page: int | None = None):
+    """Aggregates over the whole corpus in SQL (stats.py / DuckDB); each block names the rows it counted."""
+    try:
+        return stats.summary(query=query, section=section, page=page)
+    except stats.CorpusMissing as e:
+        raise HTTPException(503, str(e)) from e
+    except (stats.UnsupportedQuery, stats.InvalidFilter) as e:
+        raise HTTPException(400, str(e)) from e
 
 
 @app.get("/")

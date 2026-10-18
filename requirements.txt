@@ -8,5 +8,7 @@ openpyxl==3.1.5
 fastapi==0.143.5
 uvicorn[standard]==0.54.0
 pydantic==2.14.1
+# statistics (whole-corpus aggregates over the parquet, app.py /api/stats)
+duckdb==1.5.6
 # tests
 pytest==9.1.1
