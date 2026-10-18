@@ -1,23 +1,24 @@
 %% ArchAI - what the project does. Audience: readers without a technical background.
 %% Deliberately free of module names, filenames, HTTP paths, table names and jargon.
+%% Labels are short bullet points.
 %% Render: mmdr -i docs/architecture-overview.mmd -o docs/architecture-overview.png -e png
 flowchart LR
 
-  ARCHIVE(["Historic surveys<br/>handwritten school questionnaires<br/>from 1799, kept in the<br/>federal archives"])
+  ARCHIVE(["1799 school surveys<br/>handwritten records<br/>kept in the<br/>federal archives"])
 
-  DIGITISE["Digitised and cleaned<br/>the handwriting is transcribed<br/>and the text made readable"]
+  DIGITISE["Digitised<br/>transcribed<br/>cleaned<br/>readable"]
 
-  AI["An AI reads along<br/>it proposes summaries and topics,<br/>and every proposal is checked<br/>against the original wording"]
+  AI["An AI reads along<br/>summarises records<br/>proposes topics<br/>checked against<br/>the original text"]
 
-  DATA[("A trustworthy dataset<br/>2,250 school records and<br/>569 records from later<br/>federal consultations,<br/>each one traceable back<br/>to its source page")]
+  DATA[("A trustworthy dataset<br/>2,250 school records<br/>2,819 records in all<br/>each traceable<br/>to its source page")]
 
-  ASK["Ask in plain language<br/>how many girls went<br/>to school in Bern?"]
+  ASK["Ask a question<br/>in plain language<br/>how many girls went<br/>to school in Bern?"]
 
-  ANSWER(["A cited answer<br/>the totals are added up exactly,<br/>every school that was counted<br/>is listed, and each number<br/>points back to the page<br/>it came from"])
+  ANSWER(["A cited answer<br/>exact totals<br/>every school listed<br/>every number cited"])
 
-  DASH["Dashboards<br/>how many schools there were,<br/>where they stood, how big<br/>they were, and how well<br/>the records were transcribed"]
+  DASH["Dashboards<br/>how many schools<br/>where they were<br/>how big they were<br/>record quality"]
 
-  PEOPLE(["Researchers, citizens,<br/>archivists"])
+  PEOPLE(["Researchers<br/>citizens<br/>archivists"])
 
   ARCHIVE --> DIGITISE
   DIGITISE --> AI
