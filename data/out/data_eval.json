@@ -1,0 +1,201 @@
+{
+ "scope": "16 hand-checked data questions (counts, averages, groups, pupil totals, a condition, pay; 3 lookups that must stay with the passage answer), each run 3 times end to end (dynamic rewrite, data engine, Apertus 70B); 1799 Bern and Lausanne, Hinwil, consultations of 1984",
+ "caveat": "a small hand-made set around the cases the engine was built on; a pass needs the exact gold result",
+ "model": "apertus-v1-5-70b",
+ "runs": 48,
+ "runs_passed": 43,
+ "questions_passed_every_run": 14,
+ "by_category": {
+  "schools": {
+   "runs": 6,
+   "passed": 6
+  },
+  "teachers": {
+   "runs": 6,
+   "passed": 6
+  },
+  "consultations": {
+   "runs": 9,
+   "passed": 9
+  },
+  "pupils": {
+   "runs": 12,
+   "passed": 10
+  },
+  "condition": {
+   "runs": 3,
+   "passed": 3
+  },
+  "pay": {
+   "runs": 3,
+   "passed": 0
+  },
+  "lookup": {
+   "runs": 9,
+   "passed": 9
+  }
+ },
+ "questions": {
+  "how many schools are there in the city of bern in 1799 ?": {
+   "category": "schools",
+   "passed": 3,
+   "runs": 3,
+   "details": [
+    "result [9]",
+    "result [9]",
+    "result [9]"
+   ]
+  },
+  "Combien d'écoles y avait-il à Lausanne en 1799 ?": {
+   "category": "schools",
+   "passed": 3,
+   "runs": 3,
+   "details": [
+    "result [11]",
+    "result [11]",
+    "result [11]"
+   ]
+  },
+  "What was the average age of the teachers in the district of Hinwil?": {
+   "category": "teachers",
+   "passed": 3,
+   "runs": 3,
+   "details": [
+    "result 50.3",
+    "result 50.3",
+    "result 50.3"
+   ]
+  },
+  "How many female teachers were there in the Stapfer survey?": {
+   "category": "teachers",
+   "passed": 3,
+   "runs": 3,
+   "details": [
+    "result [68]",
+    "result [68]",
+    "result [68]"
+   ]
+  },
+  "How many consultations were there in 1984?": {
+   "category": "consultations",
+   "passed": 3,
+   "runs": 3,
+   "details": [
+    "result [22]",
+    "result [22]",
+    "result [22]"
+   ]
+  },
+  "How many consultations did each department run in 1984?": {
+   "category": "consultations",
+   "passed": 3,
+   "runs": 3,
+   "details": [
+    "all groups right",
+    "all groups right",
+    "all groups right"
+   ]
+  },
+  "How many consultations about data protection were there?": {
+   "category": "consultations",
+   "passed": 3,
+   "runs": 3,
+   "details": [
+    "result [1]",
+    "result [1]",
+    "result [1]"
+   ]
+  },
+  "how many students where there in the schoool in bern in 1799 ?": {
+   "category": "pupils",
+   "passed": 3,
+   "runs": 3,
+   "details": [
+    "result [686, 726] more=True",
+    "result [686, 726] more=True",
+    "result [686, 726] more=True"
+   ]
+  },
+  "Wie viele Mädchen gingen 1799 in Bern zur Schule?": {
+   "category": "pupils",
+   "passed": 3,
+   "runs": 3,
+   "details": [
+    "result [353, 383] more=True",
+    "result [353, 383] more=True",
+    "result [353, 383] more=True"
+   ]
+  },
+  "How many girls went to school in Bern in 1799?": {
+   "category": "pupils",
+   "passed": 1,
+   "runs": 3,
+   "details": [
+    "result [353, 383] more=True",
+    "result [283, 303] more=False",
+    "result [283, 303] more=False"
+   ]
+  },
+  "Wie viele Knaben gingen 1799 in Bern zur Schule?": {
+   "category": "pupils",
+   "passed": 3,
+   "runs": 3,
+   "details": [
+    "result [347, 371] more=True",
+    "result [347, 371] more=True",
+    "result [347, 371] more=True"
+   ]
+  },
+  "Which schools in Bern had more than 100 pupils in 1799?": {
+   "category": "condition",
+   "passed": 3,
+   "runs": 3,
+   "details": [
+    "missing [] wrong []",
+    "missing [] wrong []",
+    "missing [] wrong []"
+   ]
+  },
+  "What was the teacher's pay in the schools of Bern?": {
+   "category": "pay",
+   "passed": 0,
+   "runs": 3,
+   "details": [
+    "missing ['Mittleres Stadtquartier'] assistants added []",
+    "missing ['Mittleres Stadtquartier'] assistants added []",
+    "missing ['Mittleres Stadtquartier', 'Stalden', 'Bollwerk', 'Mattenquartier (Knabenschule)'] assistants added []"
+   ]
+  },
+  "Wie alt war der Lehrer in Hörndli?": {
+   "category": "lookup",
+   "passed": 3,
+   "runs": 3,
+   "details": [
+    "answer_source apertus",
+    "answer_source apertus",
+    "answer_source apertus"
+   ]
+  },
+  "Wer war der Lehrer an der Postgasse in Bern?": {
+   "category": "lookup",
+   "passed": 3,
+   "runs": 3,
+   "details": [
+    "answer_source apertus",
+    "answer_source apertus",
+    "answer_source apertus"
+   ]
+  },
+  "Which consultation in 1984 dealt with data protection?": {
+   "category": "lookup",
+   "passed": 3,
+   "runs": 3,
+   "details": [
+    "answer_source apertus",
+    "answer_source apertus",
+    "answer_source apertus"
+   ]
+  }
+ },
+ "seconds_median": 6.4
+}

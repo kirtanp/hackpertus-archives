@@ -26,8 +26,12 @@ This file is the project's committed home for project-intrinsic agent knowledge:
 - Apertus labels figures inconsistently from run to run (season, catechism, "and more", skipped answers). Whatever the
   text itself settles is set by code in `verify_figure` (season from the sub-question's wording, `_OTHER_GROUP`, ages
   via `NOT_PUPILS_AFTER`, the sex a quote names); keep moving judgements there rather than adding prompt rules.
-- Reference figures to test against: 1799 Bern has 9 schools (Bümpliz and Oberbottigen are today's Bern only) and
-  782 to 836 "and more" pupils in winter without the catechism classes, checked sheet by sheet by hand.
+- Reference figures: `src/archai/data_eval.py` holds the hand-checked answers (1799 Bern: 9 schools, 782 to 836 "and
+  more" pupils in winter without catechism; Bümpliz and Oberbottigen are today's Bern only). Brunngasse's figures may
+  be past ones ("sonst ... darunter waren"), so both readings are accepted. Run it after any change to dataq or to the
+  routing; it measures run-to-run variance, which the unit tests (fake Apertus) cannot.
+- Do not put a data/lookup label into the dynamic rewrite prompt (`qa.DYNAMIC`): it cost consultation retrieval
+  (top-1 7-8 of 20 down to 4-6 over three A/B runs). The engine's own planner decides (`{"task": "lookup"}`).
 
 ## Corpus statistics and the Superset datasource
 

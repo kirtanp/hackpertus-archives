@@ -95,6 +95,10 @@ def test_reader_figures_are_checked_against_the_sheet():
 def test_catechism_and_ages_do_not_count_as_pupils():
     text = "im Winter besuchen die Schule heür Kaben 90 Mägdchen 85 175. Zur unterweisung Zum Heil: abendmahl knaben 29. mägdchen 35 64."
     ctx = [("III.12.a", "Im Winter. (Knaben/Mädchen)", text)]
+    f, why = dataq.verify_figure(_fig("Kaben 90 Mägdchen 85", 85, 90, sex="girls"), "number", text, ctx)
+    assert f is None and "two figures" in why  # boys' 90 and girls' 85 are no range "85 to 90"
+    f, _ = dataq.verify_figure(_fig("Kaben 90 Mägdchen 85", 90, sex="boys"), "number", text, ctx)
+    assert f["sex"] == "boys"  # a quote with both figures keeps the label ("Kaben" as written)
     f, _ = dataq.verify_figure(_fig("knaben 29.", 29, sex="boys"), "number", text, ctx)
     assert f["asked"] is False
     f, _ = dataq.verify_figure(_fig("Mägdchen 85", 85, sex="girls"), "number", text, ctx)
@@ -137,12 +141,68 @@ def test_money_is_never_added_across_currencies():
                                     {"value": {"parts": [{"lo": amount, "hi": amount, "more": False, "unit": unit}], "complete": True}})
     units, readings = zip(*[mk("a", 50, "Kronen"), mk("b", 30, "Kronen"), mk("c", 150, "francs")], strict=False)
     res = dataq.compute(list(units), plan, {u["rec"]["id"]: rd for u, rd in zip(units, readings, strict=False)})
-    assert {k: v["lo"] for k, v in res["result"].items()} == {"Kronen": 80, "francs": 150}
+    assert {k: v["lo"] for k, v in res["result"].items()} == {("Kronen", None): 80, ("francs", None): 150}
+
+
+PAY = ("a. an Geld fronfästlich 32 kr. aus den ehmaligen Sekelschreiberey, und jährlich 12 kr. als Gartengeld. b. an "
+       "Getreide fronfästlich 5 1/4 Mütt Korn von der Stifft. An Geld. kr. 200. und für einen Gehülfen kr. 50.")
+
+
+def test_pay_is_kept_apart_by_period_and_kind_and_assistants_are_left_out():
+    ctx = [("IV.16.A", "Einkommen des Schullehrers", PAY)]
+    q32, y12, mutt, kr200, gehulfe = (dataq.verify_figure(_fig(q, n, unit=u), "money", PAY, ctx)[0] for q, n, u in (
+        ("fronfästlich 32 kr.", 32, "kr"), ("jährlich 12 kr.", 12, "kr"), ("5 1/4 Mütt", 5, "Mütt"), ("kr. 200.", 200, "kr"), ("kr. 50.", 50, "kr")))
+    assert (q32["period"], y12["period"], mutt["period"]) == ("quarter", "year", "quarter")  # from the words, not the model
+    assert gehulfe["asked"] is False and kr200["asked"] is True  # "für einen Gehülfen": not the teacher's own pay
+    bw = "An Geld. Jährlich 200 kr. frohnfästlich mit 50. kr. von der Verwaltungskammer, an Holz, 4 Klafter tannenes."
+    y200, q50, wood = (dataq.verify_figure(_fig(q, n, unit=u), "money", bw, [("IV.16.A", "Einkommen", bw)])[0] for q, n, u in (
+        ("Jährlich 200 kr. frohnfästlich", 200, "kr"), ("frohnfästlich mit 50. kr.", 50, "kr"), ("4 Klafter tannenes", 4, "Klaffter")))
+    assert (y200["period"], q50["period"]) == ("year", "quarter")  # the period word nearest before the number
+    assert wood["unit"] == "Klafter"  # the measure as the quote spells it
+    v, _ = dataq.resolve([q32, y12, mutt], None, None)
+    assert dataq.totals(v) == {("kr", "quarter"): (32, 32, False, "kr", "quarter"), ("kr", "year"): (12, 12, False, "kr", "year"),
+                               ("mutt", "quarter"): (5, 5, False, "Mütt", "quarter")}
+    assert dataq._num(v) is None  # no single number: kr and Mütt, quarterly and yearly are never added
+
+
+def test_the_items_of_a_stated_total_are_not_added_again():
+    text = "En argent. L. 715; Savoir de l'ancien gouvernement Cent et cinquante [=150] francs."
+    ctx = [("IV.16.A", "Einkommen", text)]
+    tot = dataq.verify_figure(_fig("L. 715", 715, unit="L"), "money", text, ctx)[0]
+    part = dataq.verify_figure(_fig("Cent et cinquante [=150] francs", 150, unit="francs", part=True), "money", text, ctx)[0]
+    v, out = dataq.resolve([tot, part], None, None)
+    assert dataq._num(v) == (715, 715, False, "L") and [why for _f, why in out] == ["a part of a total stated on the sheet"]
+
+
+def test_pay_is_listed_per_school_unless_a_total_is_asked(idx):
+    obj = {"dataset": "stapfer", "unit": "schools", "filters": {"places": ["Bern"]}, "operation": "sum",
+           "measure": {"field": "read", "sections": ["IV.16"], "what": "pay", "value": "money"}}
+    assert dataq.validate_plan(obj, idx, "What was the teacher's pay in the schools of Bern?")["operation"] == "list"
+    assert dataq.validate_plan(obj, idx, "What did the teachers of Bern earn in total?")["operation"] == "sum"
+
+
+def test_a_count_of_people_planned_as_a_count_of_schools_is_sent_back(idx, monkeypatch):
+    replies = [{"dataset": "stapfer", "unit": "schools", "filters": {"places": ["Bern"]}, "measure": None, "operation": "count"},
+               {"dataset": "stapfer", "unit": "schools", "filters": {"places": ["Bern"]}, "operation": "sum",
+                "measure": {"field": "read", "sections": ["III.12"], "what": "number of girls", "value": "number", "sex": "female"}}]
+    calls = []
+    monkeypatch.setattr(llm, "chat_json", lambda prompt, **kw: (calls.append(prompt), (replies[len(calls) - 1], {"errors": []}))[1])
+    plan, _meta = dataq.make_plan("How many girls went to school in Bern in 1799?", idx)
+    assert len(calls) == 2 and 'counts "girls"' in calls[1]
+    assert plan["operation"] == "sum" and plan["measure"]["sex"] == "female" and plan["revised"]
+
+
+def test_the_planner_can_hand_a_lookup_back(idx, monkeypatch):
+    monkeypatch.setattr(llm, "chat_json", lambda prompt, **kw: ({"task": "lookup"}, {"errors": []}))
+    r = {"places": ["bern"], "intents": ["teacher"]}
+    assert dataq.answer(idx, "Wer war der Lehrer an der Postgasse in Bern?", r) is None
+    assert "lookup" in r["data_engine"]["reason"]
 
 
 def test_number_words_are_annotated_for_the_reader():
     assert dataq.annotate("zwey und achtzig Lehrkinder, un enfant") == "zwey und achtzig [=82] Lehrkinder, un enfant"
     assert dataq.plain("zwey und achtzig [=82] Lehrkinder") == "zwey und achtzig Lehrkinder"
+    assert dataq.annotate("dreyßig Cronen, zehen Klafter") == "dreyßig [=30] Cronen, zehen [=10] Klafter"  # 1799 spellings
 
 
 def test_reader_gets_one_correction_round(idx, monkeypatch):
@@ -162,11 +222,14 @@ def test_reader_gets_one_correction_round(idx, monkeypatch):
 
 
 def test_rules_net_sends_multi_record_questions_to_the_engine():
-    r = {"places": ["bern"], "intents": ["pupils"], "task": "lookup"}  # Apertus' label varies; the rules catch it
+    r = {"places": ["bern"], "intents": ["pupils"]}  # a place with several schools: the planner decides
     assert dataq.is_data_question("Which schools in Bern had more than 100 pupils?", r)
+    assert dataq.is_data_question("What was the teacher's pay in the schools of Bern?", r)
     assert not dataq.is_data_question("Wie alt war der Lehrer in Hörndli?", {"places": ["hornli"], "intents": ["teacher"]})
     assert not dataq.is_data_question("Which teacher taught in Hörndli?", {"places": ["hornli"], "intents": ["teacher"]})  # one sheet
     assert dataq.is_data_question("How many consultations were there in 1984?", {"intents": ["consultation"], "places": []})
+    assert not dataq.is_data_question("Which consultation in 1984 dealt with data protection?", {"intents": ["consultation"], "places": []})
+    assert dataq.is_data_question("Which consultations in 1984 dealt with data protection?", {"intents": ["consultation"], "places": []})
 
 
 def test_reader_is_told_which_answer_it_skipped(idx, monkeypatch):
@@ -196,3 +259,74 @@ def test_an_answer_still_skipped_after_the_correction_round_is_kept_out(idx, mon
     plan = {"measure": {"field": "read", "sections": ["III.12"], "what": "number of pupils", "value": "number", "sex": None}}
     rd = dataq.read(idx, plan, [dataq.data()["rows"]["stapfer:transkription:1084"]])["stapfer:transkription:1084"]
     assert dataq._num(rd["value"]) is None and any("III.12.a" in b for b in rd["rejected"])
+
+
+def test_a_second_round_rereads_only_the_sheets_still_left_out(idx, monkeypatch):
+    """Bollwerk's winter answer skipped twice, read on the third call; the other sheet is never read again."""
+    calls = []
+    winter = [_fig("Knaben? – 100 und mehr", 100, more=True), _fig("Mädchen? – 70 bis 80. und mehr.", 70, 80, more=True),
+              _fig("Nahe bey 300 Kinder bis zur Revolution.", 300, current=False)]
+    summer = [_fig("Knaben? 50 bis 60.", 50, 60), _fig("Mädchen? 25 bis 35 und 40.", 25, 40)]
+
+    def fake(prompt, schema=None, max_tokens=400, **kw):
+        calls.append(prompt)
+        if len(calls) == 1:  # both sheets; the French school's answers are read fully
+            return {"sheets": [{"sheet": "S1", "figures": summer},
+                               {"sheet": "S2", "figures": [_fig("De vingt [=20] à vingt-cinq [=25].", 20, 25),
+                                                           _fig("quatorze [=14]", 14, sex="boys"), _fig("huit [=8]", 8, sex="girls"),
+                                                           _fig("Quinze [=15]", 15, asked=False), _fig("Sept [=7]", 7, asked=False)]}]}, {"errors": []}
+        return {"sheets": [{"sheet": "S1", "figures": summer + (winter if len(calls) == 3 else [])}]}, {"errors": []}
+
+    monkeypatch.setattr(llm, "chat_json", fake)
+    plan = {"measure": {"field": "read", "sections": ["III.12"], "what": "number of pupils", "value": "number", "sex": None}}
+    rows = dataq.data()["rows"]
+    out = dataq.read(idx, plan, [rows["stapfer:transkription:1084"], rows["stapfer:transkription:1087"]])
+    assert len(calls) == 3 and "S2" not in calls[2].split("Sheets:")[1]
+    assert dataq._num(out["stapfer:transkription:1084"]["value"]) == (170, 180, True, None)
+    assert dataq._num(out["stapfer:transkription:1087"]["value"]) == (22, 22, False, None)
+
+
+def test_a_skipped_answer_that_cannot_change_the_value_does_not_block_it(idx, monkeypatch):
+    """The French school: the winter answer gives 14 boys and 8 girls; a skipped general answer ("De vingt à
+    vingt-cinq") cannot change it under the one-season policy, so the girls stay counted."""
+    def fake(prompt, schema=None, max_tokens=400, **kw):
+        return {"sheets": [{"sheet": "S1", "figures": [_fig("quatorze [=14]", 14, sex="boys"), _fig("huit [=8]", 8, sex="girls")]}]}, {"errors": []}
+
+    monkeypatch.setattr(llm, "chat_json", fake)
+    plan = {"measure": {"field": "read", "sections": ["III.12"], "what": "number of girls", "value": "number", "sex": "female"}}
+    rd = dataq.read(idx, plan, [dataq.data()["rows"]["stapfer:transkription:1087"]])["stapfer:transkription:1087"]
+    assert dataq._num(rd["value"]) == (8, 8, False, None)
+
+
+def test_a_quote_is_found_as_whole_words_only():
+    text = "a. das einkommen des Schullehrers ist jährlich – 150. kr. b. für Zwey [=2] gehülfen 50 kr."
+    f, _ = dataq.verify_figure(_fig("50 kr.", 50, unit="kr"), "money", text, [("IV.16.A", "Einkommen", text)])
+    assert f["asked"] is False  # the "50 kr." after "gehülfen", not the end of "150. kr."
+
+
+def test_aggregate_wording_reaches_the_planner_even_for_a_one_sheet_place():
+    r = {"places": ["hinwil"], "intents": ["teacher"]}
+    assert dataq.is_data_question("What was the average age of the teachers in the district of Hinwil?", r)
+
+
+def test_a_lookup_reply_to_a_how_many_question_is_sent_back(idx, monkeypatch):
+    replies = [{"task": "lookup"}, {"dataset": "stapfer", "unit": "schools", "filters": {"places": ["Bern"]}, "operation": "sum",
+                                    "measure": {"field": "read", "sections": ["III.12"], "what": "girls", "value": "number", "sex": "female"}}]
+    calls = []
+    monkeypatch.setattr(llm, "chat_json", lambda prompt, **kw: (calls.append(prompt), (replies[len(calls) - 1], {"errors": []}))[1])
+    plan, meta = dataq.make_plan("How many girls went to school in Bern in 1799?", idx)
+    assert len(calls) == 2 and "how many" in calls[1] and plan["measure"]["sex"] == "female" and not meta.get("lookup")
+
+
+def test_a_failed_reader_call_is_retried_one_sheet_at_a_time(idx, monkeypatch):
+    """A call over several sheets that times out (the gateway's 504) loses no sheet."""
+    def fake(prompt, schema=None, max_tokens=400, **kw):
+        if "[S2]" in prompt:
+            return None, {"errors": ["HTTPError: HTTP Error 504: Gateway Time-out"]}
+        return {"sheets": [{"sheet": "S1", "figures": [_fig("zwey und achtzig [=82] Lehrkinder", 82, sex="all")]}]}, {"errors": []}
+
+    monkeypatch.setattr(llm, "chat_json", fake)
+    plan = {"measure": {"field": "read", "sections": ["III.12"], "what": "number of pupils", "value": "number", "sex": None}}
+    rows = dataq.data()["rows"]
+    out = dataq.read(idx, plan, [rows["stapfer:transkription:1077"], rows["stapfer:transkription:1084"]])
+    assert set(out) == {"stapfer:transkription:1077", "stapfer:transkription:1084"}

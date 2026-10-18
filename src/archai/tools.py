@@ -132,8 +132,9 @@ _NW = {"un": 1, "une": 1, "deux": 2, "trois": 3, "quatre": 4, "cinq": 5, "six": 
        "zehn": 10, "elf": 11, "zwolf": 12, "dreizehn": 13, "vierzehn": 14, "funfzehn": 15, "sechzehn": 16, "siebzehn": 17,
        "achtzehn": 18, "neunzehn": 19, "zwanzig": 20, "dreissig": 30, "dreizig": 30, "vierzig": 40, "funfzig": 50, "sechzig": 60,
        "siebzig": 70, "achtzig": 80, "neunzig": 90, "hundert": 100, "tausend": 1000,
-       "zwey": 2, "drey": 3, "zwo": 2, "quarente": 40}  # 1799 spellings
-_NW_SURFACE = {**_NW, "fünf": 5, "zwölf": 12, "fünfzehn": 15, "fünfzig": 50, "dreißig": 30, "eilf": 11, "nonanté": 90, "septanté": 70, "huitanté": 80, "quarente": 40, "zwey": 2, "drey": 3, "zwo": 2}  # as written in the sources
+       "zwey": 2, "drey": 3, "zwo": 2, "quarente": 40, "zehen": 10, "eilf": 11, "dreyssig": 30,
+       "dreiig": 30, "dreyig": 30}  # 1799 spellings; "dreißig"/"dreyßig" lose the ß in _ascii
+_NW_SURFACE = {**_NW, "fünf": 5, "zwölf": 12, "fünfzehn": 15, "fünfzig": 50, "dreißig": 30, "eilf": 11, "nonanté": 90, "septanté": 70, "huitanté": 80, "quarente": 40, "zwey": 2, "drey": 3, "zwo": 2, "dreyßig": 30, "zehen": 10}  # as written in the sources
 _DE_COMPOUND = re.compile(r"(ein|zwei|drei|vier|funf|sechs|sieben|acht|neun)und(zwanzig|dreissig|vierzig|funfzig|sechzig|siebzig|achtzig|neunzig)")
 
 

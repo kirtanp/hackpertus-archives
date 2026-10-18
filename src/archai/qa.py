@@ -180,10 +180,7 @@ Reply with JSON only:
  "sections": ["for stapfer: question numbers from the questionnaire below that answer the question, most relevant first, max 4"],
  "places": ["villages or towns the question names, as written, max 5"],
  "years": [from, to] copied from the question, or null,
- "keywords": ["ALWAYS 3-6 search words, mostly German (the sources are mostly German) plus French, as the source would phrase them"],
- "task": "data" (the answer needs counting, adding, averaging, comparing or listing over several records: how many
-         schools/pupils/teachers/consultations, totals, averages, most/least, which ones, or one value for every school of
-         a town with several schools, e.g. "the teacher's pay in the schools of Bern") | "lookup" (one fact of one record)}}
+ "keywords": ["ALWAYS 3-6 search words, mostly German (the sources are mostly German) plus French, as the source would phrase them"]}}
 Stapfer questionnaire (number: German / French):
 {catalogue}{feedback}
 Question: {q}"""
@@ -235,7 +232,7 @@ def dynamic_route(q, idx, rules):
                 other_line=('- "other": ' + "; ".join(d["description"] for d in pub) + "\n") if pub else "")
     feedback, rounds = "", []
     for rnd in range(2):
-        obj, meta = llm.chat_json(DYNAMIC.format(**base, feedback=feedback, q=q), schema={"sections": list, "keywords": list}, max_tokens=260)
+        obj, meta = llm.chat_json(DYNAMIC.format(**base, feedback=feedback, q=q), schema={"sections": list, "keywords": list}, max_tokens=220)
         if not isinstance(obj, dict):
             rounds.append({"round": rnd, "failed": meta.get("errors")})
             break
@@ -263,9 +260,7 @@ def dynamic_route(q, idx, rules):
             years = None
         kw = [k.strip() for k in obj.get("keywords", []) if isinstance(k, str) and k.strip()][:6]
         r = {"intents": _derive_intents(ds, secs), "places": places, "sections": secs, "dataset": ds, "years": years,
-             "rule_intents": rules["intents"], "routed_by": "apertus-dynamic",
-             # a count/total/average over records is answered by archai.dataq, not by the top-k passages
-             "task": "data" if obj.get("task") == "data" and ds in ("stapfer", "consultation") else "lookup"}
+             "rule_intents": rules["intents"], "routed_by": "apertus-dynamic"}
         rounds.append({"round": rnd, "dataset": ds, "note": rounds_note, "sections": secs, "places": places, "unknown_places": unknown,
                        "years": years, "keywords": kw, "dropped_sections": [x for x in obj.get("sections") or [] if str(x).strip().rstrip(".") not in secs]})
         if ds == "none":  # only a hint: the answer step decides whether the archives answer it
@@ -284,9 +279,9 @@ def dynamic_route(q, idx, rules):
         if not problems or rnd == 1:
             break
         feedback = "\nYour previous request had problems: " + " | ".join(problems) + ". Reply again with a corrected request."
-    r["rewrite"] = {"rounds": rounds}
-    if not rounds or "failed" in rounds[-1]:
+    if not rounds or "failed" in rounds[-1]:  # also a first call that failed (timeout, no key): no route was built
         return None
+    r["rewrite"] = {"rounds": rounds}
     last = rounds[-1]
     if last.get("dataset") == "none" or (last.get("dataset") == "stapfer" and not last.get("sections")):
         return None  # no verdict / no question chosen: the validated 9-intent rewrite routes this one instead
@@ -568,8 +563,8 @@ def confidence(out, path=OUT / "confidence_model.json"):
 # carries one is marked answer_source "aggregate" and never comes from the model, which must not calculate.
 AGG_SOURCES_MAX = 120  # more retrieved sources than this and a single total stops being auditable in one answer
 
-_FEMALE_SEX = re.compile(r"sch(?:ue|u)lerinn|m(?:ae|a)d(?:chen|gen|lein|li)|meitli|filles?|t(?:oe|o)chter|ecolieres?|\bgirls?\b")
-_MALE_SEX = re.compile(r"\bknab|\bbuben?\b|garcons?|sohne\b|ecoliers?|\bboys?\b")
+_FEMALE_SEX = re.compile(r"sch(?:ue|u)lerinn|m(?:ae|a)d(?:chen|gen|lein|li)|m(?:ae|a)gd(?:chen|lein|li)|meitli|filles?|t(?:oe|o)chter|ecolieres?|\bgirls?\b")
+_MALE_SEX = re.compile(r"\bknab|\bkaben\b|\bbuben?\b|garcons?|sohne\b|ecoliers?|\bboys?\b")
 _GENERIC_SEX = re.compile(r"sch(?:ue|u)ler|schulkind|\bkind(?:er)?\b|pupils?|\bchildren\b|\beleves?\b|\benfants?\b")
 _COUNT_WORD = re.compile(r"wie\s*viele?|wieviele?|how\s*many|combien|total|\bsum(?:me)?\b|insgesamt|zusammen|(?:gesamt)?zahl|anzahl|\bnombre\b")
 _PUPIL_WORD = re.compile(r"sch(?:ue|u)ler|schulkind|\bkind(?:er)?\b|\bknab|\bbuben?\b|\bm(?:ae|a)d|\bmeitli|\btochter|"

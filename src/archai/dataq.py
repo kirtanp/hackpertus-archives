@@ -30,10 +30,12 @@ from .tools import NOT_PUPILS_AFTER, NUMW_RUN, number_run_value, word_numbers
 # Apertus 1.5 serves a 262,144-token context (gateway /models "max_context"): a reader call gets whole answers and the
 # school's metadata, packed by size rather than cut at a fixed length; output per sheet is what bounds a call
 MAX_READ = 120  # records Apertus reads for one answer
-CHUNK = 8  # sheets per reader call: every figure comes back labelled, so output (~60 tokens a figure) bounds a call
+CHUNK = 3  # sheets per reader call: output (~60 tokens a figure) bounds a call, and 8 sheets ran past the gateway's
+# time limit (504); a failed call is retried one sheet at a time
 CHUNK_CHARS = 60_000  # input per reader call (~20k tokens), far inside the window, so long prose answers stay whole
 SHEET_CHARS = 6_000  # one sheet's chosen answers, whole for all but the longest prose sheets
 WORKERS = 6
+ROUNDS = 2  # correction rounds; the second re-reads only the sheets the first left incomplete
 MAX_LISTED = 40  # units listed (and cited) in the audit text; the computation always uses all of them
 OPS = ("count", "sum", "average", "min", "max", "list")
 COND = (">", ">=", "<", "<=", "=", "yes", "no")
@@ -104,7 +106,8 @@ Dataset "consultation": {n_co} Swiss federal consultations 1960-1991. unit "cons
   a consultation matches if ANY of them occurs, e.g. ["Datenschutz", "Personendaten"]); no reading.
 Questionnaire (number: German / French):
 {catalogue}
-Reply with JSON only:
+A question about one fact of one record ("Who was the teacher in Hörndli?", "Which consultation in 1984 dealt with
+data protection?") is no data question: reply {{"task": "lookup"}}. Otherwise reply with JSON only:
 {{"dataset": "stapfer" | "consultation", "unit": "schools" | "teachers" | "consultations",
  "filters": {{"places": [], "districts": [], "school_types": [], "confessions": [], "languages": [], "teacher_gender": null,
              "years": null, "departments": [], "types": [], "title_words": []}},
@@ -117,6 +120,8 @@ Reply with JSON only:
 Examples:
 "How many schools were there in Bern?" -> {{"dataset": "stapfer", "unit": "schools", "filters": {{"places": ["Bern"]}}, "measure": null, "operation": "count"}}
 "How many pupils were in the schools of Bern?" -> {{"dataset": "stapfer", "unit": "schools", "filters": {{"places": ["Bern"]}}, "measure": {{"field": "read", "sections": ["III.12"], "what": "number of pupils", "value": "number", "sex": null}}, "operation": "sum"}}
+"How many girls went to school in Bern?" -> the same with "what": "number of girls", "sex": "female"
+"What was the teacher's pay in Bern?" -> {{"dataset": "stapfer", "unit": "schools", "filters": {{"places": ["Bern"]}}, "measure": {{"field": "read", "sections": ["IV.16"], "what": "the teacher's own pay, in money and in kind", "value": "money", "sex": null}}, "operation": "list"}}
 "Average age of the teachers in Hinwil?" -> {{"dataset": "stapfer", "unit": "teachers", "filters": {{"districts": ["Hinwil"]}}, "measure": {{"field": "teacher_age"}}, "operation": "average"}}
 "Which schools in Lausanne teach Latin?" -> {{"dataset": "stapfer", "unit": "schools", "filters": {{"places": ["Lausanne"]}}, "measure": {{"field": "read", "sections": ["II.5"], "what": "Latin is taught", "value": "yes_no"}}, "operation": "list", "condition": {{"op": "yes"}}}}
 "How many consultations did each department run in 1984?" -> {{"dataset": "consultation", "unit": "consultations", "filters": {{"years": [1984, 1984]}}, "measure": null, "operation": "count", "group_by": "department"}}
@@ -134,7 +139,10 @@ def _pick(raw, vocab, cutoff=0.8):
     return list(dict.fromkeys(out))
 
 
-def validate_plan(obj, idx):
+_TOTAL = re.compile(r"\btotal\b|insgesamt|zusammen|gesamt|en tout|au total|\bsum(?:me)?\b|altogether|in all\b")
+
+
+def validate_plan(obj, idx, q=""):
     """The plan with every value checked against the data, and what was dropped; None when nothing usable is left."""
     if not isinstance(obj, dict):
         return None
@@ -190,6 +198,8 @@ def validate_plan(obj, idx):
     op = obj.get("operation") if obj.get("operation") in OPS else "count"
     if op in ("sum", "average", "min", "max") and not (plan["measure"] and plan["measure"]["value"] in ("number", "money")):
         op = "list" if plan["measure"] else "count"
+    if op == "sum" and plan["measure"]["value"] == "money" and not _TOTAL.search(_ascii(q)):
+        op = "list"  # "what was the pay in Bern" asks each school's pay; a sum of pay over schools only when asked
     plan["operation"] = op
     c = obj.get("condition") if isinstance(obj.get("condition"), dict) else None
     if c and c.get("op") in COND and plan["measure"]:
@@ -202,13 +212,48 @@ def validate_plan(obj, idx):
     return plan
 
 
+_COUNTED = re.compile(r"(?:wie\s*viele?|wieviele?|how\s*many|combien\s+(?:de\s+|d.)?|anzahl\s+(?:der\s+)?|number\s+of)\W*(\w+)")
+
+
+def plan_problems(q, plan):
+    """What code can tell is wrong with a plan, for Apertus to revise: a count of people planned as a count of records."""
+    from .qa import _PUPIL_WORD
+    t = _ascii(q)
+    m = _COUNTED.search(t)
+    out = []
+    if plan and m and _PUPIL_WORD.search(m.group(1)) and plan["unit"] == "schools" and not plan.get("measure"):
+        out.append(f'the question counts "{m.group(1)}" (people), not schools: read them from the answers (measure "read", '
+                   f'value "number", the sex if the question names one) with operation "sum"')
+    ms = (plan or {}).get("measure") or {}
+    sex = "female" if _FEMALE_SEX.search(t) and not _MALE_SEX.search(t) else "male" if _MALE_SEX.search(t) and not _FEMALE_SEX.search(t) else None
+    if ms.get("field") == "read" and ms.get("value") == "number" and sex and ms.get("sex") != sex:
+        out.append(f'the question asks about {"girls" if sex == "female" else "boys"} only: set the measure\'s "sex" to "{sex}"')
+    return out
+
+
 def make_plan(q, idx):
+    """Apertus' plan, validated; one correction round when code finds a problem. (None, meta) for no plan, and
+    meta["lookup"] when Apertus reads the question as a lookup of one record."""
     D = data()
     V = {k: ", ".join(v) for k, v in D["vocab"].items()}
     cat = "\n".join(f"  {k}: {de} / {fr}" for k, (de, fr) in idx.catalogue.items())
-    obj, meta = llm.chat_json(PLAN.format(**V, n_st=D["n"]["stapfer"], n_co=D["n"]["consultation"], catalogue=cat, q=q),
-                              schema={"dataset": str, "operation": str}, max_tokens=450)
-    return validate_plan(obj, idx), {"raw": obj, "errors": meta.get("errors")}
+    prompt = PLAN.format(**V, n_st=D["n"]["stapfer"], n_co=D["n"]["consultation"], catalogue=cat, q=q)
+    obj, meta = llm.chat_json(prompt, schema={}, max_tokens=450)
+    lookup = isinstance(obj, dict) and obj.get("task") == "lookup" and not obj.get("dataset")
+    if lookup and not _COUNTED.search(_ascii(q)):
+        return None, {"raw": obj, "errors": meta.get("errors"), "lookup": True}
+    plan = None if lookup else validate_plan(obj, idx, q)
+    problems = ([f'the question asks "how many" ({_COUNTED.search(_ascii(q)).group(0)}): that is a count or a total over '
+                 "the records, not one fact; reply with a plan"] if lookup else plan_problems(q, plan))
+    if problems:
+        obj2, meta2 = llm.chat_json(prompt + "\nYour previous plan " + json.dumps(obj, ensure_ascii=False) + " had problems: "
+                                    + " | ".join(problems) + ". Reply again with a corrected plan.", schema={}, max_tokens=450)
+        plan2 = validate_plan(obj2, idx, q)
+        if plan2 and not plan_problems(q, plan2):
+            plan, obj = plan2 | {"revised": problems}, obj2
+        elif lookup:
+            return None, {"raw": obj2, "errors": meta.get("errors"), "lookup": True}
+    return plan, {"raw": obj, "errors": meta.get("errors")}
 
 
 def rules_plan(q, r):
@@ -272,12 +317,18 @@ For each figure:
   summer), else null.
 - "current": false for a figure from the past ("sonst", "vormals", "bis zur Revolution", "autrefois"), else true.
 - "asked": false when the figure counts another group or thing than asked (catechism or religious instruction:
-  Unterweisung, Kinderlehre, Catechumeni, Religionsunterricht, catéchisme; houses; hours), else true.
-- "unit": the currency as written for money (fl, kr, Batzen, livres, Kronen, ...), else null.
+  Unterweisung, Kinderlehre, Catechumeni, Religionsunterricht, catéchisme; houses; hours; the pay of an assistant,
+  Gehülfe, aide, when the teacher's pay is asked), else true.
+- "unit": the currency as written for money (fl, kr, Batzen, livres, Kronen, ...), or the measure as written for a
+  payment in kind (Mütt, Klafter, Saum, muids, toises, ...), else null.
+- "period": for pay, how often it is paid as the sheet says: "year", "quarter" (fronfästlich, par quartier), "week",
+  "day" or "once"; else null.
+- "part": true when the figure is only a part or an instalment of another figure you list for the same sheet (the
+  items of a total, the quarterly instalment of a yearly sum), else false.
 - "label": three words on what the figure is.
 Never add or convert numbers yourself. An empty list when the sheet states no figure.
 Reply with JSON only: {{"sheets": [{{"sheet": "S1", "figures": [{{"quote": "...", "min": 0, "max": 0, "more": false,
-  "sex": null, "season": null, "current": true, "asked": true, "unit": null, "label": "..."}}]}}]}}
+  "sex": null, "season": null, "current": true, "asked": true, "unit": null, "period": null, "part": false, "label": "..."}}]}}]}}
 Questions read (number: German / French):
 {questions}
 Sheets:
@@ -303,6 +354,33 @@ _WINTER, _SUMMER = re.compile(r"winter|hiver|inverno"), re.compile(r"sommer|summ
 _OTHER_GROUP = re.compile(r"unterweis|kinderlehr|c[ae]te?chum|katechum|religions|abendmahl|catech|instruction relig|admis a la (?:ste|sainte) cene")
 
 
+# how often pay is due, from the words of the sheet (nearest before the figure wins): "fronfästlich 32 kr., jährlich 12 kr."
+_PERIOD = {"quarter": r"fro?h?n?fast|fraufast|quatember|quartal|vierteljahr|par quartier|par trimestre|trimestr",
+           "year": r"jahrlich|jahrlig|im jahr\b|des jahrs|per jahr|jahrgang|alle jahre|par an\b|l an\b|annuel|pour l annee|par annee",
+           "week": r"wochentlich|wochenlich|die woche|alle wochen|par semaine|chaque semaine|hebdomad",
+           "day": r"taglich|alle tage|par jour|chaque jour"}
+_PERIOD_RE = re.compile("|".join(f"(?P<{k}>{v})" for k, v in _PERIOD.items()))
+_ASSISTANT = re.compile(r"gehulf|gehilf|provisor|unterlehrer|\baides?\b|adjoint|sous.?maitre|sous.?regent")
+
+
+def _period(quote, before, n):
+    """The period the sheet states for a payment of n: the nearest period word before the number (in the quote, then
+    in the words before it), else one after it in the quote ("Jährlich 200 kr. frohnfästlich mit 50 kr.")."""
+    nq = _norm(quote)
+    at = next((m.start() for m in re.finditer(rf"(?<!\d){n}(?!\d)", nq)), len(nq))
+    for text, last in ((nq[:at], True), (before[-60:], True), (nq[at:], False)):
+        ms = list(_PERIOD_RE.finditer(text))
+        if ms:
+            return (ms[-1] if last else ms[0]).lastgroup
+    return None
+
+
+def unit_key(u):
+    """One currency or measure however it is punctuated or capitalised ("L." = "L", "kr" = "Kr."); spellings that may
+    be different units ("kr" Kronen or Kreuzer, "Cronen") are never merged."""
+    return _norm(u).lower() if u else None
+
+
 _MORE = re.compile(r"\bmehr\b|\buber\b|daruber|\bplus\b|au.dessus|\bmore\b|\bover\b")
 _RANGE = re.compile(r"(\d+)\s*(?:bis|a|-|to)\s*(\d+)")
 
@@ -310,12 +388,41 @@ _RANGE = re.compile(r"(\d+)\s*(?:bis|a|-|to)\s*(\d+)")
 def _where(quote, ctx):
     """The sub-questions whose answer holds the quote: (question number, question text, text before, text after)."""
     nq, hits = _norm(quote), []
+    if not nq:
+        return hits
+    pat = re.compile(rf"(?<!\w){re.escape(nq)}(?!\w)")  # whole words: "50 kr" is not the end of "150 kr"
     for qno, question, body in ctx:
         nb = _norm(body)
-        i = nb.find(nq)
-        if i >= 0:
+        m = pat.search(nb)
+        if m:
+            i = m.start()
             hits.append((qno, _ascii(question), nb[max(0, i - 80):i], nb[i + len(nq):i + len(nq) + 30]))
     return hits
+
+
+def _unit_in(unit, quote):
+    """The currency or measure as the quote writes it, allowing the sources' spelling ("Klafter" for "Klaffter"); None
+    when the quote does not hold it."""
+    import difflib
+    nu = _norm(unit or "")
+    if not nu:
+        return None
+    if nu in _norm(quote):
+        return unit
+    words = re.findall(r"[^\W\d_]+", plain(quote))
+    near = difflib.get_close_matches(nu, [_norm(w) for w in words], n=1, cutoff=0.8)
+    return next((w for w in words if near and _norm(w) == near[0]), None) if len(nu) >= 4 else None
+
+
+def _two_figures(quote, lo, hi):
+    """Whether lo and hi are two figures of the quote with a sex word between them ("Kaben 90 Mägdchen 85")."""
+    t = _ascii(re.sub(rf"(?:{NUMW_RUN})\s*\[=(\d+)\]", r"\1", annotate(plain(quote)), flags=re.I))
+    pos = {int(m.group(0)): m.start() for m in reversed(list(re.finditer(r"\d+", t)))}
+    if lo not in pos or hi not in pos:
+        return False
+    a, b = sorted((pos[lo], pos[hi]))
+    between = t[a:b]
+    return bool(_MALE_SEX.search(between) or _FEMALE_SEX.search(between))
 
 
 def plain(quote):
@@ -342,18 +449,24 @@ def verify_figure(p, kind, text, ctx=()):
         have.add(0)
     if lo not in have or hi not in have or lo > hi:
         return None, f"{lo}-{hi} is not in the quote {quote!r}, which holds {sorted(have)}"
+    if lo != hi and _two_figures(quote, lo, hi):
+        return None, f"{lo} and {hi} in the quote {quote!r} are two figures (another sex between them), not a range"
     rng = next((m for m in _RANGE.finditer(_norm(quote)) if int(m.group(1)) == lo), None)
     if lo == hi and rng and int(rng.group(2)) > lo:  # "70 bis 80" read as 70: the quote itself states the range
         hi = int(rng.group(2))
     unit = str(p.get("unit") or "").strip() or None
-    if kind == "money" and (not unit or _norm(unit) not in _norm(quote)):
-        return None, f"the currency {unit!r} is not in the quote {quote!r}"
+    if kind == "money":
+        written = _unit_in(unit, quote)
+        if not written:
+            return None, f"the currency {unit!r} is not in the quote {quote!r}"
+        unit = written
     sex = p.get("sex") if p.get("sex") in ("boys", "girls", "all") else None
     qa_ = _ascii(quote)
     m_, f_ = bool(_MALE_SEX.search(qa_)), bool(_FEMALE_SEX.search(qa_))
     if sex == "boys" and f_ and not m_ or sex == "girls" and m_ and not f_:
         return None, f"labelled {sex}, but the quote {quote!r} names the other sex"
-    if m_ != f_ and sex in (None, "all", "boys", "girls"):  # the quote names one sex only: that is its sex
+    if m_ != f_ and have - {0} <= {lo, hi} and sex in (None, "all", "boys", "girls"):
+        # the quote names one sex only and holds only this figure: that is its sex ("Kaben 90 Mägdchen 85" holds two)
         sex = "boys" if m_ else "girls"
     season = p.get("season") if p.get("season") in ("winter", "summer") else None
     asked = p.get("asked") is not False
@@ -366,9 +479,14 @@ def verify_figure(p, kind, text, ctx=()):
     if any(NOT_PUPILS_AFTER.match(w[3]) for w in where) and kind == "number" and sex:  # "de 4 à 20 ans": ages, not people
         asked = False
     more = bool(p.get("more")) and bool(_MORE.search(_norm(quote)))  # "und mehr" only when the quote says so
+    period = None
+    if kind == "money":
+        period = next((x for w in where if (x := _period(quote, w[2], lo))), None) or (p.get("period") if p.get("period") in (*_PERIOD, "once") else None)
+        if any(_ASSISTANT.search(w[2][-40:] + " " + qa_) for w in where):  # "für einen Gehülfen kr. 50": not the teacher's own pay
+            asked = False
     return {"label": str(p.get("label") or "")[:40], "sex": sex, "season": season, "current": p.get("current") is not False,
-            "asked": asked, "lo": lo, "hi": hi, "more": more, "unit": unit, "quote": quote,
-            "question": [w[0] for w in where]}, None
+            "asked": asked, "lo": lo, "hi": hi, "more": more, "unit": unit, "quote": quote, "period": period,
+            "part": p.get("part") is True, "question": [w[0] for w in where]}, None
 
 
 def resolve(figs, sex, single, complete=True):
@@ -381,13 +499,16 @@ def resolve(figs, sex, single, complete=True):
                                        and _norm(f["quote"]) in _norm(g["quote"]) for g in figs)]
     out = [(f, "another group or thing") for f in figs if not f["asked"]] + [(f, "a past figure") for f in figs if f["asked"] and not f["current"]]
     use = [f for f in figs if f["asked"] and f["current"]]
+    if any(not f.get("part") for f in use):  # the items or instalments of a total the sheet also states
+        out += [(f, "a part of a total stated on the sheet") for f in use if f.get("part")]
+        use = [f for f in use if not f.get("part")]
     seasons = {f["season"] for f in use}
     pick = "winter" if "winter" in seasons else None if None in seasons else "summer"
     out += [(f, "winter figure used" if pick == "winter" else "general figure used") for f in use if f["season"] != pick]
     use = [f for f in use if f["season"] == pick]
     seen, uniq = set(), []
     for f in use:  # a sheet repeats one answer for the sub-questions
-        k = (f["sex"], f["lo"], f["hi"], f["more"], f["unit"])
+        k = (f["sex"], f["lo"], f["hi"], f["more"], unit_key(f["unit"]), f.get("period"))
         if k not in seen:
             seen.add(k); uniq.append(f)
     boys, girls = [f for f in uniq if f["sex"] == "boys"], [f for f in uniq if f["sex"] == "girls"]
@@ -487,7 +608,8 @@ def read(idx, plan, recs):
         sheets = "\n\n".join(f"[S{n + 1}] {r['label']}\n{_context(r)}\n{b}" for n, (r, b) in enumerate(ch))
         if numeric:
             prompt = READ.format(what=m["what"], questions=questions, sheets=sheets, feedback=feedback)
-            return llm.chat_json(prompt, schema={"sheets": list}, max_tokens=600 * len(ch) + 300)
+            per_sheet = 1000 if m["value"] == "money" else 600  # pay lists money and every payment in kind
+            return llm.chat_json(prompt, schema={"sheets": list}, max_tokens=per_sheet * len(ch) + 300)
         prompt = READ_SIMPLE.format(what=m["what"], value_rule=VALUE_RULES[m["value"]], questions=questions, sheets=sheets, feedback=feedback)
         return llm.chat_json(prompt, schema={"sheets": list}, max_tokens=90 * len(ch) + 120)
 
@@ -506,12 +628,11 @@ def read(idx, plan, recs):
                                                        {(x["quote"], x["lo"], x["hi"]) for x in prev[r["id"]]["figures"]}]
                 # coverage: every answer that holds a number must be covered by a figure (counted or left out)
                 covered = {q for f in figs for q in f["question"]}
-                for qno, _question, body in ctx[r["id"]]:
-                    if qno not in covered and _has_number(body):
-                        bad.append(f"you listed no figure from the answer to {qno}: {plain(body)[:160]!r}")
+                skipped = [(qno, question, body) for qno, question, body in ctx[r["id"]] if qno not in covered and _has_number(body)]
+                bad += [f"you listed no figure from the answer to {qno}: {plain(body)[:160]!r}" for qno, _q, body in skipped]
                 v, excl = resolve(figs, m.get("sex"), _single_sex(r))
-                if prev is not None and v and any(b_.startswith("you listed no figure") for b_ in bad):
-                    v = dict(v, complete=False)  # still skipped after the correction round: kept out, never a silent guess
+                if prev is not None and v and any(_could_change(v, question) for _qno, question, _b in skipped):
+                    v = dict(v, complete=False)  # still skipped after the correction rounds: kept out, never a silent guess
                 out[r["id"]] = {"value": v, "figures": figs, "excluded": [{"quote": f["quote"], "label": f["label"], "reason": why}
                                                                          for f, why in excl if f.get("quote")], "rejected": bad}
             else:
@@ -524,25 +645,59 @@ def read(idx, plan, recs):
 
     with ThreadPoolExecutor(max_workers=min(WORKERS, len(chunks))) as ex:
         replies = list(ex.map(ask, chunks))
-    out, failed, retry = {}, 0, []
+    ok = lambda obj: isinstance(obj, dict) and isinstance(obj.get("sheets"), list)  # noqa: E731
+    lost = [ch for ch, (obj, _m) in zip(chunks, replies, strict=False) if not ok(obj) and len(ch) > 1]
+    if lost:  # a call that failed (timeout, cut-off JSON): each of its sheets alone
+        singles = [[x] for ch in lost for x in ch]
+        with ThreadPoolExecutor(max_workers=min(WORKERS, len(singles))) as ex:
+            more = list(ex.map(ask, singles))
+        chunks, replies = chunks + singles, replies + more
+    out, retry = {}, []
     for ch, (obj, _meta) in zip(chunks, replies, strict=False):
-        if not isinstance(obj, dict) or not isinstance(obj.get("sheets"), list):
-            failed += 1
-            continue
-        retry += take(ch, obj, out)
-    if failed == len(chunks):
+        if ok(obj):
+            retry += take(ch, obj, out)
+    if not out:
         return None
-    if retry:  # one feedback round: code says exactly what failed, Apertus re-reads those sheets only
-        ch = [(r, b) for r, b, _bad in retry][:CHUNK]
-        notes = " | ".join(f"S{n + 1}: " + "; ".join(bad) for n, (_r, _b, bad) in enumerate(retry[:CHUNK]))
-        obj, _meta = ask(ch, f"\nYour previous reading of these sheets failed the check: {notes}. "
-                             "Read them again and list every figure, with exact quotes.")
-        if isinstance(obj, dict) and isinstance(obj.get("sheets"), list):
+    for rnd in range(ROUNDS):  # feedback rounds: code says exactly what failed, Apertus re-reads those sheets only
+        if rnd and not numeric:
+            break
+        if rnd:  # a later round re-reads only the sheets still left out, not the whole batch
+            retry = [(r, b, bad) for r, b, bad in retry if (v := out[r["id"]]["value"]) is None or not v.get("complete", True)]
+        if not retry:
+            break
+        groups = [retry[i:i + CHUNK] for i in range(0, len(retry), CHUNK)]
+
+        def again(grp):
+            notes = " | ".join(f"S{n + 1}: " + "; ".join(bad) for n, (_r, _b, bad) in enumerate(grp))
+            return ask([(r, b) for r, b, _bad in grp], f"\nYour previous reading of these sheets failed the check: {notes}. "
+                                                        "Read them again and list every figure, with exact quotes.")
+        with ThreadPoolExecutor(max_workers=min(WORKERS, len(groups))) as ex:
+            replies = list(ex.map(again, groups))
+        retry = []
+        for grp, (obj, _meta) in zip(groups, replies, strict=False):
+            if not (isinstance(obj, dict) and isinstance(obj.get("sheets"), list)):
+                retry += grp
+                continue
             fixed = {}
-            take(ch, obj, fixed, prev=out)
+            retry += take([(r, b) for r, b, _bad in grp], obj, fixed, prev=out)
             for rid, rd in fixed.items():
-                out[rid] = rd | {"corrected": True}
+                out[rid] = rd | {"corrected": rnd + 1}
     return out
+
+
+def _season_rank(text):
+    t = _ascii(text)
+    return 2 if _WINTER.search(t) else 0 if _SUMMER.search(t) else 1
+
+
+def _could_change(v, question):
+    """Whether an answer the reader skipped could change the value: under the one-season policy a skipped summer (or
+    general) answer cannot change a value taken from the winter answer; any other skipped answer can."""
+    used = [p for p in v.get("parts", []) if p.get("quote")]
+    if not used:
+        return True
+    rank = max(2 if p.get("season") == "winter" else 0 if p.get("season") == "summer" else 1 for p in used)
+    return _season_rank(question) >= rank
 
 
 def _has_number(text):
@@ -556,14 +711,28 @@ def _single_sex(r):
 
 
 # ---------------------------------------------------------------- step 4: code computes
-def _num(v):
-    """A verified numeric value as (lo, hi, more, unit); None for a value that is incomplete or mixes currencies."""
+def totals(v):
+    """A verified numeric value as {(currency or measure, period): (lo, hi, more, unit as written, period)}: parts are
+    added only within one currency and one period, never across them (kr and Mütt, quarterly and yearly). {} for a
+    value that is incomplete."""
     if not v or "parts" not in v or not v["complete"]:
+        return {}
+    out = {}
+    for p in v["parts"]:
+        k = (unit_key(p["unit"]), p.get("period"))
+        lo, hi, more, _u, _per = out.get(k, (0, 0, False, None, None))
+        out[k] = (lo + p["lo"], hi + p["hi"], more or p["more"], p["unit"], p.get("period"))
+    return out
+
+
+def _num(v):
+    """A verified numeric value as one (lo, hi, more, unit); None for a value that is incomplete or mixes currencies,
+    measures or periods (it has no single number to test or rank)."""
+    t = totals(v)
+    if len(t) != 1:
         return None
-    units = {p["unit"] for p in v["parts"]}
-    if len(units) > 1:
-        return None
-    return sum(p["lo"] for p in v["parts"]), sum(p["hi"] for p in v["parts"]), any(p["more"] for p in v["parts"]), units.pop()
+    lo, hi, more, unit, _per = next(iter(t.values()))
+    return lo, hi, more, unit
 
 
 def value_of(u, plan, readings):
@@ -614,14 +783,15 @@ def compute(units, plan, readings):
         return {"op": op, "n": len(rows), "rows": rows, "unclear": unclear}
     per_unit, missing = {}, []
     for u, v in rows:
-        n = _num(v)
-        if n:
-            per_unit.setdefault(n[3], []).append((u, v, n))
-        else:
+        t = totals(v)
+        for k, (lo, hi, more, unit, _per) in t.items():  # a school paying in kr and in Mütt adds to both totals
+            per_unit.setdefault(k, []).append((u, v, (lo, hi, more, unit)))
+        if not t:
             missing.append((u, v))
     res = {}
-    for cur, xs in per_unit.items():
+    for key, xs in per_unit.items():
         lo, hi, more = [x[2][0] for x in xs], [x[2][1] for x in xs], any(x[2][2] for x in xs)
+        cur = (xs[0][2][3], key[1])  # the currency as written, the period
         if op == "sum":
             res[cur] = {"lo": sum(lo), "hi": sum(hi), "more": more, "n": len(xs)}
         elif op == "average":
@@ -629,7 +799,9 @@ def compute(units, plan, readings):
         else:
             pick = (max if op == "max" else min)(xs, key=lambda x: (x[2][0] + x[2][1]) / 2)
             res[cur] = {"lo": pick[2][0], "hi": pick[2][1], "more": pick[2][2], "n": len(xs), "unit": pick[0]}
-    return {"op": op, "result": res, "rows": [(u, v) for xs in per_unit.values() for u, v, _ in xs], "missing": missing, "unclear": unclear}
+    seen = set()
+    listed = [(u, v) for xs in per_unit.values() for u, v, _ in xs if not (id(u) in seen or seen.add(id(u)))]
+    return {"op": op, "result": res, "rows": listed, "missing": missing, "unclear": unclear}
 
 
 # ---------------------------------------------------------------- rendering (the audit trail) and step 5
@@ -642,7 +814,8 @@ T = {
            "excluded": "Read but left out on purpose:", "more_units": "… and {n} more", "by": "by {g}",
            "unit": {"schools": "schools", "teachers": "teachers", "consultations": "consultations"},
            "one": {"schools": "school", "teachers": "teacher", "consultations": "consultation"},
-           "op": {"count": "count", "sum": "total", "average": "average", "min": "smallest", "max": "largest", "list": "list"}},
+           "op": {"count": "count", "sum": "total", "average": "average", "min": "smallest", "max": "largest", "list": "list"},
+           "per": {"year": "a year", "quarter": "a quarter", "week": "a week", "day": "a day", "once": "once"}},
     "de": {"boys": "Knaben", "girls": "Mädchen", "implied": "keine genannt: {what}",
            "head": "Berechnet aus den zitierten Datensätzen, in keiner einzelnen Quelle so genannt.", "plan": "Vorgehen", "result": "Ergebnis",
            "count": "{n} {unit}", "range": "{lo} bis {hi}", "more": " und mehr", "of": "aus {n} {unit} mit einer Angabe",
@@ -651,7 +824,8 @@ T = {
            "excluded": "Gelesen, aber bewusst ausgelassen:", "more_units": "… und {n} weitere", "by": "nach {g}",
            "unit": {"schools": "Schulen", "teachers": "Lehrpersonen", "consultations": "Vernehmlassungen"},
            "one": {"schools": "Schule", "teachers": "Lehrperson", "consultations": "Vernehmlassung"},
-           "op": {"count": "Anzahl", "sum": "Summe", "average": "Durchschnitt", "min": "kleinster Wert", "max": "grösster Wert", "list": "Liste"}},
+           "op": {"count": "Anzahl", "sum": "Summe", "average": "Durchschnitt", "min": "kleinster Wert", "max": "grösster Wert", "list": "Liste"},
+           "per": {"year": "jährlich", "quarter": "vierteljährlich", "week": "wöchentlich", "day": "täglich", "once": "einmalig"}},
     "fr": {"boys": "garçons", "girls": "filles", "implied": "aucun indiqué : {what}",
            "head": "Calculé à partir des fiches citées, et non repris d'une seule source.", "plan": "Démarche", "result": "Résultat",
            "count": "{n} {unit}", "range": "de {lo} à {hi}", "more": " et plus", "of": "sur {n} {unit} avec une valeur",
@@ -660,7 +834,8 @@ T = {
            "excluded": "Lu, mais écarté volontairement :", "more_units": "… et {n} autres", "by": "par {g}",
            "unit": {"schools": "écoles", "teachers": "enseignants", "consultations": "consultations"},
            "one": {"schools": "école", "teachers": "enseignant", "consultations": "consultation"},
-           "op": {"count": "nombre", "sum": "total", "average": "moyenne", "min": "plus petit", "max": "plus grand", "list": "liste"}},
+           "op": {"count": "nombre", "sum": "total", "average": "moyenne", "min": "plus petit", "max": "plus grand", "list": "liste"},
+           "per": {"year": "par an", "quarter": "par trimestre", "week": "par semaine", "day": "par jour", "once": "une fois"}},
 }
 
 
@@ -686,9 +861,9 @@ class _Audit:
         return xs
 
 
-def _fmt(lo, hi, more, unit, L):
+def _fmt(lo, hi, more, unit, L, period=None):
     s = (str(lo) if lo == hi else L["range"].format(lo=lo, hi=hi)) + (L["more"] if more else "")
-    return s + (f" {unit}" if unit else "")
+    return s + (f" {unit}" if unit else "") + (f' {L["per"][period]}' if period else "")
 
 
 def _unit_line(u, v, A, L):
@@ -703,12 +878,13 @@ def _unit_line(u, v, A, L):
             c = A.cite(u, p["quote"]) if p.get("quote") else A.cite(u)
             name = L.get(p.get("sex") or "", "") or (p.get("label") if len(v["parts"]) > 1 else "")
             how = f' ({L["implied"].format(what=p["implied"])})' if p.get("implied") else ""
-            bits.append(f'{(name + " ") if name else ""}{_fmt(p["lo"], p["hi"], p["more"], p["unit"], L)}{how} {c}'.strip())
-        n = _num(v)
-        tot = ""
-        if n and len(v["parts"]) > 1:
-            A.num(n[0], n[1])
-            tot = f" = {_fmt(*n, L)}"
+            bits.append(f'{(name + " ") if name else ""}{_fmt(p["lo"], p["hi"], p["more"], p["unit"], L, p.get("period"))}{how} {c}'.strip())
+        tots = []
+        for k, (lo, hi, more, unit, per) in totals(v).items():  # a sum per currency and period, where it adds parts
+            if sum((unit_key(p["unit"]), p.get("period")) == k for p in v["parts"]) > 1:
+                A.num(lo, hi)
+                tots.append(_fmt(lo, hi, more, unit, L, per))
+        tot = f" = {'; '.join(tots)}" if tots else ""
         return f"- {label}: " + ", ".join(bits) + tot
     if "yes" in v:
         return f'- {label}: {"yes" if v["yes"] else "no"} — "{plain(v["quote"])}" {A.cite(u, v["quote"])}'
@@ -760,10 +936,10 @@ def render(q, plan, units, today, readings, idx):
                 A.num(len(res["rows"]) - MAX_LISTED)
                 lines.append(L["more_units"].format(n=len(res["rows"]) - MAX_LISTED))
             parts = []
-            for cur, x in res["result"].items():
+            for (cur, per), x in res["result"].items():
                 A.num(x["lo"], x["hi"], x["n"])
                 who = f' — {x["unit"]["rec"]["label"]}' if x.get("unit") else ""
-                parts.append(f'{_fmt(x["lo"], x["hi"], x["more"], cur, L)} ({L["of"].format(n=x["n"], unit=unit)}){who}')
+                parts.append(f'{_fmt(x["lo"], x["hi"], x["more"], cur, L, per)} ({L["of"].format(n=x["n"], unit=unit)}){who}')
             summary.append((g, None, "; ".join(parts) or "–"))
             if res["missing"]:
                 lines += [L["missing"]] + [_unit_line(u, v, A, L) for u, v in res["missing"][:MAX_LISTED]]
@@ -814,23 +990,26 @@ _DATA_WORDS = re.compile(r"wie\s*viele?|wieviele?|how\s*many|combien|anzahl|\bno
                          r"more than|mehr als|plus de|less than|weniger als|moins de|\beach\b|\bje\b|\bpro\b|\bper\b|chaque|list\b|liste")
 
 
+# wording that always asks over several records, even when it names a place ("the district of Hinwil")
+_AGG_WORDS = re.compile(r"average|durchschnitt|moyenne|\bmean\b|district|bezirk|kanton|canton|\beach\b|\bjede[rsn]?\b|chaque|"
+                        r"\bper\b|\bpro\b|\bje\b|\btotal\b|insgesamt|zusammen")
+_ONE_RECORD = re.compile(r"\b(?:which|what|welche[rs]?|quelle?)\s+(?:consultation|vernehmlassung|law|gesetz|loi)\b(?!s|en\b)")
+
+
 def is_data_question(q, r):
-    """Whether to try the engine: Apertus' reading of the question (dynamic route task "data"). Its label varies from
-    run to run, so the rules are a safety net, as for the dataset: data wording ("how many", "which", "more than",
-    "average", "each") over a scope of several records. A single sheet stays with the passage answer."""
+    """Whether to give the question to the engine, whose planner (Apertus) then reads it as a data question or as a
+    lookup. Tried when it could be one: a question about a place with several schools ("the teacher's pay in Bern"),
+    a pupil or school count, or data wording ("how many", "which", "more than", "average", "each") over consultations.
+    A place with a single sheet stays with the passage answer, and so does every other question."""
     from .qa import is_pupil_count_question
-    if r.get("task") == "data":
-        return True
     if r.get("places") and (is_pupil_count_question(q) or rules_plan(q, r) is not None):
         return True
-    if not _DATA_WORDS.search(_ascii(q)):
-        return False
-    if r.get("intents") == ["consultation"] or r.get("dataset") == "consultation":
-        return True
-    if r.get("places"):
+    if r.get("places") and not _AGG_WORDS.search(_ascii(q)):
         main, _today = select({"dataset": "stapfer", "unit": "schools", "filters": {"places": r["places"]}})
         return len(main) > 1
-    return False
+    if _ONE_RECORD.search(_ascii(q)):  # "which consultation dealt with ...": one record, found by the search
+        return False
+    return bool(_DATA_WORDS.search(_ascii(q)))  # no place: districts, confessions, consultations, the whole survey
 
 
 def answer(idx, q, r, use_llm=True):
@@ -841,8 +1020,11 @@ def answer(idx, q, r, use_llm=True):
     plan = None
     if use_llm:
         plan, meta = make_plan(q, idx)
-    plan = plan or rules_plan(q, r)
     note = lambda why: r.__setitem__("data_engine", {"used": False, "reason": why, "plan": plan, "planner": meta.get("raw")})
+    from .qa import is_pupil_count_question
+    if meta.get("lookup") and rules_plan(q, r) is None and not (r.get("places") and is_pupil_count_question(q)):
+        return note("Apertus reads it as a lookup of one record")
+    plan = plan or rules_plan(q, r)
     if not plan:
         return note("no usable plan")
     units, today = select(plan)
