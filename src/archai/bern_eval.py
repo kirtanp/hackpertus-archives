@@ -39,7 +39,7 @@ def run():
             worst.append({"TransID": r.TransID, "Frage": r.Frage, "sim": round(s, 3), "bern": ref[:160], "ours": max(cands, key=lambda c: difflib.SequenceMatcher(None, ref, c).ratio())[:160]})
     s = pd.Series(sims, dtype=float)
     m = s.notna()
-    sig = [docs.get(f"stapfer:transkription:{t}", {}).get("provenance", {}).get("archive_signature") == g for t, g in zip(b.TransID, b.Signatur)]
+    sig = [docs.get(f"stapfer:transkription:{t}", {}).get("provenance", {}).get("archive_signature") == g for t, g in zip(b.TransID, b.Signatur, strict=True)]
     rep = {
         "scope": f"University of Bern reference export: {len(b)} rows over {b.TransID.nunique()} sheets "
                  f"({int((~doc_level).sum())} question answers, {int(doc_level.sum())} sheet-level fields not compared)",
