@@ -1,0 +1,64 @@
+# Secondary (Docker) route for the Superset prototype: Superset 6.1.0 with a Postgres metadata database and
+# Redis, reading the DuckDB datasource that `make statssql` writes into data/out/ (mounted read-only).
+#
+# NOT RUN in this prototype: Docker's daemon is not running on the machine it was built on. The primary route
+# (deploy/superset/README.md, section 2) is the one that was executed and verified.
+#
+#   docker compose -f deploy/superset/docker-compose.yml up --build -d
+#   .venv/bin/python deploy/superset/provision_superset.py --uri duckdb:////app/data/out/stapfer_stats.duckdb
+#
+# Localhost only (127.0.0.1): nothing is exposed beyond this machine.
+services:
+  metadata-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: superset
+      POSTGRES_PASSWORD: superset
+      POSTGRES_DB: superset
+    volumes:
+      - superset-metadata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U superset"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - superset-redis:/data
+
+  superset:
+    build:
+      context: .
+      dockerfile: Dockerfile.superset
+    depends_on:
+      metadata-db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    ports:
+      - "127.0.0.1:8088:8088"
+    environment:
+      SUPERSET_CONFIG_PATH: /app/pythonpath/superset_config_docker.py
+      # Replace this with your own secret before exposing anything, and never commit it.
+      SUPERSET_SECRET_KEY: change-me-generate-with-secrets-token-urlsafe
+      SUPERSET_LOAD_EXAMPLES: "no"
+      SCARF_ANALYTICS: "false"
+    volumes:
+      - ./superset_config_docker.py:/app/pythonpath/superset_config_docker.py:ro
+      # the repository's build artifact, readable by the container but never writable
+      - ../../data/out:/app/data/out:ro
+    command:
+      - /bin/sh
+      - -c
+      - |
+        superset db upgrade &&
+        superset fab create-admin --username admin --firstname ArchAI --lastname Prototype \
+          --email admin@localhost.invalid --password archai-prototype-1 &&
+        superset init &&
+        superset run -h 0.0.0.0 -p 8088
+
+volumes:
+  superset-metadata:
+  superset-redis:

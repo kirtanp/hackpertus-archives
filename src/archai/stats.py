@@ -116,41 +116,66 @@ def _filter(section=None, page=None):
     return (f" where {' and '.join(conds)}" if conds else ""), params
 
 
-def _blocks(con, path, where, params, query):
-    """The requested aggregates, each computed by DuckDB over the parquet (no rows are fetched to count them)."""
-    src, p = "read_parquet(?)", [str(path), *params]
+def aggregate_sql(query="all", where=""):
+    """The SQL behind every aggregate block, as ``{"block" or "block.part": statement}``.
+
+    Each statement is a plain SELECT whose first bound parameter is the corpus parquet path, followed by the
+    parameters of ``where`` (:func:`_filter`; empty means the whole corpus). :func:`_blocks` executes exactly
+    these strings, and ``statssql.py`` materialises the same ones into a DuckDB database file for Superset, so
+    the HTTP API and the datasource cannot drift apart. The keys are the block names of a ``summary`` response,
+    with a dot for the nested ``sheets`` parts.
+    """
+    src = "read_parquet(?)"
     out = {}
     if query in ("all", "sections"):
-        out["sections"] = _rows(con, f"select {SECTION} as section, count(*) as answers from {src}{where}"
-                                     " group by 1 order by answers desc, section", p)
+        out["sections"] = (f"select {SECTION} as section, count(*) as answers from {src}{where}"
+                           " group by 1 order by answers desc, section")
     if query in ("all", "documents"):
-        out["documents"] = _one(con, f"select count(*) as answers, count(distinct doc_id) as documents from {src}{where}", p)
+        out["documents"] = f"select count(*) as answers, count(distinct doc_id) as documents from {src}{where}"
     if query in ("all", "pages"):
-        out["pages"] = {"answers_per_page": _rows(con, f"select page_start as page, count(*) as answers from {src}{where}"
-                                                       " group by 1 order by 1", p)}
+        out["pages.answers_per_page"] = (f"select page_start as page, count(*) as answers from {src}{where}"
+                                         " group by 1 order by 1")
     if query in ("all", "sheets"):
-        out["sheets"] = {
-            "summary": _one(con, f"select count(*) as sheets, min(n) as min_answers, median(n) as median_answers,"
-                                 f" max(n) as max_answers from (select count(*) as n from {src}{where} group by doc_id)", p),
-            "answers_per_sheet": _rows(con, f"select n as answers, count(*) as sheets from"
-                                            f" (select count(*) as n from {src}{where} group by doc_id) group by 1 order by 1", p),
-            "pages_per_sheet": _rows(con, f"select p as pages, count(*) as sheets from"
-                                          f" (select max(page_end) as p from {src}{where} group by doc_id) group by 1 order by 1", p),
-        }
+        out["sheets.summary"] = (f"select count(*) as sheets, min(n) as min_answers, median(n) as median_answers,"
+                                 f" max(n) as max_answers from (select count(*) as n from {src}{where} group by doc_id)")
+        out["sheets.answers_per_sheet"] = (f"select n as answers, count(*) as sheets from"
+                                           f" (select count(*) as n from {src}{where} group by doc_id) group by 1 order by 1")
+        out["sheets.pages_per_sheet"] = (f"select p as pages, count(*) as sheets from"
+                                         f" (select max(page_end) as p from {src}{where} group by doc_id) group by 1 order by 1")
     if query in ("all", "markup"):
-        out["markup"] = _one(con, f"""select count(*) as answers,
+        out["markup"] = f"""select count(*) as answers,
             sum(case when array_length(annotations) > 0 then 1 else 0 end) as with_transcription_markup,
             sum(case when markup_errors > 0 then 1 else 0 end) as with_markup_errors,
             sum(case when uncertain_readings > 0 then 1 else 0 end) as with_uncertain_readings,
             sum(case when trim(coalesce(margin_note, '')) <> '' then 1 else 0 end) as with_margin_notes,
             sum(case when trim(coalesce(editor_comment, '')) <> '' then 1 else 0 end) as with_editor_comments
-            from {src}{where}""", p)
+            from {src}{where}"""
     if query in ("all", "content"):
-        out["content"] = _rows(con, f"""select {SECTION} as section, count(*) as answers,
+        out["content"] = f"""select {SECTION} as section, count(*) as answers,
             sum(case when {EMPTY} then 1 else 0 end) as empty,
             sum(case when {TRIVIAL} then 1 else 0 end) as trivial,
             sum(case when {PLAIN} then 1 else 0 end) as non_empty
-            from {src}{where} group by 1 order by section""", p)
+            from {src}{where} group by 1 order by section"""
+    return out
+
+
+def _blocks(con, path, where, params, query):
+    """The requested aggregates, each computed by DuckDB over the parquet (no rows are fetched to count them)."""
+    p, sql, out = [str(path), *params], aggregate_sql(query, where), {}
+    if "sections" in sql:
+        out["sections"] = _rows(con, sql["sections"], p)
+    if "documents" in sql:
+        out["documents"] = _one(con, sql["documents"], p)
+    if "pages.answers_per_page" in sql:
+        out["pages"] = {"answers_per_page": _rows(con, sql["pages.answers_per_page"], p)}
+    if "sheets.summary" in sql:
+        out["sheets"] = {"summary": _one(con, sql["sheets.summary"], p),
+                          "answers_per_sheet": _rows(con, sql["sheets.answers_per_sheet"], p),
+                          "pages_per_sheet": _rows(con, sql["sheets.pages_per_sheet"], p)}
+    if "markup" in sql:
+        out["markup"] = _one(con, sql["markup"], p)
+    if "content" in sql:
+        out["content"] = _rows(con, sql["content"], p)
     return out
 
 

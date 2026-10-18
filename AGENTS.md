@@ -17,6 +17,12 @@ This file is the project's committed home for project-intrinsic agent knowledge:
 - Question asking for a *number of pupils* ("Wie viele Schülerinnen gab es total in Bern?") is answered by code, not the model: `aggregate_pupils` + `render_pupil_totals` group `tools.extract_quantities` over the whole routed pool (`Index.pool`), keep boys and girls apart, and only sum sheets that state one unambiguous figure. `answer_source` is then `aggregate`. Numbers the aggregate computes are admitted to `check_numbers` solely through its `extra=` argument; keep that exception confined to the aggregate.
 - `tools.extract_quantities` is the one parser for pupil counts and 1799 money; its pattern tables encode transcription realities that cost real time to rediscover (count before the sex word, the "(Knaben/Mädchen)" questionnaire header, `Mägdchen`/`Mägdlein`, `Knaben und 21 Mädchen`). Extend those tables instead of adding a second extractor, and take test strings from real rows in `data/out/stapfer_answers.parquet`.
 
+## Corpus statistics and the Superset datasource
+
+- `src/archai/stats.py` owns the corpus aggregates and their SQL; `tests/test_stats.py` re-derives every figure it returns with pandas, so copy that pattern for a new aggregate instead of asserting SQL against itself. `statssql.py` (the Apache Superset datasource, `make statssql`) consumes the same SQL: it builds its DuckDB tables from `stats.aggregate_sql()` / `SECTION` / `EMPTY` / `TRIVIAL` / `PLAIN`, so a new aggregate belongs in `stats.py` and never as fresh SQL in `statssql.py`.
+- `data/out/stapfer_stats.duckdb` is a derived, gitignored build artifact (`.gitignore`: `data/out/*.duckdb`); the committed corpus stays `data/out/stapfer_answers.parquet`.
+- Superset is a separate application under `deploy/superset/`, deliberately not imported by `app.py`. How to run it and the Superset 6.1 traps it hit (flask-caching pin, the removed `bar` chart type, a chart `query_context` that the API does not compute) are recorded in `deploy/superset/README.md`.
+
 ## Maintaining this file
 
 Keep this file for knowledge useful to almost every future agent session in this project.

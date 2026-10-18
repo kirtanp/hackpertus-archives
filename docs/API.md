@@ -65,6 +65,10 @@ different place. When Apertus chooses no question, or calls the question unrelat
 `route` shows `dataset`, `sections`, `places`, `years`, `routed_by` and `rewrite.rounds`.
 Other modes: `apertus` (9 fixed intents), `off` (rules only). Measured in `data/out/qa_eval.json`.
 
+The same aggregates are also available as SQL, for BI tools that cannot chart a JSON envelope: `make statssql`
+materialises them into a DuckDB database file (`src/archai/statssql.py`) that Apache Superset reads as a
+datasource. See `deploy/superset/README.md`.
+
 ## `GET /api/places`
 One point per geocoded Stapfer sheet (2,249): `id, name` (1799), `today` (municipality), `school, type, lang, conf`
 (confession), `pupils` (largest count stated), `district, lat, lon, url`. Feeds the map and its filters.
