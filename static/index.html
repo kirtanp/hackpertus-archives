@@ -44,6 +44,11 @@ h2{font:600 13px/1 Inter,sans-serif;text-transform:uppercase;letter-spacing:.06e
 .src a{color:var(--accent);font-size:13px;margin-right:12px}
 .hidden{display:none}
 .err{color:var(--accent)}
+.conf{display:inline-flex;align-items:center;gap:8px;margin-top:12px;font-size:13px;padding:5px 10px;border-radius:999px;border:1px solid var(--line);cursor:help}
+.conf i{width:9px;height:9px;border-radius:50%;display:inline-block}
+.conf b{font-variant-numeric:tabular-nums}
+.notice{font:16px/1.55 Inter,sans-serif;background:var(--accent-soft);border-radius:8px;padding:12px 14px;white-space:normal}
+.notice b{display:block;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:4px}
 /* data sources */
 .ds{border-top:1px solid var(--line);padding:12px 0}
 .ds:first-of-type{border-top:0;padding-top:0}
@@ -114,6 +119,7 @@ h2{font:600 13px/1 Inter,sans-serif;text-transform:uppercase;letter-spacing:.06e
       <div class="card hidden" id="res">
         <h2>Answer</h2>
         <div id="answer"></div>
+        <div id="conf"></div>
         <div class="meta" id="meta"></div>
       </div>
       <div class="card" id="mapcard">
@@ -133,7 +139,7 @@ h2{font:600 13px/1 Inter,sans-serif;text-transform:uppercase;letter-spacing:.06e
         <div id="game" class="hidden"></div>
       </div>
       <div class="card hidden" id="srcs">
-        <h2>Sources</h2>
+        <h2 id="srctitle">Sources</h2>
         <div id="list"></div>
       </div>
     </main>
@@ -171,28 +177,43 @@ async function health(){
 }
 health();
 
+function inputError(detail){  // FastAPI 422: a list of {type, msg}
+  const t=Array.isArray(detail)?detail[0]?.type:"";
+  if(t==="string_too_short")return "Please type a question (at least 2 characters).";
+  if(t==="string_too_long")return "Please keep the question under 500 characters.";
+  return Array.isArray(detail)?detail.map(x=>x.msg).join("; "):String(detail||"Request failed");
+}
 async function ask(){
-  const q=$("q").value.trim(); if(q.length<2)return;
+  const q=$("q").value.trim();
+  if(q.length<2||q.length>500){showError(inputError([{type:q.length<2?"string_too_short":"string_too_long"}]));return}
   $("go").disabled=true;$("go").textContent="…";
   try{
     const r=await fetch("/api/ask",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({question:q})});
     const d=await r.json();
-    if(!r.ok)throw new Error(d.detail||r.statusText);
+    if(!r.ok)throw new Error(r.status===422?inputError(d.detail):(typeof d.detail==="string"?d.detail:r.statusText));
     render(d);
-  }catch(e){$("res").classList.remove("hidden");$("srcs").classList.add("hidden");$("answer").innerHTML=`<span class="err">${esc(e.message)}</span>`;$("meta").innerHTML=""}
+  }catch(e){showError(e.message)}
   finally{$("go").disabled=false;$("go").textContent="Ask"}
 }
 
+function showError(msg){$("res").classList.remove("hidden");$("srcs").classList.add("hidden");$("answer").innerHTML=`<span class="err">${esc(msg)}</span>`;$("meta").innerHTML=""}
 function render(d){
-  $("res").classList.remove("hidden");$("srcs").classList.remove("hidden");
-  $("answer").innerHTML=esc(d.answer).replace(/\[(\d+)\]/g,(m,n)=>n<=d.sources.length?`<a class="cite" data-n="${n}">[${n}]</a>`:m);
+  $("res").classList.remove("hidden");$("srcs").classList.toggle("hidden",!d.sources.length);
+  const nd=d.answer_source==="no_direct_answer", nf=d.answer_source==="not_found"||nd, bad=d.answer_source==="invalid_input";
+  $("srctitle").textContent=nd?"Most relevant passages":d.answer_source==="not_found"?"Closest passages — not an answer":"Sources";
+  if(nf||bad){
+    $("answer").innerHTML=`<div class="notice"><b>${nd?"No direct answer":nf?"Not in these archives":"Not a question"}</b>${esc(d.answer)}</div>`;
+  }else $("answer").innerHTML=esc(d.answer).replace(/\[(\d+)\]/g,(m,n)=>n<=d.sources.length?`<a class="cite" data-n="${n}">[${n}]</a>`:m);
+  const c=d.confidence;
+  $("conf").innerHTML=c?`<span class="conf" title="${esc(c.meaning)} — ${esc(c.calibration)}. An estimate, not a guarantee: see Measured results.">
+    <i style="background:${c.percent>=80?"#2f8f4e":c.percent>=50?"#c9a227":"#c0392b"}"></i>Source confidence <b>${c.percent}%</b></span>`:"";
   const r=d.route||{};
   $("meta").innerHTML=[`answer: ${d.answer_source}`,...(r.intents||[]).map(i=>"intent: "+i),...(r.places||[]).map(p=>"place: "+p),
     r.filtered_pool!=null?`pool: ${r.filtered_pool}`:null,r.fallback?"fallback: "+r.fallback:null].filter(Boolean).map(t=>`<span class="tag">${esc(t)}</span>`).join("");
   $("list").innerHTML=d.sources.map((s,i)=>`<div class="src" id="s${i+1}"><div><span class="n">[${i+1}]</span><span class="sig">${esc(s.cite)}</span></div>
     <div class="txt">${esc(s.text.length>420?s.text.slice(0,420)+"…":s.text)}</div>
     <a href="${esc(s.url)}" target="_blank" rel="noopener">Open in archive viewer ↗</a><a href="/api/record/${encodeURIComponent(s.doc_id)}" target="_blank">Record JSON</a></div>`).join("")||"<p>No sources.</p>";
-  showOnMap(d);
+  if(nf||bad){citedLayer.clearLayers();$("maptitle").textContent="Map of the schools"}else showOnMap(d);
 }
 // ---- map: swisstopo Dufour map (1845–1865) over today's map, as on stapferenquete.ch ----
 const map=L.map("map",{preferCanvas:true,minZoom:7,maxBounds:[[45.6,5.6],[48.0,10.8]]}).setView([46.82,8.23],8);
@@ -389,7 +410,19 @@ function results(m){
       tile(pct(A.simple.exact),`single calls right (native API: ${pct(N.simple.exact)})`,raw(["70b/json.simple.exact",A.simple.exact])),
       tile(pct(A.parallel.exact),`"same tool several times" right — often only one of the values is looked up (native API: ${pct(N.parallel.exact)}, one call per turn)`,raw(["70b/json.parallel.exact",A.parallel.exact],["70b/native.parallel.exact",N.parallel.exact])),
       tile(pct(A.irrelevance.exact),`requests no tool can serve correctly answered without a call (8B JSON: ${S?pct(S.irrelevance.exact):"–"})`,raw(["70b/json.irrelevance.exact",A.irrelevance.exact]))]);}
+  const ce=m.qa_confidence;
+  if(ce){const rel=ce.reliability||[];
+    h+=group("Is the confidence percentage honest?",ce.scope+". "+ce.method+". "+ce.caveat,[
+      tile(pct(ce.expected_calibration_error),"average gap between the stated confidence and how often the cited sources were right (cross-validated)",raw(["expected_calibration_error",ce.expected_calibration_error]),LOW),
+      tile(String(ce.auc),"how well the score separates right from wrong answers (1 = perfectly, 0.5 = chance)",raw(["auc",ce.auc])),
+      ...rel.filter(b=>b.answers>=5).slice(-2).map(b=>tile(`${pct(b.share_correct)} right`,`of ${b.answers} answers given ${b.confidence} confidence`,raw(["mean_confidence",b.mean_confidence],["share_correct",b.share_correct]))),
+      tile(ce.model_chosen==="signals"?"no gain":"gain",`from Apertus' own token probabilities (AUC ${ce.comparison.signals_only.auc} without, ${ce.comparison.signals_plus_token_logprobs.auc} with)`,raw(["comparison.signals_only.auc",ce.comparison.signals_only.auc],["comparison.signals_plus_token_logprobs.auc",ce.comparison.signals_plus_token_logprobs.auc]))]);}
   const c=m.qa_answer_check;
+  if(c&&c.unanswerable){const u=c.unanswerable;
+    h+=group("Does it say \"not in these archives\" when it should?",u.scope,[
+      tile(of(u.declined,u.questions),"unanswerable questions correctly declined",raw(["unanswerable.declined",u.declined],["unanswerable.questions",u.questions])),
+      tile(n(u.answered_anyway.length),"answered anyway"+(u.answered_anyway.length?": "+u.answered_anyway.slice(0,3).join(" · "):""),raw(["unanswerable.answered_anyway",u.answered_anyway.length]),LOW),
+      tile(of(c.declined_as_not_in_sources,c.answers),"real questions answered \"not in these archives\" (questions about a recognised place get \"no direct answer\" with the passages instead)",raw(["declined_as_not_in_sources",c.declined_as_not_in_sources],["no_direct_answer",c.no_direct_answer]),LOW)]);}
   if(c)h+=group("Are the numbers in Apertus' answers backed by the cited source?",c.scope+". Check: "+c.number_check_definition,[
     tile(of(c.accepted,c.answers),"answers shown as written by Apertus",raw(["accepted",c.accepted],["answers",c.answers])),
     tile(n(c.rejected_number_not_in_cited_source),"answers stopped because a number was not in the source it cited (all checked by hand: real errors)",raw(["rejected_number_not_in_cited_source",c.rejected_number_not_in_cited_source]),LOW),

@@ -182,6 +182,8 @@ def main(with_runtime=False):
             rep["apertus_agent_v4"] = agent_metrics(OUT / "agent_traces_v4_json.jsonl", "agent-v4", "default mode: JSON tool protocol, the model batches calls")
         rep["apertus_agent_v3_same_run"] = agent_metrics(OUT / "agent_traces_v3_local.jsonl", "agent-v3",
                                                          "re-run next to v4; Archive Database not available locally, so lookup_archive_unit returns not found in both")
+    if (OUT / "confidence_eval.json").exists():  # written by archai.qa_eval --confidence
+        rep["qa_confidence"] = json.load(open(OUT / "confidence_eval.json"))
     if (OUT / "qa_answer_check.json").exists():
         rep["qa_answer_check"] = json.load(open(OUT / "qa_answer_check.json"))
     if with_runtime:

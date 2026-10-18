@@ -142,16 +142,42 @@ def chat_tools(messages, tools, max_tokens=400, retries=3):
     return None, meta
 
 
-def chat_text(prompt, max_tokens=300, retries=3):
+def token_confidence(logprobs):
+    """Summaries of the final layer's token probabilities (softmax of the logits) for one generated answer."""
+    import math
+    toks = (logprobs or {}).get("content") or []
+    if not toks:
+        return None
+    p = [math.exp(t["logprob"]) for t in toks]
+    txt = [t["token"] for t in toks]
+    num = [pi for pi, t in zip(p, txt) if any(ch.isdigit() for ch in t)]
+    cite, inside = [], False  # tokens between "[" and "]"
+    for pi, t in zip(p, txt):
+        if "[" in t:
+            inside = True
+        if inside and any(ch.isdigit() for ch in t):
+            cite.append(pi)
+        if "]" in t:
+            inside = False
+    return {"tokens": len(p), "mean_prob": round(math.exp(sum(t["logprob"] for t in toks) / len(toks)), 4),
+            "min_prob": round(min(p), 4), "share_below_50": round(sum(x < .5 for x in p) / len(p), 4),
+            "min_number_prob": round(min(num), 4) if num else None, "min_citation_prob": round(min(cite), 4) if cite else None}
+
+
+def chat_text(prompt, max_tokens=300, retries=3, logprobs=False):
     meta = {"model": MODEL, "attempts": 0, "errors": []}
     if _fails["n"] >= MAX_CONSECUTIVE_FAILS:
         meta["errors"].append("circuit_open"); return None, meta
     for a in range(retries):
         meta["attempts"] = a + 1
         try:
-            d = _post({"model": MODEL, "temperature": 0, "max_tokens": max_tokens,
-                       "messages": [{"role": "user", "content": prompt}]})
+            body = {"model": MODEL, "temperature": 0, "max_tokens": max_tokens, "messages": [{"role": "user", "content": prompt}]}
+            if logprobs:
+                body["logprobs"] = True
+            d = _post(body)
             _fails["n"] = 0
+            if logprobs:
+                meta["token_confidence"] = token_confidence(d["choices"][0].get("logprobs"))
             return d["choices"][0]["message"].get("content") or "", meta
         except (urllib.error.URLError, TimeoutError, ConnectionError, OSError) as e:
             meta["errors"].append(f"{type(e).__name__}: {str(e)[:120]}"); time.sleep(min(2 ** a, 8))

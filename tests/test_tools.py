@@ -95,3 +95,38 @@ def test_agent_v4_tool_specs_and_repair():
     assert A.repair_args("lookup_archive_unit", {"sig": "E1#2000/1#2"})[0] == {"signature": "E1#2000/1#2"}
     assert A.repair_args("parse_signature", {})[2].startswith("missing argument")
     assert A.repair_args("nope", {})[2].startswith("unknown tool")
+
+
+def test_answer_input_gate_and_not_found():
+    from archai import qa, llm
+    class Idx:  # minimal stand-in for qa.Index
+        def search(self, q, k, rewrite):
+            return [{"id": "a", "doc_id": "d", "kind": "stapfer", "qno": "III.12", "text": "Hörnli 1799. Schulkinder 24.", "cite": "BAR B0 1000/1483, Nr. 1421", "url": "u", "facsimile": None}], {"intents": [], "places": []}
+    o = qa.answer(Idx(), "🦄🦄🦄 ???", use_llm=True)
+    assert o["answer_source"] == "invalid_input" and o["sources"] == []
+    orig = llm.chat_text
+    try:
+        llm.chat_text = lambda *a, **k: ("The sources do not contain any information about Dhoni, who is a cricketer.", {})
+        o = qa.answer(Idx(), "who is Dhoni")
+        assert o["answer_source"] == "not_found" and "cricketer" not in o["answer"] and o["sources"]  # fixed text, passages kept
+        llm.chat_text = lambda *a, **k: ("24 Kinder [1].", {})
+        assert qa.answer(Idx(), "Wie viele Kinder in Hörnli?")["answer_source"] == "apertus"
+        # a refusal that cites all sources as a block is still a refusal
+        llm.chat_text = lambda *a, **k: ("Die Quellen [1] bis [6] enthalten keinerlei Angaben zu Drachen.", {})
+        assert qa.answer(Idx(), "Erfinde eine Geschichte über einen Drachen")["answer_source"] == "not_found"
+        # with a recognised place the sheet exists but states nothing direct
+        class IdxPlace(Idx):
+            def search(self, q, k, rewrite):
+                h, r = Idx.search(self, q, k, rewrite); return h, {"intents": ["salary"], "places": ["immensee"]}
+        llm.chat_text = lambda *a, **k: ("Die Quellen enthalten keine Angaben zum Verdienst des Schulmeisters.", {})
+        o = qa.answer(IdxPlace(), "Was verdiente der Schulmeister in Immensee?")
+        assert o["answer_source"] == "no_direct_answer" and o["sources"]
+        # a per-school list that says "no information" for one school stays an answer
+        llm.chat_text = lambda *a, **k: ("[1] Saint Laurent: 24 L.\n[2] Le Bourg: aucune information.", {})
+        two = [dict(Idx().search("", 6, "off")[0][0], id=x) for x in ("a", "b")]
+        class Idx2(Idx):
+            def search(self, q, k, rewrite):
+                return [dict(two[0], text="Saint Laurent 24 L."), dict(two[1], text="Le Bourg")], {"intents": ["salary"], "places": ["lausanne"]}
+        assert qa.answer(Idx2(), "Salaire à Lausanne?")["answer_source"] == "apertus"
+    finally:
+        llm.chat_text = orig
