@@ -11,12 +11,12 @@ Categories (single request each, all 8 tools offered every time):
 Formats: "native" = OpenAI tools API of the gateway; "json" = the tool schemas in the prompt, reply {"calls": [...]}.
 Values come from the data (place names, signatures, record text); instructions are DE/FR/EN templates.
 Writes data/out/tool_bench.json and tool_bench_cases.jsonl."""
-import json, random, re, sys, time, unicodedata
+import json, random, sys, time, unicodedata
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from . import llm
-from .agent import tool_specs, TEXT_BOUND
+from .agent import tool_specs
 
 OUT = Path("data/out")
 SYSTEM = "You are an assistant for Swiss archival records. Use the tools when they help; call several at once when the request needs several. If no tool fits, answer without calling one."
@@ -130,8 +130,8 @@ def run(models=("apertus-v1-5-70b", "apertus-v1-5-8b"), formats=("native", "json
     for model in models:
         for fmt in formats:
             with ThreadPoolExecutor(workers) as ex:
-                outs = list(ex.map(lambda c: ask(c, model, fmt, specs), cases))
-            for c, (calls, err, sec) in zip(cases, outs):
+                outs = list(ex.map(lambda c, model=model, fmt=fmt: ask(c, model, fmt, specs), cases))
+            for c, (calls, err, sec) in zip(cases, outs, strict=False):
                 rows.append({"model": model, "format": fmt, **{k: c[k] for k in ("id", "category", "lang", "q", "gold")}, "calls": calls,
                              "error": err, "seconds": sec, **score(c, calls, specs)})
     rep = {"scope": f"{len(cases)} single-turn cases on this project's 8 tools (BFCL-style categories: "

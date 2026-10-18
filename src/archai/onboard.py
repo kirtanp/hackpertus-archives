@@ -413,7 +413,7 @@ def run(path=None, ds=None, source_url=None, licence=None, desc=None, mask=False
     cov = lambda f: round(sum(bool(f(r)) for r in good) / max(len(good), 1), 3)
     flags = {}
     for r in good:
-        for k, v in r["quality"]["privacy_flags"].items():
+        for k, _ in r["quality"]["privacy_flags"].items():
             flags[k] = flags.get(k, 0) + 1
     report = {"dataset": ds, "scope": f"{src['file']} ({src['rows']} rows, sha256 {src['sha256'][:12]}…)", "source_url": src["source_url"], "licence": src["licence"],
               "records": len(good), "schema_invalid": len(bad), "mapping_source": m["source"], "mapping_notes": m["validation_notes"],

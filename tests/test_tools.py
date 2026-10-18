@@ -42,7 +42,7 @@ def test_assign_pages():
     a = pd.DataFrame({"doc_id": ["d"] * 4, "question_no": ["I.1", "I.2", "II.5", "II.6"],
                       "text_raw": ["a", "b ||[Seite 2] c", "||[Seite 3] d", "e"]})
     p = assign_pages(a)
-    assert list(zip(p.page_start, p.page_end)) == [(1, 1), (1, 2), (3, 3), (3, 3)]
+    assert list(zip(p.page_start, p.page_end, strict=True)) == [(1, 1), (1, 2), (3, 3), (3, 3)]
 
 
 def test_balance_errors():

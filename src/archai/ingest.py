@@ -1,5 +1,5 @@
 """Stage 1: load the raw open-data files into tidy parquet tables (no content changes)."""
-import io, json, re, sys, zipfile, zlib, struct
+import re, sys, zipfile, zlib, struct
 from pathlib import Path
 import pandas as pd
 from .mysqldump import parse_values, table_columns, iter_inserts
@@ -13,7 +13,7 @@ def stapfer():
         sql = z.read(name).decode("utf-8", "replace")
     cols = table_columns(sql)
     rows = {}
-    for t, explicit, vals in iter_inserts(sql.split("\n")):
+    for t, _, vals in iter_inserts(sql.split("\n")):
         rows.setdefault(t, []).extend(parse_values(vals))
     out = INTERIM / "stapfer"; out.mkdir(parents=True, exist_ok=True)
     for t, r in rows.items():

@@ -6,7 +6,7 @@
 3. execute:  tools run in code; errors are recorded, never hidden.
 4. compose:  Apertus writes metadata from the record + tool results only.
 5. validate: deterministic grounding check; ungrounded entities are rejected in export."""
-import json, random, sys, time, concurrent.futures as cf
+import json, random, time, concurrent.futures as cf
 from pathlib import Path
 from . import tools as T, llm
 
@@ -275,7 +275,7 @@ def run_record_v4(rec_id, kind, text, meta, max_chars=1500, mode="json"):
         with cf.ThreadPoolExecutor(max(1, len(prepared))) as pool:  # calls of one turn run in parallel
             outs = list(pool.map(ex, prepared))
         step_res = []
-        for (name, a, cid, err, rep), r in zip(prepared, outs):
+        for (name, a, _cid, err, rep), r in zip(prepared, outs, strict=False):
             if "error" in r:
                 stats["arg_errors"] += bool(err); failed_tools.add(name)
             elif name in failed_tools:
@@ -296,7 +296,7 @@ def run_record_v4(rec_id, kind, text, meta, max_chars=1500, mode="json"):
                     a = {}
                 norm.append(dict(c, function=dict(c["function"], arguments=json.dumps(a or {"text": "$RECORD"}, ensure_ascii=False))))
             msgs.append({"role": "assistant", "content": msg.get("content") or "", "tool_calls": norm})
-            msgs += [{"role": "tool", "tool_call_id": cid, "content": feed(r)} for (_, _, cid, _, _), r in zip(prepared, step_res)]
+            msgs += [{"role": "tool", "tool_call_id": cid, "content": feed(r)} for (_, _, cid, _, _), r in zip(prepared, step_res, strict=False)]
         else:
             history += "\n\nStep %d results:\n" % step + "\n".join(f"{r['tool']}({json.dumps(r['args'], ensure_ascii=False)}) -> {feed(r)}" for r in step_res)
         if n_calls >= MAX_CALLS:

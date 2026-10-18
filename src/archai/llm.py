@@ -150,9 +150,9 @@ def token_confidence(logprobs):
         return None
     p = [math.exp(t["logprob"]) for t in toks]
     txt = [t["token"] for t in toks]
-    num = [pi for pi, t in zip(p, txt) if any(ch.isdigit() for ch in t)]
+    num = [pi for pi, t in zip(p, txt, strict=False) if any(ch.isdigit() for ch in t)]
     cite, inside = [], False  # tokens between "[" and "]"
-    for pi, t in zip(p, txt):
+    for pi, t in zip(p, txt, strict=False):
         if "[" in t:
             inside = True
         if inside and any(ch.isdigit() for ch in t):

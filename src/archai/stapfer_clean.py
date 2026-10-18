@@ -67,7 +67,7 @@ def assign_pages(answers):
     """page_start/page_end per answer from the transcription page markers ([Seite N]), walking each sheet in questionnaire order."""
     answers = answers.sort_values(["doc_id", "question_no"], kind="stable")
     start, end, cur, doc = [], [], 1, None
-    for d, raw in zip(answers.doc_id, answers.text_raw):
+    for d, raw in zip(answers.doc_id, answers.text_raw, strict=True):
         if d != doc:
             cur, doc = 1, d
         raw = raw if isinstance(raw, str) else ""

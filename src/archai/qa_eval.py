@@ -110,13 +110,19 @@ def summarise(rows):
     return rep
 
 
+def mode_runner(idx, mode):
+    """Per-case callable for one evaluation mode. `mode` is bound now, as a default argument, so the pool can never
+    run a callable that reads a loop variable which has already moved on to the next mode."""
+    return lambda c, mode=mode: run_case(idx, c, mode)
+
+
 def main(workers=4):
     idx = qa.Index()
     cases = stapfer_cases(idx) + [{"q": q, "dataset": "consultation", "style": "para", "gold": [g]} for q, g in CONSULTATIONS]
     rows = []
     for m in MODES:
         with ThreadPoolExecutor(workers if m != "off" else 1) as ex:
-            rows += list(ex.map(lambda c: run_case(idx, c, m), cases))
+            rows += list(ex.map(mode_runner(idx, m), cases))
     n_st = sum(c["dataset"] == "stapfer" for c in cases)
     n_pl = len({c["place"] for c in cases if c["dataset"] == "stapfer"})
     rep = {"scope": f"{len(cases)} questions: {n_st} templated Stapfer questions ({n_pl} sampled places, seed 3; 6 intents; "
@@ -201,7 +207,7 @@ def confidence_data(workers=4, modes=("apertus", "off")):
     rows = []
     for mode in modes:
         with ThreadPoolExecutor(workers) as ex:
-            rows += list(ex.map(lambda c: one(c, mode), cases))
+            rows += list(ex.map(lambda c, mode=mode: one(c, mode), cases))
     with open(OUT / "confidence_cases.jsonl", "w", encoding="utf-8") as f:
         for r in rows:
             f.write(json.dumps(r, ensure_ascii=False, default=str) + "\n")
@@ -260,7 +266,7 @@ def _fit(rows, features, bins=5, save=True):
     lr = LogisticRegression(C=1.0, max_iter=1000)
     p = cross_val_predict(lr, Z, y, cv=StratifiedKFold(5, shuffle=True, random_state=0), method="predict_proba")[:, 1]
     edges = np.linspace(0, 1, bins + 1); rel = []; ece = 0.0
-    for lo, hi in zip(edges[:-1], edges[1:]):
+    for lo, hi in zip(edges[:-1], edges[1:], strict=False):
         m = (p >= lo) & (p < hi if hi < 1 else p <= hi)
         if m.sum():
             rel.append({"confidence": f"{int(lo * 100)}–{int(hi * 100)}%", "answers": int(m.sum()), "mean_confidence": round(float(p[m].mean()), 3),
@@ -277,7 +283,7 @@ def _fit(rows, features, bins=5, save=True):
                     f"to the retrieval-eval and unanswerable questions; label = a cited source is a gold source",
            "base_rate_correct": round(float(y.mean()), 3), "auc": round(float(roc_auc_score(y, p)), 3), "brier": round(float(brier_score_loss(y, p)), 3),
            "expected_calibration_error": round(float(ece), 3), "reliability": rel,
-           "weights": dict(zip(features, model["coef"])), "_features": list(features),
+           "weights": dict(zip(features, model["coef"], strict=False)), "_features": list(features),
            "method": f"logistic regression on {len(features)} signals available at answer time; 5-fold cross-validated predictions for the calibration numbers",
            "caveat": "calibrated on templated test questions; real questions may differ, so treat the percentage as an estimate"}
     return rep
