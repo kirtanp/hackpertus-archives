@@ -112,6 +112,36 @@ def chat_json(prompt, schema=None, max_tokens=400, retries=3, temperature=0.0):
     return None, meta
 
 
+def chat_tools(messages, tools, max_tokens=400, retries=3):
+    """Native (OpenAI-style) tool calling. Returns (assistant message or None, meta). meta["tools_unsupported"] is set
+    when the endpoint rejects the tools parameter (e.g. a llama.cpp server without a tool template): use the JSON protocol."""
+    meta = {"model": MODEL, "attempts": 0, "errors": []}
+    if _fails["n"] >= MAX_CONSECUTIVE_FAILS:
+        meta["errors"].append("circuit_open"); return None, meta
+    t0 = time.time()
+    for a in range(retries):
+        meta["attempts"] = a + 1
+        try:
+            d = _post({"model": MODEL, "temperature": 0, "max_tokens": max_tokens, "messages": messages,
+                       "tools": tools, "tool_choice": "auto", "parallel_tool_calls": True})
+        except urllib.error.HTTPError as e:
+            body = e.read()[:300].decode("utf-8", "replace")
+            if e.code in (400, 422) and re.search(r"invalid tool call", body, re.I):
+                meta["invalid_tool_call"] = True; meta["errors"].append(f"HTTP {e.code}: {body[:120]}")
+                return None, meta  # the model produced a call the server could not parse: caller decides (retry / fall back)
+            if e.code in (400, 422) and re.search(r"tool|function", body, re.I):
+                meta["tools_unsupported"] = True; meta["errors"].append(f"HTTP {e.code}: {body[:120]}")
+                return None, meta
+            meta["errors"].append(f"HTTP {e.code}: {body[:120]}"); time.sleep(min(2 ** a, 8)); continue
+        except (urllib.error.URLError, TimeoutError, ConnectionError, OSError) as e:
+            meta["errors"].append(f"{type(e).__name__}: {str(e)[:120]}"); time.sleep(min(2 ** a, 8)); continue
+        _fails["n"] = 0
+        meta.update(seconds=round(time.time() - t0, 1), usage=d.get("usage", {}), finish=d["choices"][0].get("finish_reason"))
+        return d["choices"][0]["message"], meta
+    _fails["n"] += 1; meta["seconds"] = round(time.time() - t0, 1)
+    return None, meta
+
+
 def chat_text(prompt, max_tokens=300, retries=3):
     meta = {"model": MODEL, "attempts": 0, "errors": []}
     if _fails["n"] >= MAX_CONSECUTIVE_FAILS:

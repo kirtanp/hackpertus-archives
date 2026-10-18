@@ -89,6 +89,8 @@ Full run from scratch (`python -m archai.pipeline --force all`, deterministic st
 | Apertus 70B enrichment | all 2,250 sheets (input cut to 1,800 chars) | 99.6% valid JSON; teacher surname recall 97.4% (1,064 scored), school place recall 92.1% (1,303) vs hand-entered Bern tables; 1.1% of 20,406 entities not literally in source text; median 3.8 s/sheet |
 | Q&A retrieval: Apertus query rewriting | 230 questions with gold passages (216 templated Stapfer, 14 hand-written consultation paraphrases; paraphrases avoid the rule keywords) | paraphrased Stapfer questions: right top source 8.6% (rules only) → 100%; consultations: right one among 6 sources 14% → 57%; wording the rules know: 100% → 100%; ~1.2 s per question (`qa_eval.json`) |
 | Q&A answers: number check | full Apertus answers to the same 230 questions | 185 shown as written; 6 stopped because a number was not in the cited source (all checked by hand: 4 computed/inferred, 2 mis-cited); 39 replaced by passages (no citation or "no information") (`qa_answer_check.json`) |
+| Apertus tool agent v4 vs v3 | same 80 records (60 Stapfer, 20 consultations), both re-run in one environment | v4 (loop, parallel calls, argument repair, one feedback round): Apertus chose 79.3% of required tools (v3 65.4%), 97.7% of steps ran calls in parallel (up to 14), tool errors 3 (all self-corrected) vs 5, hallucination proxy 9.2% vs 11.4%; 15.1 s vs 6.7 s per record (`metrics.json` → `apertus_agent_v4`) |
+| Tool-calling benchmark (BFCL-style) | 64 single-turn cases on the 8 tools: simple 26, parallel 16, parallel_multiple 12, irrelevance 10 | 70B: 81% exact with the JSON protocol, 50% with the gateway's native tools API (it returns one call per turn: parallel 0%); simple 100%, irrelevance 100%; repeating one tool on several values is the weak spot (44%). 8B: 59% (JSON), irrelevance 50% (`tool_bench.json`) |
 | Apertus tool agent (agent-v3) | 80 records (60 Stapfer, 20 consultations) | 98.8% valid plans, planner picks 68.6% of required tools (the rest run anyway as baseline), 3 tool errors, 11.1% unsupported-entity proxy |
 
 Model numbers are measurements on the stated scope, not an "overall accuracy".
@@ -137,6 +139,23 @@ Raw text is never overwritten: every answer keeps `text_raw` next to `text_clean
 Counts per sheet use distinct answer texts: the database stores the same text under several sub-questions.
 Re-derive all cleaned fields from `text_raw` without the raw dumps: `PYTHONPATH=src python -m archai.stapfer_clean --reclean`.
 Record schema: `docs/SCHEMA.md`. Web API: `docs/API.md`.
+
+## Tool agent (`src/archai/agent.py`, agent-v4)
+No agent framework: plain OpenAI-compatible HTTP calls (`llm.py`). Tool schemas are generated from the Python signatures in
+`tools.py`; text tools are bound to the record, so the model never has to pass the text.
+1. Apertus calls tools — JSON protocol by default (it batches calls), or the gateway's native tools API (`--mode native`).
+2. Calls of one step run in parallel; repeated calls are served from a cache; near-miss argument names are repaired
+   (`place` → `name`), types coerced, and anything still wrong goes back to the model as an error listing the expected
+   arguments, so it can correct itself.
+3. The model sees the results and may call more (max 6 steps / 14 calls). If it finishes with required tools missing, the
+   code names them once and the model decides; anything still missing runs anyway (`origin: baseline`).
+4. Compose → deterministic grounding check, as before. Every step is in `agent_traces_v4*.jsonl`.
+```bash
+make setup && PYTHONPATH=src .venv/bin/python -m archai.agent 60 4          # 80 records, needs APERTUS_API_KEY
+PYTHONPATH=src .venv/bin/python -m archai.tool_bench                         # BFCL-style benchmark, 70B + 8B
+```
+Gateway quirks found and handled: the native API returns at most one call per turn, and rejects a conversation that
+contains an earlier call with empty arguments (`{}`), so history calls are recorded with a placeholder argument.
 
 ## Web demo and deployment
 - API: `docs/API.md` (also interactive at `/docs`). Endpoints: `/api/ask`, `/api/record/{id}`, `/api/metrics`,

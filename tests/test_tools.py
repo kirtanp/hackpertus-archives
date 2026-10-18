@@ -84,3 +84,14 @@ def test_word_numbers():
     assert "260" in word_numbers("Deux Cent soixante francs de Suisse")
     assert {"80", "21"} <= word_numbers("quatre-vingts écoliers, vingt et un garçons")
     assert {"41", "8"} <= word_numbers("einundvierzig Kinder, acht Uhr")
+
+
+def test_agent_v4_tool_specs_and_repair():
+    from archai import agent as A
+    specs = {s["function"]["name"]: s["function"]["parameters"] for s in A.tool_specs()}
+    assert set(specs) == {"normalize_dates", "lookup_place", "parse_signature", "lookup_archive_unit", "extract_quantities", "verify_in_source", "clean_markup", "finish"}
+    assert "text" not in specs["extract_quantities"]["properties"]  # text tools are bound to the record
+    assert A.repair_args("lookup_place", {"place": "Hörnli"})[:2] == ({"name": "Hörnli"}, ["place->name"])
+    assert A.repair_args("lookup_archive_unit", {"sig": "E1#2000/1#2"})[0] == {"signature": "E1#2000/1#2"}
+    assert A.repair_args("parse_signature", {})[2].startswith("missing argument")
+    assert A.repair_args("nope", {})[2].startswith("unknown tool")

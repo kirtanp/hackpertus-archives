@@ -376,6 +376,19 @@ function results(m){
       tile(`${ap.all.seconds_median} s`,`median search time per question with the Apertus rewrite (rules only: ${off.all.seconds_median} s; ${ap.all.apertus_failures} failed calls of ${ap.all.apertus_calls})`,
         raw(["results.apertus.all.seconds_median",ap.all.seconds_median],["results.apertus.all.apertus_failures",ap.all.apertus_failures]),LOW)]);
   }
+  const v3=m.apertus_agent_v3_same_run, v4=m.apertus_agent_v4, v4n=m.apertus_agent_v4_native_api;
+  if(v3&&v4)h+=group("Does the new tool agent (v4) do better than v3?",v4.scope.replace("Apertus tool-agent","Same records as v3")+" · v3: "+v3.scope,[
+    tile(`${pct(v3.planner_recall_of_required_tools)} → ${pct(v4.planner_recall_of_required_tools)}`,"of the required tools Apertus chose itself (v3 → v4, after one feedback round)",raw(["v3.planner_recall_of_required_tools",v3.planner_recall_of_required_tools],["v4.planner_recall_of_required_tools",v4.planner_recall_of_required_tools])),
+    tile(pct(v4.steps_with_parallel_calls),`of v4 steps ran several tools in parallel (up to ${v4.max_calls_in_one_step} at once; native API: ${pct(v4n?v4n.steps_with_parallel_calls:0)})`,raw(["v4.steps_with_parallel_calls",v4.steps_with_parallel_calls])),
+    tile(`${n(v3.tool_execution_errors)} → ${n(v4.tool_execution_errors)}`,`tool errors (v4: ${n(v4.self_corrected_after_error)} fixed by the model after seeing the error)`,raw(["v3.tool_execution_errors",v3.tool_execution_errors],["v4.self_corrected_after_error",v4.self_corrected_after_error]),LOW),
+    tile(`${pct(v3.unsupported_entity_rate)} → ${pct(v4.unsupported_entity_rate)}`,"of output names not literally in the source (hallucination proxy)",raw(["v3.unsupported_entity_rate",v3.unsupported_entity_rate],["v4.unsupported_entity_rate",v4.unsupported_entity_rate]),LOW)]);
+  const tb=m.tool_calling_benchmark;
+  if(tb){const A=tb.results["apertus-v1-5-70b / json"],N=tb.results["apertus-v1-5-70b / native"],S=tb.results["apertus-v1-5-8b / json"];
+    if(A&&N)h+=group("How well does Apertus call tools? (BFCL-style benchmark)",tb.scope+". "+tb.scoring,[
+      tile(pct(A.overall_exact),`of cases exactly right, 70B with the JSON protocol (native API: ${pct(N.overall_exact)}; 8B JSON: ${S?pct(S.overall_exact):"–"})`,raw(["70b/json.overall_exact",A.overall_exact],["70b/native.overall_exact",N.overall_exact])),
+      tile(pct(A.simple.exact),`single calls right (native API: ${pct(N.simple.exact)})`,raw(["70b/json.simple.exact",A.simple.exact])),
+      tile(pct(A.parallel.exact),`"same tool several times" right — often only one of the values is looked up (native API: ${pct(N.parallel.exact)}, one call per turn)`,raw(["70b/json.parallel.exact",A.parallel.exact],["70b/native.parallel.exact",N.parallel.exact])),
+      tile(pct(A.irrelevance.exact),`requests no tool can serve correctly answered without a call (8B JSON: ${S?pct(S.irrelevance.exact):"–"})`,raw(["70b/json.irrelevance.exact",A.irrelevance.exact]))]);}
   const c=m.qa_answer_check;
   if(c)h+=group("Are the numbers in Apertus' answers backed by the cited source?",c.scope+". Check: "+c.number_check_definition,[
     tile(of(c.accepted,c.answers),"answers shown as written by Apertus",raw(["accepted",c.accepted],["answers",c.answers])),
