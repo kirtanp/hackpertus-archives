@@ -74,6 +74,8 @@ Local alternative: llama.cpp server with `Colby/apertus-v1.5-8b-text-Q4_K_M-GGUF
 - `agent_traces.jsonl` – every plan, tool call, result and validation
 - `metrics.json` – every block states its scope; model numbers are sample measurements, not overall accuracy
 - `run_manifest.json` – stages, status, runtime, output hashes, model endpoint
+- `stapfer_stats.duckdb` – **derived, not committed** (gitignored, `make statssql`): the corpus statistics as SQL
+  tables for Apache Superset, built from `stapfer_answers.parquet`, which stays the committed corpus
 
 See `docs/ETHICS.md` (privacy, bias, limits) and `docs/KAGGLE_IDEAS.md` (what we reused from the Akkadian competition winners).
 
@@ -172,12 +174,29 @@ contains an earlier call with empty arguments (`{}`), so history calls are recor
   (needs `pip install huggingface_hub` and `hf auth login`), then add `APERTUS_API_KEY` as a Space secret.
 - Map tiles: © swisstopo (Dufour map 1845–1865, national map). Facsimiles are linked on stapferenquete.ch, never copied.
 
+## Statistics in SQL (Apache Superset prototype)
+`/api/stats` answers the corpus aggregates as JSON, which a BI tool cannot chart. `src/archai/statssql.py` writes
+the same aggregates into a DuckDB **database file** that Apache Superset connects to as an ordinary SQL
+datasource (driver `duckdb-engine`, URI `duckdb:////…/data/out/stapfer_stats.duckdb`):
+```bash
+make statssql         # data/out/stapfer_stats.duckdb (derived, gitignored, ~41 MB, 13 SQL relations)
+```
+The aggregate SQL is not written twice: every table is created from `archai.stats.aggregate_sql()`, the very
+statements `/api/stats` runs, so the endpoint and the datasource cannot drift apart (`section_page`,
+`content_page` and `markup_rates` add the section/page cuts and the markup rates from `stats.py`'s own
+definitions). The committed corpus is `data/out/stapfer_answers.parquet`; the database file is a build artifact.
+Superset is a separate application, not part of `app.py`: datasource tables, the routes to run it (a local
+PyPI virtualenv first, `docker compose` second), the exported dashboard bundle and the recorded figures a chart
+returned are in `deploy/superset/README.md`. Tests: `tests/test_statssql.py`.
+
 ## Repository layout
 ```
 app.py, static/index.html     web demo (FastAPI + one HTML page, Leaflet)
 src/archai/                   pipeline: ingest, stapfer_clean, link, enrich, agent, export, evaluate, bern_eval,
-                              qa (retrieval + answers), qa_eval (accuracy), onboard (new datasets), tools, llm
+                              qa (retrieval + answers), qa_eval (accuracy), onboard (new datasets), tools, llm,
+                              stats (corpus aggregates in DuckDB, /api/stats), statssql (the Superset datasource)
 data/out/                     AI-ready dataset + metrics (committed)
 data/onboard/                 onboarding runs (test: consultations table vs hand-built records)
+deploy/superset/              Superset prototype: datasource docs, provisioning script, dashboard export, compose
 notebooks/demo.ipynb          executed walkthrough      docs/  API, SCHEMA, ETHICS, KAGGLE_IDEAS
 ```

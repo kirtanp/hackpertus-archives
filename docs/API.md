@@ -84,6 +84,10 @@ curl 'localhost:8791/api/stats?query=content&section=IV.16'  # non-empty vs empt
 curl 'localhost:8791/api/stats?query=pages&page=1'           # answers on page 1, with the scope they cover
 ```
 
+The same aggregates are also available as SQL, for BI tools that cannot chart a JSON envelope: `make statssql`
+materialises them into a DuckDB database file (`src/archai/statssql.py`) that Apache Superset reads as a
+datasource. See `deploy/superset/README.md`.
+
 ## `GET /api/places`
 One point per geocoded Stapfer sheet (2,249): `id, name` (1799), `today` (municipality), `school, type, lang, conf`
 (confession), `pupils` (largest count stated), `district, lat, lon, url`. Feeds the map and its filters.

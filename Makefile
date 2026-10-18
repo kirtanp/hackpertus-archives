@@ -4,7 +4,7 @@ BIN := $(VENV)/bin
 PORT ?= 8791
 export PYTHONPATH := src
 
-.PHONY: setup run test check notebook docker eval onboard-example clean
+.PHONY: setup run test check notebook docker eval onboard-example statssql clean
 
 setup:            ## create the virtual env and install pinned dependencies
 	$(PY) -m venv $(VENV) && $(BIN)/pip install -q -r requirements.txt
@@ -26,6 +26,9 @@ eval:             ## retrieval + answer evaluation (needs APERTUS_API_KEY); inte
 
 check:            ## lint + all tests incl. JSON Schema / Croissant / JSON-LD validation
 	$(BIN)/pip install -q -r requirements-dev.txt && $(BIN)/ruff check . && $(BIN)/python -m pytest -q tests
+
+statssql:         ## build the DuckDB datasource for Superset from the corpus parquet (gitignored build artifact)
+	$(BIN)/python -m archai.statssql
 
 onboard-example:  ## onboard the consultations table generically and compare with the hand-built records
 	$(BIN)/python -m archai.onboard data/out/consultations.csv --id example-consultations --no-llm \

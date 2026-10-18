@@ -1,0 +1,34 @@
+# Superset configuration for the ArchAI corpus-statistics prototype.
+#
+# This is the primary (non-Docker) route: Superset runs from PyPI in its own virtualenv and reads the DuckDB
+# datasource that `make statssql` writes. Superset is a separate application, not part of the FastAPI demo.
+#
+# Setup (see deploy/superset/README.md for the full sequence):
+#
+#   cp deploy/superset/superset_config.py.example deploy/superset/superset_config.py
+#   python3 -c "import secrets; print(secrets.token_urlsafe(42))"   # into SUPERSET_SECRET_KEY below
+#   export SUPERSET_CONFIG_PATH=$PWD/deploy/superset/superset_config.py
+#
+# `superset_config.py` is gitignored: it carries the generated secret key and points at the metadata database.
+import os
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+
+# Required: Superset 6 refuses to start on its built-in default key. Generate one, never commit it.
+SECRET_KEY = os.environ.get("SUPERSET_SECRET_KEY", "")
+
+# Superset's own metadata (users, databases, datasets, charts, dashboards). SQLite is enough for one local
+# prototype process, needs no server, and the file is gitignored.
+SQLALCHEMY_DATABASE_URI = os.environ.get("SUPERSET_METADATA_DB", f"sqlite:///{HERE / 'superset.db'}")
+
+# The prototype ships its own dashboard export; do not load Superset's examples on `superset init`.
+SUPERSET_LOAD_EXAMPLES = False
+
+# Localhost prototype over plain HTTP: no telemetry, and Talisman's HTTPS/CSP defaults are off.
+SCARF_ANALYTICS = False
+TALISMAN_ENABLED = False
+
+# The provisioning script authenticates against the REST API with a bearer token, not with cookies.
+# Keep CSRF on for the browser UI; the API login endpoint is used by deploy/superset/provision_superset.py.
+WTF_CSRF_ENABLED = True
