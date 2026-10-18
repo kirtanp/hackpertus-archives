@@ -1,0 +1,31 @@
+# Lint-only configuration. This project installs from requirements.txt, and the Dockerfile, Makefile and
+# .github/workflows/tests.yml all read that file directly, so this file deliberately carries no packaging
+# metadata, no [build-system] table, no [project] table and no dependency groups: it must stay inert to them.
+# The rule set below accepts the codebase's compact own style on purpose and reports only correctness and
+# dead-code problems, so that adding the linter does not rewrite the tree or destroy git blame.
+
+[tool.ruff]
+# Measured line lengths on main: p50 45, p90 114, p99 152, max 256. 120 clears p90 without a reformat;
+# ruff's 88 default would leave hundreds of E501 findings and force one.
+line-length = 120
+# Runtime is Python 3.12: Dockerfile `FROM python:3.12-slim`, Makefile `PY ?= python3.12`, CI python-version "3.12".
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "B"]  # pycodestyle errors, pyflakes, pycodestyle warnings, flake8-bugbear
+ignore = [
+    "E501",  # line-too-long: lines are written for narrow review diffs, not for a column ruler (see line-length above)
+    "E702",  # multiple-statements-on-one-line-semicolon: `p = Path(path); raw = p.read_bytes()` is used throughout
+    "E701",  # multiple-statements-on-one-line-colon: the same compact one-liner idiom as E702
+    "E741",  # ambiguous-variable-name: one-letter names such as `l` are deliberate in these short loops
+    "E401",  # multiple-imports-on-one-line: `import argparse, csv, datetime as dt, ...` is the house import style
+    "E402",  # module-import-not-at-top-of-file: app.py imports after its os.chdir / sys.path setup, which must come first
+    "E731",  # lambda-assignment: the compact local-helper idiom used in onboard.py and qa.py
+]
+# Deliberately not selected: I (import sorting), N (pep8-naming) and D (docstrings). Those fight the existing
+# style, and D would additionally require authoring docstrings for every public function, class and module.
+
+[tool.ruff.format]
+# Formatting is deliberately not enforced on this codebase, and no target runs `ruff format`: it would rewrite
+# 20 of the 21 Python files. The quote style is recorded here for anyone who does run it by hand.
+quote-style = "double"
