@@ -1,0 +1,108 @@
+{
+ "@context": {
+  "@version": 1.1,
+  "@base": "https://github.com/kirtanp/hackpertus-archives/record/",
+  "dct": "http://purl.org/dc/terms/",
+  "schema": "https://schema.org/",
+  "archai": "https://github.com/kirtanp/hackpertus-archives/vocab#",
+  "xsd": "http://www.w3.org/2001/XMLSchema#",
+  "stapfer": {
+   "@id": "https://github.com/kirtanp/hackpertus-archives/record/stapfer:",
+   "@prefix": true
+  },
+  "consultation": {
+   "@id": "https://github.com/kirtanp/hackpertus-archives/record/consultation:",
+   "@prefix": true
+  },
+  "record_id": "@id",
+  "dataset": {
+   "@id": "schema:isPartOf",
+   "@type": "@id"
+  },
+  "kind": "archai:kind",
+  "title": "dct:title",
+  "language": "dct:language",
+  "text": "schema:text",
+  "text_raw_available": "archai:textRawAvailable",
+  "schema_version": "schema:schemaVersion",
+  "dates": {
+   "@id": "dct:date",
+   "@context": {
+    "iso": "schema:value",
+    "surface": "archai:surface",
+    "source": "archai:extractedBy",
+    "precision": "archai:precision",
+    "year_inferred": "archai:yearInferred"
+   }
+  },
+  "places": {
+   "@id": "dct:spatial",
+   "@context": {
+    "place_id": "schema:identifier",
+    "name": "schema:name",
+    "municipality_today": "schema:containedInPlace",
+    "lat": {
+     "@id": "schema:latitude",
+     "@type": "xsd:decimal"
+    },
+    "lon": {
+     "@id": "schema:longitude",
+     "@type": "xsd:decimal"
+    },
+    "source": "archai:extractedBy"
+   }
+  },
+  "persons": {
+   "@id": "schema:mentions",
+   "@context": {
+    "person_id": "schema:identifier",
+    "name": "schema:name",
+    "role": "schema:roleName",
+    "source": "archai:extractedBy",
+    "grounded": "archai:groundedInSource"
+   }
+  },
+  "organisations": {
+   "@id": "schema:sourceOrganization",
+   "@context": {
+    "org_id": "schema:identifier",
+    "name": "schema:name",
+    "type": "schema:additionalType",
+    "abbr": "schema:alternateName",
+    "role": "schema:roleName"
+   }
+  },
+  "quantities": "archai:quantities",
+  "archive_units": {
+   "@id": "dct:relation",
+   "@context": {
+    "signature": "schema:identifier",
+    "title": "dct:title",
+    "url": {
+     "@id": "schema:url",
+     "@type": "@id"
+    }
+   }
+  },
+  "provenance": {
+   "@id": "dct:provenance",
+   "@context": {
+    "archive_signature": "schema:identifier",
+    "repository": "schema:holdingArchive",
+    "viewer_url": {
+     "@id": "schema:url",
+     "@type": "@id"
+    },
+    "source_dataset": {
+     "@id": "dct:source",
+     "@type": "@id"
+    },
+    "facsimile_file": "archai:facsimileFile",
+    "is_original": "archai:isOriginal"
+   }
+  },
+  "quality": "archai:quality",
+  "enrichment": "archai:enrichment",
+  "places_mentioned": "archai:placesMentioned"
+ }
+}

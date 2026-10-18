@@ -201,7 +201,7 @@ class Index:
             rw, meta = rewrite_query(q, self.gaz)
             r["rewrite"] = rw or {"failed": meta.get("errors")}
             if rw:
-                rule_intents = r["intents"]
+                rule_intents = list(r["intents"]); r["rule_intents"] = rule_intents
                 if rw["intents"] and (rewrite == "apertus" or not rule_intents):
                     r["intents"], r["intents_from"] = rw["intents"], "apertus"
                 if rw["places"] and r["intents"] != ["consultation"]:
@@ -234,8 +234,37 @@ class Index:
         return [self._hit(int(i)) for i in np.where(self.mask(r))[0]]
 
 
-NO_INFO = re.compile(r"keine (angaben|informationen?)|enthalten nicht|no information|do not contain|does not contain|"
-                     r"aucune information|ne contiennent pas|ne mentionnent pas", re.I)
+NO_INFO = re.compile(r"keine(rlei)? (angaben|informationen?|antwort)|enthalten nicht|no information|do not contain|does not contain|"
+                     r"none of the (provided |given )?(archival )?(sources|documents|passages)|no (relevant )?(source|passage)s? mention|"
+                     r"aucune (information|des sources|source)|ne contiennent pas|ne mentionnent? pas|nessuna informazione", re.I)
+CITE_RANGE = re.compile(r"\[\d+\]\s*(?:-|–|bis|to|à|au|a)\s*\[\d+\]", re.I)  # "[1] bis [6]": all sources as a block, not a citation
+REFUSAL = re.compile(r"cannot (fulfil+|answer|help)|can't (answer|help)|not a meaningful|unable to answer|kann (die frage )?nicht|"
+                     r"keine sinnvolle|je ne peux pas|ne peux pas répondre|pas une question", re.I)
+WORD = re.compile(r"[^\W\d_]{3,}")  # a run of 3+ letters in any script
+NO_DIRECT_MSG = {
+    "de": "In den gefundenen Archivstellen steht dazu keine direkte Angabe. Die relevantesten Stellen stehen unten.",
+    "fr": "Les passages d'archives trouvés ne donnent pas de réponse directe. Les passages les plus pertinents sont ci-dessous.",
+    "it": "I passaggi d'archivio trovati non danno una risposta diretta. I passaggi più pertinenti sono qui sotto.",
+    "en": "The archive passages found do not state this directly. The most relevant passages are below."}
+NOT_FOUND_MSG = {
+    "de": "Die hier verwendeten Archive (Stapfer-Enquête 1799, Vernehmlassungen 1960–1991) enthalten keine Antwort auf diese Frage.",
+    "fr": "Les archives utilisées ici (enquête Stapfer 1799, consultations fédérales 1960–1991) ne contiennent pas de réponse à cette question.",
+    "it": "Gli archivi usati qui (inchiesta Stapfer 1799, consultazioni federali 1960–1991) non contengono una risposta a questa domanda.",
+    "en": "The archives used here (Stapfer-Enquête 1799, Federal Consultations 1960–1991) do not contain an answer to this question."}
+INVALID_MSG = {
+    "de": "Bitte stellen Sie eine Frage zu den Schulen von 1799 oder zu den Vernehmlassungen 1960–1991.",
+    "fr": "Posez une question sur les écoles de 1799 ou sur les consultations fédérales 1960–1991.",
+    "it": "Fai una domanda sulle scuole del 1799 o sulle consultazioni federali 1960–1991.",
+    "en": "Please ask a question about the 1799 schools or the federal consultations 1960–1991."}
+
+
+def _qlang(q):
+    from .stapfer_clean import guess_lang
+    l = guess_lang(q)
+    if l in ("de", "fr", "it"):
+        return l
+    a = _ascii(q)
+    return "de" if re.search(r"\b(wie|wer|was|wo|welche|gab|hatte)\b", a) else "fr" if re.search(r"\b(qui|quel|quelle|combien|ou)\b", a) else "en"
 
 PROMPT = """Answer the question using ONLY the numbered archival sources. Cite every claim with [n].
 If the sources do not contain the answer, say so. Answer in the language of the question.
@@ -259,42 +288,7 @@ def _nums(t):
     return {n.replace(",", ".") for n in NUM.findall(t)}
 
 
-# number words in the sources (FR/DE), so "Quarante-un" in a source grounds "41" in an answer
-_NW = {"un": 1, "une": 1, "deux": 2, "trois": 3, "quatre": 4, "cinq": 5, "six": 6, "sept": 7, "huit": 8, "neuf": 9, "dix": 10,
-       "onze": 11, "douze": 12, "treize": 13, "quatorze": 14, "quinze": 15, "seize": 16, "vingt": 20, "vingts": 20, "trente": 30,
-       "quarante": 40, "cinquante": 50, "soixante": 60, "septante": 70, "huitante": 80, "octante": 80, "nonante": 90,
-       "cent": 100, "cents": 100, "mille": 1000,
-       "ein": 1, "eins": 1, "eine": 1, "zwei": 2, "drei": 3, "vier": 4, "funf": 5, "sechs": 6, "sieben": 7, "acht": 8, "neun": 9,
-       "zehn": 10, "elf": 11, "zwolf": 12, "dreizehn": 13, "vierzehn": 14, "funfzehn": 15, "sechzehn": 16, "siebzehn": 17,
-       "achtzehn": 18, "neunzehn": 19, "zwanzig": 20, "dreissig": 30, "dreizig": 30, "vierzig": 40, "funfzig": 50, "sechzig": 60,
-       "siebzig": 70, "achtzig": 80, "neunzig": 90, "hundert": 100, "tausend": 1000}
-_DE_COMPOUND = re.compile(r"(ein|zwei|drei|vier|funf|sechs|sieben|acht|neun)und(zwanzig|dreissig|vierzig|funfzig|sechzig|siebzig|achtzig|neunzig)")
-
-
-def word_numbers(t):
-    """Values of FR/DE number words and runs of them ("quarante six" 46, "deux cent soixante" 260, "einundvierzig" 41)."""
-    t = _ascii(t)
-    out = {str(_NW[m.group(1)] + _NW[m.group(2)]) for m in _DE_COMPOUND.finditer(t)}
-    cur, total, run = 0, 0, False
-    for w in re.findall(r"[a-z]+", t) + [""]:
-        v = _NW.get(w)
-        if v is None:
-            if w == "et" and run:  # "vingt et un"
-                continue
-            if run:
-                out.add(str(total + cur))
-            cur, total, run = 0, 0, False
-            continue
-        out.add(str(v)); run = True
-        if v == 100:
-            cur = (cur or 1) * 100
-        elif v == 1000:
-            total += (cur or 1) * 1000; cur = 0
-        elif v == 20 and cur % 100 == 4:  # quatre-vingt(s) = 80
-            cur += 76
-        else:
-            cur += v
-    return out
+from .tools import word_numbers  # FR/DE number words, shared with extract_quantities
 
 
 def check_numbers(a, hits, q, extra=()):
@@ -312,6 +306,47 @@ def check_numbers(a, hits, q, extra=()):
         for n in _nums(re.sub(r"\[\d+\]", " ", seg)) - allowed_q - pool:
             fails.append({"number": n, "cited": refs, "sentence": seg[:200]})
     return fails
+
+
+CONF_FEATURES_SIGNALS = ["top_score", "margin", "has_place", "intent_agree", "no_intent", "apertus_answer", "n_cited", "cites_top",
+                         "number_ok", "consultation", "log_pool"]
+CONF_FEATURES_LOGPROBS = ["tok_mean_prob", "tok_min_prob", "tok_min_number_prob", "tok_min_citation_prob"]
+CONF_FEATURES = CONF_FEATURES_SIGNALS + CONF_FEATURES_LOGPROBS
+_CONF = {}
+
+
+def confidence_features(out):
+    h, r = out["sources"], out["route"]
+    sc = [x.get("score", 0.0) for x in h] + [0, 0]
+    cited = out.get("cited") or []
+    rule = r.get("rule_intents", r.get("intents", []))
+    return {"top_score": sc[0], "margin": sc[0] - sc[1], "has_place": float(bool(r.get("places"))),
+            "intent_agree": float(set(rule) == set(r.get("intents", []))), "no_intent": float(not r.get("intents")),
+            "apertus_answer": float(out["answer_source"] == "apertus"), "n_cited": min(len(cited), 6) / 6, "cites_top": float(1 in cited),
+            "number_ok": float((out.get("number_check") or {"ok": True})["ok"]), "consultation": float(bool(h) and h[0]["kind"] == "consultation"),
+            "log_pool": float(np.log1p(r.get("filtered_pool", 0)) / 12), **_tok_features(out)}
+
+
+def _tok_features(out):
+    """Final-layer token probabilities of Apertus' answer; neutral values (1.0) when there is no generated answer."""
+    t = (out.get("llm_meta") or {}).get("token_confidence") or {}
+    used = out["answer_source"] == "apertus" and t
+    g = lambda k: float(t[k]) if used and t.get(k) is not None else 1.0
+    return {"tok_mean_prob": g("mean_prob"), "tok_min_prob": g("min_prob"), "tok_min_number_prob": g("min_number_prob"),
+            "tok_min_citation_prob": g("min_citation_prob")}
+
+
+def confidence(out, path=OUT / "confidence_model.json"):
+    """Calibrated estimate that the cited sources answer the question (logistic model fitted by archai.qa_eval --confidence)."""
+    if "m" not in _CONF:
+        _CONF["m"] = json.loads(path.read_text()) if path.exists() else None
+    m = _CONF["m"]
+    if not m or out["answer_source"] not in ("apertus", "extractive") or not out["sources"]:
+        return None
+    f = confidence_features(out)
+    z = m["intercept"] + sum(c * (f[k] - mu) / sd for k, c, mu, sd in zip(m["features"], m["coef"], m["mean"], m["std"], strict=False))
+    # shown between 1 and 99: the best calibration bucket was right ~98% of the time, never "certain"
+    return {"percent": int(min(99, max(1, round(100 / (1 + np.exp(-z)))))), "meaning": m["meaning"], "calibration": m["calibration_summary"]}
 
 
 # ---------------------------------------------------------------- deterministic pupil totals
@@ -572,6 +607,18 @@ def render_pupil_totals(agg, question):
 
 
 def answer(idx, q, k=6, use_llm=True, rewrite="off"):
+    out = _answer(idx, q, k, use_llm, rewrite)
+    c = confidence(out)
+    if c:
+        out["confidence"] = c
+    return out
+
+
+def _answer(idx, q, k=6, use_llm=True, rewrite="off"):
+    lang = _qlang(q)
+    if not WORD.search(q):  # no word at all (emoji, punctuation, digits): nothing to search for, no model call
+        return {"question": q, "route": {"intents": [], "places": []}, "sources": [], "answer": INVALID_MSG[lang],
+                "cited": [], "answer_source": "invalid_input", "citation_ok": True}
     hits, r = idx.search(q, k, rewrite if use_llm else "off")
     out = {"question": q, "route": r}
     # a count question is answered from the whole routed pool (all schools of the place), not from the top k passages
@@ -589,22 +636,37 @@ def answer(idx, q, k=6, use_llm=True, rewrite="off"):
     src = "\n".join(f"[{i + 1}] ({h['cite']}) {h['text'][:SRC_CHARS]}" for i, h in enumerate(hits))
     a = None
     if use_llm:
-        a, meta = llm.chat_text(PROMPT.format(src=src, q=q), max_tokens=300)
+        a, meta = llm.chat_text(PROMPT.format(src=src, q=q), max_tokens=300, logprobs=True)
         out["llm_meta"] = meta
     if a:
         cited = sorted({int(n) for n in re.findall(r"\[(\d+)\]", a) if 0 < int(n) <= len(hits)})
+        specific = sorted({int(n) for n in re.findall(r"\[(\d+)\]", CITE_RANGE.sub(" ", a)) if 0 < int(n) <= len(hits)})
         # a per-school list may say "no information" for one school; only reject answers that are a refusal overall
         fails = check_numbers(a, hits, q)
         out["number_check"] = {"ok": not fails, "failures": fails}
-        if cited and not (NO_INFO.search(a) and len(cited) < 2) and not fails:
+        if specific and not ((NO_INFO.search(a) or REFUSAL.search(a)) and len(specific) < 2) and not fails:
             out.update(answer=a, cited=cited, answer_source="apertus", citation_ok=True)
-        else:  # uncited, "no information" despite routed sources, or a number its citation does not contain: show the passages
+        elif not fails and (NO_INFO.search(a) or REFUSAL.search(a)) and len(specific) < 2:
+            # Apertus says the passages do not answer this (Charter: "say that the answer is unknown rather than guess").
+            # Fixed text, not the model's, so no outside knowledge slips in. With a recognised place the sheet exists but
+            # states nothing direct ("no_direct_answer"); without one, the question is outside these archives ("not_found").
+            return _decline(out, lang, a, "model_says_not_in_sources")
+        else:  # uncited, or a number its citation does not contain: show the passages
             out["llm_rejected"] = a
             out["llm_rejected_reason"] = "number_not_in_cited_source" if fails else "uncited_or_no_information"
             a = None
     if not a:
+        if not (r.get("intents") or r.get("places")) and (use_llm or not hits):  # nothing in the question connects to the archives
+            return _decline(out, lang, out.get("llm_rejected"), out.get("llm_rejected_reason") or "no_route")
         out.update(answer="\n".join(f"[{i + 1}] {h['text'][:300]}" for i, h in enumerate(hits[:3])),
                    cited=[1, 2, 3][:len(hits)], answer_source="extractive", citation_ok=True)
+    return out
+
+
+def _decline(out, lang, model_text, reason):
+    direct = bool(out["route"].get("places")) and bool(out["sources"])
+    out.update(answer=(NO_DIRECT_MSG if direct else NOT_FOUND_MSG)[lang], cited=[], citation_ok=True,
+               answer_source="no_direct_answer" if direct else "not_found", llm_rejected=model_text, llm_rejected_reason=reason)
     return out
 
 

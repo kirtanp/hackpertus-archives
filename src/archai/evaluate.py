@@ -44,6 +44,41 @@ def stapfer_metrics():
     }
 
 
+def bias_metrics(threshold=0.10):
+    """Bias-aware preprocessing check: does each extraction step work equally well for every source language? Rates are
+    per Stapfer sheet; a gap above `threshold` between German and French is flagged. "before_fix" are the rates of the
+    German-only extractor (October 2026), kept for transparency."""
+    recs = [json.loads(l) for l in open(OUT / "records.jsonl", encoding="utf-8")]
+    st = [r for r in recs if r["dataset"] == "stapfer-enquete-1799"]
+    checks = {"pupil_counts_extracted": lambda r: bool(r["quantities"]["pupils"]), "money_amounts_extracted": lambda r: bool(r["quantities"]["money"]),
+              "dates_found": lambda r: bool(r["dates"]), "place_geocoded": lambda r: any(p.get("lat") for p in r["places"]),
+              "teacher_named": lambda r: bool(r["persons"]), "apertus_enriched": lambda r: r["enrichment"]["source"] != "deterministic"}
+    out = {"scope": "Stapfer sheets by detected language (it: 3 sheets, too few to compare)", "threshold": threshold,
+           "rates": {}, "gaps_de_fr": {}, "flagged": [],
+           "before_fix": {"pupil_counts_extracted": {"de": 0.77, "fr": 0.43}, "money_amounts_extracted": {"de": 0.78, "fr": 0.36}},
+           "fix": "extract_quantities reads French and German number words, both writing orders, French pupil/currency words "
+                  "and bare numbers in the pupils question (III.12); precision of newly added extractions 36/40 in a hand-checked sample"}
+    for lang in ("de", "fr", "it"):
+        rs = [r for r in st if r["language"] == lang]
+        out["rates"][lang] = {"sheets": len(rs), **{k: round(sum(f(r) for r in rs) / len(rs), 3) for k, f in checks.items()}} if rs else {"sheets": 0}
+    # dates: the sources themselves differ (French sheets are dated less often), so parity is measured on the sheets that
+    # carry a year where the pipeline looks for the date of writing (letterhead + end of the sheet)
+    docs = {json.loads(l)["doc_id"]: json.loads(l) for l in open(OUT / "stapfer_documents.jsonl", encoding="utf-8")}
+    dated = lambda r: bool(re.search(r"\b1[78]\d\d\b", (docs[r["record_id"]]["letterhead_clean"] or "") + " " + docs[r["record_id"]]["text_clean"][-400:]))
+    for lang in ("de", "fr"):
+        rs = [r for r in st if r["language"] == lang]; d = [r for r in rs if dated(r)]
+        out["rates"][lang]["sheets_with_a_year_in_source"] = round(len(d) / len(rs), 3)
+        out["rates"][lang]["dates_found_where_source_dated"] = round(sum(bool(r["dates"]) for r in d) / len(d), 3)
+    out["source_side_gaps"] = {"dates_found": "French sheets carry a date less often (year in letterhead/end of sheet: see "
+                                              "sheets_with_a_year_in_source); parity is checked on dates_found_where_source_dated"}
+    for k in list(checks) + ["dates_found_where_source_dated"]:
+        gap = round(out["rates"]["de"][k] - out["rates"]["fr"][k], 3)
+        out["gaps_de_fr"][k] = gap
+        if abs(gap) > threshold and k not in out["source_side_gaps"]:
+            out["flagged"].append(k)
+    return out
+
+
 def link_metrics():
     s = json.load(open(OUT / "link_stats.json"))
     recs = [json.loads(l) for l in open(OUT / "consultations.jsonl", encoding="utf-8")]
@@ -106,22 +141,22 @@ def runtime():
     return t
 
 
-def agent_metrics():
-    p = OUT / "agent_traces.jsonl"
+def agent_metrics(p=OUT / "agent_traces.jsonl", version=None, note=None):
     if not p.exists():
         return None
     rows = [json.loads(l) for l in open(p, encoding="utf-8")]
     from .agent import PROMPT_VERSION
-    rows = [r for r in rows if r.get("prompt_version") == PROMPT_VERSION]
+    version = version or PROMPT_VERSION
+    rows = [r for r in rows if r.get("prompt_version") == version]
     if not rows:
         return None
     pl = [r["planner"] for r in rows]
     base = sum(len(x["baseline_tools"]) for x in pl)
     ents = sum(len(r["steps"][-1]["result"]) for r in rows)
     return {
-        "scope": f"Apertus tool-agent (plan -> deterministic tools -> compose -> validate) on {len(rows)} records "
-                 f"({sum(r['kind'] == 'stapfer' for r in rows)} Stapfer, {sum(r['kind'] == 'consultation' for r in rows)} consultations)",
-        "prompt_version": PROMPT_VERSION,
+        "scope": f"Apertus tool-agent ({'native tool calls in a loop' if version == 'agent-v4' else 'plan -> tools -> compose'} -> validate) on {len(rows)} records "
+                 f"({sum(r['kind'] == 'stapfer' for r in rows)} Stapfer, {sum(r['kind'] == 'consultation' for r in rows)} consultations)" + (f"; {note}" if note else ""),
+        "prompt_version": version,
         "valid_plan_rate": round(sum(x["valid_plan"] for x in pl) / len(rows), 3),
         "plan_truncated_rate": round(sum(r.get("plan_truncated", False) for r in rows) / len(rows), 3),
         "mean_tool_calls_planned": round(sum(x["n_calls"] for x in pl) / len(rows), 2),
@@ -136,7 +171,28 @@ def agent_metrics():
         "unsupported_entity_rate": round(sum(len(r["unsupported"]) for r in rows) / ents, 3) if ents else None,
         "entities_checked": ents,
         "seconds_per_record_median": float(pd.Series([r["seconds"] for r in rows]).median()),
+        **(loop_metrics(rows) if version == "agent-v4" else {}),
     }
+
+
+def loop_metrics(rows):
+    L = [r["loop"] for r in rows]
+    per_step = [c for x in L for c in x["calls_per_step"]]
+    return {"loop_steps_mean": round(sum(x["steps"] for x in L) / len(L), 2),
+            "steps_with_parallel_calls": round(sum(c > 1 for c in per_step) / max(len(per_step), 1), 3),
+            "max_calls_in_one_step": max(per_step, default=0),
+            "planner_recall_before_feedback": round(sum(len(x.get("chosen_before_feedback", [])) for x in L) / max(sum(len(r["planner"]["baseline_tools"]) for r in rows), 1), 3),
+            "feedback_rounds_used": sum(x.get("feedback_rounds", 0) for x in L),
+            "argument_repairs": sum(len(x["repairs"]) for x in L),
+            "argument_errors_returned_to_model": sum(x["arg_errors"] for x in L),
+            "self_corrected_after_error": sum(x["self_corrected"] for x in L),
+            "repeated_calls_served_from_cache": sum(x["duplicates"] for x in L),
+            "invalid_tool_calls_from_model": sum(x.get("invalid_tool_calls", 0) for x in L),
+            "records_native_api": sum(r["mode"] == "native" for r in rows), "records_json_protocol": sum(r["mode"] == "json" for r in rows),
+            "records_native_fell_back_to_json": sum(r["mode"] == "native->json" for r in rows),
+            "loop_definition": "Apertus calls tools (native API or JSON protocol), sees results, may call more (max 6 steps / 14 calls); calls of one step run "
+                               "in parallel; when it finishes with required tools missing, the code names them once and the model decides; anything still "
+                               "missing runs anyway (origin baseline). planner_recall_of_required_tools counts after that feedback round."}
 
 
 def export_metrics():
@@ -153,6 +209,17 @@ def main(with_runtime=False):
            "apertus_enrichment": {f.name: apertus_metrics(f) for f in sorted(OUT.glob("apertus_enrichment*.jsonl"))}, "apertus_agent": agent_metrics()}
     if (OUT / "qa_eval.json").exists():  # written by archai.qa_eval (needs Apertus)
         rep["qa_retrieval"] = json.load(open(OUT / "qa_eval.json"))
+    rep["bias_by_language"] = bias_metrics()
+    if (OUT / "tool_bench.json").exists():  # written by archai.tool_bench (needs Apertus)
+        rep["tool_calling_benchmark"] = json.load(open(OUT / "tool_bench.json"))
+    if (OUT / "agent_traces_v4.jsonl").exists():  # same 80 records, same environment: v3 re-run locally vs v4
+        rep["apertus_agent_v4_native_api"] = agent_metrics(OUT / "agent_traces_v4.jsonl", "agent-v4", "native tools API of the gateway (one call per turn)")
+        if (OUT / "agent_traces_v4_json.jsonl").exists():
+            rep["apertus_agent_v4"] = agent_metrics(OUT / "agent_traces_v4_json.jsonl", "agent-v4", "default mode: JSON tool protocol, the model batches calls")
+        rep["apertus_agent_v3_same_run"] = agent_metrics(OUT / "agent_traces_v3_local.jsonl", "agent-v3",
+                                                         "re-run next to v4; Archive Database not available locally, so lookup_archive_unit returns not found in both")
+    if (OUT / "confidence_eval.json").exists():  # written by archai.qa_eval --confidence
+        rep["qa_confidence"] = json.load(open(OUT / "confidence_eval.json"))
     if (OUT / "qa_answer_check.json").exists():
         rep["qa_answer_check"] = json.load(open(OUT / "qa_answer_check.json"))
     if with_runtime:

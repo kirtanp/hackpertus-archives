@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/kirtanp/hackpertus-archives/docs/record.schema.json",
+  "title": "ArchAI unified archival record",
+  "description": "One line of data/out/records.jsonl (schema_version 1.1). Stapfer-Enquête 1799 sheets and Federal Consultations 1960-1991 share this schema; see docs/SCHEMA.md.",
+  "type": "object",
+  "required": ["record_id", "dataset", "kind", "title", "language", "text", "dates", "places", "persons", "organisations", "provenance", "quality", "enrichment", "schema_version"],
+  "properties": {
+    "record_id": {"type": "string", "pattern": "^[a-z0-9-]+:[^\\s]+$", "description": "stable id, e.g. stapfer:transkription:16, consultation:417"},
+    "dataset": {"type": "string", "enum": ["stapfer-enquete-1799", "federal-consultations-1960-1991"]},
+    "kind": {"type": "string", "enum": ["school_survey_response", "federal_consultation"]},
+    "title": {"type": "string", "minLength": 1},
+    "language": {"type": ["string", "null"], "enum": ["de", "fr", "it", "en", null]},
+    "text": {"type": "string"},
+    "text_raw_available": {"type": "boolean"},
+    "dates": {"type": "array", "items": {"type": "object", "required": ["iso", "source"], "properties": {
+      "iso": {"type": "string", "pattern": "^\\d{4}(-\\d{2}(-\\d{2})?)?$"},
+      "source": {"type": "string"}, "surface": {"type": "string"}, "precision": {"enum": ["day", "month", "year"]},
+      "year_inferred": {"type": "boolean"}}}},
+    "places": {"type": "array", "items": {"type": "object", "required": ["name", "source"], "properties": {
+      "place_id": {"type": ["string", "null"]}, "name": {"type": ["string", "null"]}, "municipality_today": {"type": ["string", "null"]},
+      "lat": {"type": ["number", "null"], "minimum": 45.7, "maximum": 47.9}, "lon": {"type": ["number", "null"], "minimum": 5.9, "maximum": 10.6},
+      "source": {"type": "string"}}}},
+    "persons": {"type": "array", "items": {"type": "object", "required": ["name", "role", "source"], "properties": {
+      "person_id": {"type": ["string", "null"]}, "name": {"type": "string"}, "role": {"type": "string"}, "source": {"type": "string"}}}},
+    "organisations": {"type": "array", "items": {"type": "object", "required": ["name"], "properties": {
+      "org_id": {"type": ["string", "null"]}, "name": {"type": "string"}, "type": {"type": ["string", "null"]}, "abbr": {"type": ["string", "null"]}, "role": {"type": "string"}}}},
+    "quantities": {"type": "object", "required": ["pupils", "money"], "properties": {
+      "pupils": {"type": "array", "items": {"type": "object", "required": ["sex", "count", "surface"], "properties": {
+        "sex": {"enum": ["male", "female", "all", "unspecified"]}, "count": {"type": "integer", "minimum": 0}, "surface": {"type": "string"}, "section": {"type": "string"}}}},
+      "money": {"type": "array", "items": {"type": "object", "required": ["amount", "unit", "surface"], "properties": {
+        "amount": {"type": "number", "minimum": 0}, "unit": {"type": "string"}, "surface": {"type": "string"}}}}}},
+    "archive_units": {"type": "array", "items": {"type": "object", "properties": {
+      "unit_id": {}, "signature": {"type": "string"}, "title": {"type": ["string", "null"]}, "begin": {"type": ["string", "null"]},
+      "end": {"type": ["string", "null"]}, "level": {}, "access": {}, "url": {"type": ["string", "null"]}, "path": {}}}},
+    "provenance": {"type": "object", "required": ["source_dataset"], "properties": {
+      "archive_signature": {"type": ["string", "null"]}, "repository": {"type": ["string", "null"]}, "is_original": {"type": "boolean"},
+      "facsimile_file": {"type": ["string", "null"]}, "viewer_url": {"type": ["string", "null"], "format": "uri"},
+      "source_dataset": {"type": "string", "format": "uri"}, "source_tables": {"type": "array", "items": {"type": "string"}},
+      "source_file": {"type": "string"}, "row_nr": {}, "linked_dataset": {"type": "string"}}},
+    "quality": {"type": "object", "properties": {
+      "handwritten": {"type": "boolean"}, "uncertain_readings": {"type": "integer", "minimum": 0}, "markup_errors_in_source": {"type": "integer", "minimum": 0},
+      "pages_in_transcription": {"type": "integer", "minimum": 0}, "legibility_rule": {"enum": ["good", "partly_illegible", "mostly_illegible"]},
+      "archive_refs": {"type": "integer"}, "archive_refs_linked": {"type": "integer"}, "dates_parsed": {"type": "integer"}}},
+    "enrichment": {"type": "object", "required": ["source"], "properties": {
+      "source": {"type": "string", "pattern": "^(deterministic|apertus:[a-z_]+)$"}, "model": {"type": "string"}, "prompt_version": {"type": "string"},
+      "title_generated": {"type": ["string", "null"]}, "summary_en": {"type": ["string", "null"]}, "topics": {"type": "array"},
+      "legibility_model": {"type": ["string", "null"]}, "rejected_ungrounded": {"type": "array"}}},
+    "places_mentioned": {"type": "array", "items": {"type": "string"}},
+    "schema_version": {"const": "1.1"}
+  }
+}

@@ -1,0 +1,326 @@
+{
+ "@context": {
+  "@language": "en",
+  "@vocab": "https://schema.org/",
+  "citeAs": "cr:citeAs",
+  "column": "cr:column",
+  "conformsTo": "dct:conformsTo",
+  "cr": "http://mlcommons.org/croissant/",
+  "rai": "http://mlcommons.org/croissant/RAI/",
+  "data": {
+   "@id": "cr:data",
+   "@type": "@json"
+  },
+  "dataType": {
+   "@id": "cr:dataType",
+   "@type": "@vocab"
+  },
+  "dct": "http://purl.org/dc/terms/",
+  "examples": {
+   "@id": "cr:examples",
+   "@type": "@json"
+  },
+  "extract": "cr:extract",
+  "field": "cr:field",
+  "fileProperty": "cr:fileProperty",
+  "fileObject": "cr:fileObject",
+  "fileSet": "cr:fileSet",
+  "format": "cr:format",
+  "includes": "cr:includes",
+  "isLiveDataset": "cr:isLiveDataset",
+  "jsonPath": "cr:jsonPath",
+  "key": "cr:key",
+  "md5": "cr:md5",
+  "parentField": "cr:parentField",
+  "path": "cr:path",
+  "recordSet": "cr:recordSet",
+  "references": "cr:references",
+  "regex": "cr:regex",
+  "repeated": "cr:repeated",
+  "replace": "cr:replace",
+  "sc": "https://schema.org/",
+  "separator": "cr:separator",
+  "source": "cr:source",
+  "subField": "cr:subField",
+  "transform": "cr:transform",
+  "samplingRate": "cr:samplingRate",
+  "equivalentProperty": "cr:equivalentProperty"
+ },
+ "@type": "sc:Dataset",
+ "conformsTo": "http://mlcommons.org/croissant/1.0",
+ "name": "archai-swiss-archives",
+ "description": "Stapfer-Enquête 1799 (2,250 handwritten school-survey sheets, transcribed) and the Federal Consultations 1960–1991 (569), cleaned, linked to the Swiss Federal Archives' archive database and enriched with Apertus; every record keeps its archive signature and a link to the original.",
+ "license": "https://opendata.swiss/de/dataset/stapfer-enquete-schule-in-der-schweiz-1799",
+ "url": "https://github.com/kirtanp/hackpertus-archives",
+ "version": "1.1.0",
+ "datePublished": "2026-10-18",
+ "inLanguage": [
+  "de",
+  "fr",
+  "it"
+ ],
+ "creator": {
+  "@type": "sc:Organization",
+  "name": "Hack Apertus team ArchAI"
+ },
+ "citeAs": "Schmidt, H.R. / Messerli, A. / Osterwalder, F. / Tröhler, D. (Hgg.), Die Stapfer-Enquête. Edition der helvetischen Schulumfrage von 1799, Bern 2015; Schweizerische Bundeskanzlei, Metadatenbank Vernehmlassungen 1960–1991.",
+ "keywords": [
+  "archives",
+  "Switzerland",
+  "Helvetic Republic",
+  "school history",
+  "federal consultations",
+  "Apertus"
+ ],
+ "rai:dataCollection": "Open-government releases on opendata.swiss (SQL dump of the Bern Stapfer database, consultations CSV, archive-database dump); no crawling. Transcriptions are by the University of Bern edition team.",
+ "rai:dataBiases": "Survey answered mostly by German-speaking, Reformed parishes (de 77%, fr 23%, it <1%). Extraction parity is measured per language in metrics.json bias_by_language (flagged gaps: []). French sheets carry a date of writing less often (source-side).",
+ "rai:personalSensitiveInformation": "Teacher names, ages and families from 1799 (persons deceased > 200 years). Consultation records name institutions, not private persons. See docs/ETHICS.md.",
+ "rai:dataUseCases": "Retrieval and question answering with citations, training data for historical-language models, historical research on the Helvetic school system and federal legislation.",
+ "rai:dataLimitations": "Model-generated enrichment (titles, summaries, topics) is marked per record; quantities are rule-based extractions (hand-checked precision ~90% on new extractions); see metrics.json scopes.",
+ "distribution": [
+  {
+   "@type": "cr:FileObject",
+   "@id": "records-jsonl",
+   "name": "records.jsonl",
+   "description": "unified AI-ready records (one JSON object per line)",
+   "contentUrl": "records.jsonl",
+   "encodingFormat": "application/jsonlines",
+   "sha256": "ca3638d2e79fdedfa8a55e5f82f3f3301de889ecdfc4bf703ab1a53c28173631"
+  },
+  {
+   "@type": "cr:FileObject",
+   "@id": "records-csv",
+   "name": "records.csv",
+   "description": "flattened copy of records.jsonl",
+   "contentUrl": "records.csv",
+   "encodingFormat": "text/csv",
+   "sha256": "a3af097337d50d5302ff2a52ce35caff19c9b778f87ff54474db1cde7a2c5e17"
+  },
+  {
+   "@type": "cr:FileObject",
+   "@id": "stapfer-answers",
+   "name": "stapfer_answers.parquet",
+   "description": "one row per Stapfer answer: raw and cleaned text, annotations, pages",
+   "contentUrl": "stapfer_answers.parquet",
+   "encodingFormat": "application/x-parquet",
+   "sha256": "809a482ff8082fdbacf01a5709896f7734b65ce700906bbb535a1837f93c44ec"
+  },
+  {
+   "@type": "cr:FileObject",
+   "@id": "metrics",
+   "name": "metrics.json",
+   "description": "every measurement with its scope",
+   "contentUrl": "metrics.json",
+   "encodingFormat": "application/json",
+   "sha256": "622f811d798273f560a3d1d8e404217a68e991ef73936ded57e1fff064943b29"
+  }
+ ],
+ "recordSet": [
+  {
+   "@type": "cr:RecordSet",
+   "@id": "records",
+   "name": "records",
+   "key": {
+    "@id": "records/record_id"
+   },
+   "description": "one record per Stapfer sheet or consultation (docs/record.schema.json)",
+   "field": [
+    {
+     "@type": "cr:Field",
+     "@id": "records/record_id",
+     "name": "record_id",
+     "description": "stable record id, e.g. stapfer:transkription:16",
+     "dataType": "sc:Text",
+     "source": {
+      "fileObject": {
+       "@id": "records-jsonl"
+      },
+      "extract": {
+       "column": "record_id"
+      }
+     }
+    },
+    {
+     "@type": "cr:Field",
+     "@id": "records/dataset",
+     "name": "dataset",
+     "description": "stapfer-enquete-1799 or federal-consultations-1960-1991",
+     "dataType": "sc:Text",
+     "source": {
+      "fileObject": {
+       "@id": "records-jsonl"
+      },
+      "extract": {
+       "column": "dataset"
+      }
+     }
+    },
+    {
+     "@type": "cr:Field",
+     "@id": "records/kind",
+     "name": "kind",
+     "description": "school_survey_response or federal_consultation",
+     "dataType": "sc:Text",
+     "source": {
+      "fileObject": {
+       "@id": "records-jsonl"
+      },
+      "extract": {
+       "column": "kind"
+      }
+     }
+    },
+    {
+     "@type": "cr:Field",
+     "@id": "records/title",
+     "name": "title",
+     "description": "record title",
+     "dataType": "sc:Text",
+     "source": {
+      "fileObject": {
+       "@id": "records-jsonl"
+      },
+      "extract": {
+       "column": "title"
+      }
+     }
+    },
+    {
+     "@type": "cr:Field",
+     "@id": "records/language",
+     "name": "language",
+     "description": "detected language (de, fr, it)",
+     "dataType": "sc:Text",
+     "source": {
+      "fileObject": {
+       "@id": "records-jsonl"
+      },
+      "extract": {
+       "column": "language"
+      }
+     }
+    },
+    {
+     "@type": "cr:Field",
+     "@id": "records/text",
+     "name": "text",
+     "description": "cleaned text; Stapfer answers as [question number] blocks",
+     "dataType": "sc:Text",
+     "source": {
+      "fileObject": {
+       "@id": "records-jsonl"
+      },
+      "extract": {
+       "column": "text"
+      }
+     }
+    },
+    {
+     "@type": "cr:Field",
+     "@id": "records/schema_version",
+     "name": "schema_version",
+     "description": "record schema version (docs/record.schema.json)",
+     "dataType": "sc:Text",
+     "source": {
+      "fileObject": {
+       "@id": "records-jsonl"
+      },
+      "extract": {
+       "column": "schema_version"
+      }
+     }
+    },
+    {
+     "@type": "cr:Field",
+     "@id": "records/archive_signature",
+     "name": "archive_signature",
+     "description": "archive signature of the original document",
+     "dataType": "sc:Text",
+     "source": {
+      "fileObject": {
+       "@id": "records-jsonl"
+      },
+      "extract": {
+       "column": "provenance"
+      },
+      "transform": {
+       "jsonPath": "archive_signature"
+      }
+     }
+    },
+    {
+     "@type": "cr:Field",
+     "@id": "records/viewer_url",
+     "name": "viewer_url",
+     "description": "link to the original in the archive's own viewer",
+     "dataType": "sc:URL",
+     "source": {
+      "fileObject": {
+       "@id": "records-jsonl"
+      },
+      "extract": {
+       "column": "provenance"
+      },
+      "transform": {
+       "jsonPath": "viewer_url"
+      }
+     }
+    },
+    {
+     "@type": "cr:Field",
+     "@id": "records/source_dataset",
+     "name": "source_dataset",
+     "description": "opendata.swiss dataset the record comes from",
+     "dataType": "sc:URL",
+     "source": {
+      "fileObject": {
+       "@id": "records-jsonl"
+      },
+      "extract": {
+       "column": "provenance"
+      },
+      "transform": {
+       "jsonPath": "source_dataset"
+      }
+     }
+    },
+    {
+     "@type": "cr:Field",
+     "@id": "records/uncertain_readings",
+     "name": "uncertain_readings",
+     "description": "transcriber-marked uncertain readings (#..##, Editionsregeln §15)",
+     "dataType": "sc:Integer",
+     "source": {
+      "fileObject": {
+       "@id": "records-jsonl"
+      },
+      "extract": {
+       "column": "quality"
+      },
+      "transform": {
+       "jsonPath": "uncertain_readings"
+      }
+     }
+    },
+    {
+     "@type": "cr:Field",
+     "@id": "records/enrichment_source",
+     "name": "enrichment_source",
+     "description": "deterministic or apertus:<step>: which component produced the enrichment",
+     "dataType": "sc:Text",
+     "source": {
+      "fileObject": {
+       "@id": "records-jsonl"
+      },
+      "extract": {
+       "column": "enrichment"
+      },
+      "transform": {
+       "jsonPath": "source"
+      }
+     }
+    }
+   ]
+  }
+ ]
+}

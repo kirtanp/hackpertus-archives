@@ -17,12 +17,15 @@ The search index is built once at startup in a background thread (10–25 s); re
 ```
 
 ## `POST /api/ask`
-Body: `{"question": "Wie viele Kinder besuchten die Schule in Hörndli?"}` (2–500 chars, German/French/English).
+Body: `{"question": "Wie viele Kinder besuchten die Schule in Hörndli?"}` (2–500 chars, German/French/English; `422` otherwise).
 
 | Field | Meaning |
 |---|---|
 | `answer` | Apertus answer with `[n]` citations, the extractive fallback, or the pupil total computed from the sources |
-| `answer_source` | `apertus`, `extractive` or `aggregate` |
+| `answer_source` | `apertus` (generated, cited, checked) · `aggregate` (a pupil total computed by code from the cited sheets, never by the model) · `extractive` (the top passages, when the generated answer failed a check) · `not_found` (Apertus says the archives do not answer it: a fixed message in the question's language; `sources` are the closest passages, not an answer) · `invalid_input` (no word in the question: no search, no model call) |
+| `confidence` | `{percent, meaning, calibration}`: calibrated estimate that the cited sources answer the question (only for `apertus` / `extractive`). Fitted by `python -m archai.qa_eval --confidence` on answers with known gold sources; calibration in `data/out/confidence_eval.json` |
+| `number_check` | `{ok, failures}`: every number in a sentence must occur in the sources it cites |
+| `llm_meta.token_confidence` | final-layer token probabilities of the generated answer (mean, minimum, minimum on numbers and on citations) |
 | `cited` | source numbers cited in the answer |
 | `route` | deterministic router output: `intents`, `places`, `filtered_pool`, optional `fallback` |
 | `sources[]` | `id`, `doc_id` (= `record_id`), `kind` (`stapfer`/`consultation`), `qno`, `text`, `cite` (archive signature, page, question), `page`, `url` (archive viewer), `facsimile`, `score` |

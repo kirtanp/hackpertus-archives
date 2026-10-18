@@ -44,6 +44,11 @@ h2{font:600 13px/1 Inter,sans-serif;text-transform:uppercase;letter-spacing:.06e
 .src a{color:var(--accent);font-size:13px;margin-right:12px}
 .hidden{display:none}
 .err{color:var(--accent)}
+.conf{display:inline-flex;align-items:center;gap:8px;margin-top:12px;font-size:13px;padding:5px 10px;border-radius:999px;border:1px solid var(--line);cursor:help}
+.conf i{width:9px;height:9px;border-radius:50%;display:inline-block}
+.conf b{font-variant-numeric:tabular-nums}
+.notice{font:16px/1.55 Inter,sans-serif;background:var(--accent-soft);border-radius:8px;padding:12px 14px;white-space:normal}
+.notice b{display:block;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:4px}
 /* data sources */
 .ds{border-top:1px solid var(--line);padding:12px 0}
 .ds:first-of-type{border-top:0;padding-top:0}
@@ -114,6 +119,7 @@ h2{font:600 13px/1 Inter,sans-serif;text-transform:uppercase;letter-spacing:.06e
       <div class="card hidden" id="res">
         <h2>Answer</h2>
         <div id="answer"></div>
+        <div id="conf"></div>
         <div class="meta" id="meta"></div>
       </div>
       <div class="card" id="mapcard">
@@ -133,7 +139,7 @@ h2{font:600 13px/1 Inter,sans-serif;text-transform:uppercase;letter-spacing:.06e
         <div id="game" class="hidden"></div>
       </div>
       <div class="card hidden" id="srcs">
-        <h2>Sources</h2>
+        <h2 id="srctitle">Sources</h2>
         <div id="list"></div>
       </div>
     </main>
@@ -171,28 +177,43 @@ async function health(){
 }
 health();
 
+function inputError(detail){  // FastAPI 422: a list of {type, msg}
+  const t=Array.isArray(detail)?detail[0]?.type:"";
+  if(t==="string_too_short")return "Please type a question (at least 2 characters).";
+  if(t==="string_too_long")return "Please keep the question under 500 characters.";
+  return Array.isArray(detail)?detail.map(x=>x.msg).join("; "):String(detail||"Request failed");
+}
 async function ask(){
-  const q=$("q").value.trim(); if(q.length<2)return;
+  const q=$("q").value.trim();
+  if(q.length<2||q.length>500){showError(inputError([{type:q.length<2?"string_too_short":"string_too_long"}]));return}
   $("go").disabled=true;$("go").textContent="…";
   try{
     const r=await fetch("/api/ask",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({question:q})});
     const d=await r.json();
-    if(!r.ok)throw new Error(d.detail||r.statusText);
+    if(!r.ok)throw new Error(r.status===422?inputError(d.detail):(typeof d.detail==="string"?d.detail:r.statusText));
     render(d);
-  }catch(e){$("res").classList.remove("hidden");$("srcs").classList.add("hidden");$("answer").innerHTML=`<span class="err">${esc(e.message)}</span>`;$("meta").innerHTML=""}
+  }catch(e){showError(e.message)}
   finally{$("go").disabled=false;$("go").textContent="Ask"}
 }
 
+function showError(msg){$("res").classList.remove("hidden");$("srcs").classList.add("hidden");$("answer").innerHTML=`<span class="err">${esc(msg)}</span>`;$("meta").innerHTML=""}
 function render(d){
-  $("res").classList.remove("hidden");$("srcs").classList.remove("hidden");
-  $("answer").innerHTML=esc(d.answer).replace(/\[(\d+)\]/g,(m,n)=>n<=d.sources.length?`<a class="cite" data-n="${n}">[${n}]</a>`:m);
+  $("res").classList.remove("hidden");$("srcs").classList.toggle("hidden",!d.sources.length);
+  const nd=d.answer_source==="no_direct_answer", nf=d.answer_source==="not_found"||nd, bad=d.answer_source==="invalid_input";
+  $("srctitle").textContent=nd?"Most relevant passages":d.answer_source==="not_found"?"Closest passages — not an answer":"Sources";
+  if(nf||bad){
+    $("answer").innerHTML=`<div class="notice"><b>${nd?"No direct answer":nf?"Not in these archives":"Not a question"}</b>${esc(d.answer)}</div>`;
+  }else $("answer").innerHTML=esc(d.answer).replace(/\[(\d+)\]/g,(m,n)=>n<=d.sources.length?`<a class="cite" data-n="${n}">[${n}]</a>`:m);
+  const c=d.confidence;
+  $("conf").innerHTML=c?`<span class="conf" title="${esc(c.meaning)} — ${esc(c.calibration)}. An estimate, not a guarantee: see Measured results.">
+    <i style="background:${c.percent>=80?"#2f8f4e":c.percent>=50?"#c9a227":"#c0392b"}"></i>Source confidence <b>${c.percent}%</b></span>`:"";
   const r=d.route||{};
   $("meta").innerHTML=[`answer: ${d.answer_source}`,...(r.intents||[]).map(i=>"intent: "+i),...(r.places||[]).map(p=>"place: "+p),
     r.filtered_pool!=null?`pool: ${r.filtered_pool}`:null,r.fallback?"fallback: "+r.fallback:null].filter(Boolean).map(t=>`<span class="tag">${esc(t)}</span>`).join("");
   $("list").innerHTML=d.sources.map((s,i)=>`<div class="src" id="s${i+1}"><div><span class="n">[${i+1}]</span><span class="sig">${esc(s.cite)}</span></div>
     <div class="txt">${esc(s.text.length>420?s.text.slice(0,420)+"…":s.text)}</div>
     <a href="${esc(s.url)}" target="_blank" rel="noopener">Open in archive viewer ↗</a><a href="/api/record/${encodeURIComponent(s.doc_id)}" target="_blank">Record JSON</a></div>`).join("")||"<p>No sources.</p>";
-  showOnMap(d);
+  if(nf||bad){citedLayer.clearLayers();$("maptitle").textContent="Map of the schools"}else showOnMap(d);
 }
 // ---- map: swisstopo Dufour map (1845–1865) over today's map, as on stapferenquete.ch ----
 const map=L.map("map",{preferCanvas:true,minZoom:7,maxBounds:[[45.6,5.6],[48.0,10.8]]}).setView([46.82,8.23],8);
@@ -376,7 +397,40 @@ function results(m){
       tile(`${ap.all.seconds_median} s`,`median search time per question with the Apertus rewrite (rules only: ${off.all.seconds_median} s; ${ap.all.apertus_failures} failed calls of ${ap.all.apertus_calls})`,
         raw(["results.apertus.all.seconds_median",ap.all.seconds_median],["results.apertus.all.apertus_failures",ap.all.apertus_failures]),LOW)]);
   }
+  const v3=m.apertus_agent_v3_same_run, v4=m.apertus_agent_v4, v4n=m.apertus_agent_v4_native_api;
+  if(v3&&v4)h+=group("Does the new tool agent (v4) do better than v3?",v4.scope.replace("Apertus tool-agent","Same records as v3")+" · v3: "+v3.scope,[
+    tile(`${pct(v3.planner_recall_of_required_tools)} → ${pct(v4.planner_recall_of_required_tools)}`,"of the required tools Apertus chose itself (v3 → v4, after one feedback round)",raw(["v3.planner_recall_of_required_tools",v3.planner_recall_of_required_tools],["v4.planner_recall_of_required_tools",v4.planner_recall_of_required_tools])),
+    tile(pct(v4.steps_with_parallel_calls),`of v4 steps ran several tools in parallel (up to ${v4.max_calls_in_one_step} at once; native API: ${pct(v4n?v4n.steps_with_parallel_calls:0)})`,raw(["v4.steps_with_parallel_calls",v4.steps_with_parallel_calls])),
+    tile(`${n(v3.tool_execution_errors)} → ${n(v4.tool_execution_errors)}`,`tool errors (v4: ${n(v4.self_corrected_after_error)} fixed by the model after seeing the error)`,raw(["v3.tool_execution_errors",v3.tool_execution_errors],["v4.self_corrected_after_error",v4.self_corrected_after_error]),LOW),
+    tile(`${pct(v3.unsupported_entity_rate)} → ${pct(v4.unsupported_entity_rate)}`,"of output names not literally in the source (hallucination proxy)",raw(["v3.unsupported_entity_rate",v3.unsupported_entity_rate],["v4.unsupported_entity_rate",v4.unsupported_entity_rate]),LOW)]);
+  const tb=m.tool_calling_benchmark;
+  if(tb){const A=tb.results["apertus-v1-5-70b / json"],N=tb.results["apertus-v1-5-70b / native"],S=tb.results["apertus-v1-5-8b / json"];
+    if(A&&N)h+=group("How well does Apertus call tools? (BFCL-style benchmark)",tb.scope+". "+tb.scoring,[
+      tile(pct(A.overall_exact),`of cases exactly right, 70B with the JSON protocol (native API: ${pct(N.overall_exact)}; 8B JSON: ${S?pct(S.overall_exact):"–"})`,raw(["70b/json.overall_exact",A.overall_exact],["70b/native.overall_exact",N.overall_exact])),
+      tile(pct(A.simple.exact),`single calls right (native API: ${pct(N.simple.exact)})`,raw(["70b/json.simple.exact",A.simple.exact])),
+      tile(pct(A.parallel.exact),`"same tool several times" right — often only one of the values is looked up (native API: ${pct(N.parallel.exact)}, one call per turn)`,raw(["70b/json.parallel.exact",A.parallel.exact],["70b/native.parallel.exact",N.parallel.exact])),
+      tile(pct(A.irrelevance.exact),`requests no tool can serve correctly answered without a call (8B JSON: ${S?pct(S.irrelevance.exact):"–"})`,raw(["70b/json.irrelevance.exact",A.irrelevance.exact]))]);}
+  const bl=m.bias_by_language;
+  if(bl&&bl.rates&&bl.rates.de&&bl.rates.fr){const de=bl.rates.de,fr=bl.rates.fr,bf=bl.before_fix||{};
+    const pair=(k)=>`${pct(de[k])} · ${pct(fr[k])}`;
+    h+=group("Does the pipeline work equally well for German and French sheets?",`${bl.scope}; German ${n(de.sheets)} sheets, French ${n(fr.sheets)}; gaps above ${pct(bl.threshold)} are flagged`,[
+      tile(pair("pupil_counts_extracted"),`sheets with pupil counts extracted, German · French (before the fix: ${bf.pupil_counts_extracted?pct(bf.pupil_counts_extracted.de)+" · "+pct(bf.pupil_counts_extracted.fr):"–"})`,raw(["rates.de.pupil_counts_extracted",de.pupil_counts_extracted],["rates.fr.pupil_counts_extracted",fr.pupil_counts_extracted])),
+      tile(pair("money_amounts_extracted"),`sheets with money amounts extracted (before: ${bf.money_amounts_extracted?pct(bf.money_amounts_extracted.de)+" · "+pct(bf.money_amounts_extracted.fr):"–"})`,raw(["rates.de.money_amounts_extracted",de.money_amounts_extracted],["rates.fr.money_amounts_extracted",fr.money_amounts_extracted])),
+      tile(pair("dates_found_where_source_dated"),`dates found where the sheet carries a year (French sheets are dated less often: ${pct(de.sheets_with_a_year_in_source)} · ${pct(fr.sheets_with_a_year_in_source)})`,raw(["rates.fr.dates_found_where_source_dated",fr.dates_found_where_source_dated])),
+      tile(bl.flagged.length?bl.flagged.join(", "):"none","gaps above the threshold",raw(["flagged",JSON.stringify(bl.flagged)]),LOW)]);}
+  const ce=m.qa_confidence;
+  if(ce){const rel=ce.reliability||[];
+    h+=group("Is the confidence percentage honest?",ce.scope+". "+ce.method+". "+ce.caveat,[
+      tile(pct(ce.expected_calibration_error),"average gap between the stated confidence and how often the cited sources were right (cross-validated)",raw(["expected_calibration_error",ce.expected_calibration_error]),LOW),
+      tile(String(ce.auc),"how well the score separates right from wrong answers (1 = perfectly, 0.5 = chance)",raw(["auc",ce.auc])),
+      ...rel.filter(b=>b.answers>=5).slice(-2).map(b=>tile(`${pct(b.share_correct)} right`,`of ${b.answers} answers given ${b.confidence} confidence`,raw(["mean_confidence",b.mean_confidence],["share_correct",b.share_correct]))),
+      tile(ce.model_chosen==="signals"?"no gain":"gain",`from Apertus' own token probabilities (AUC ${ce.comparison.signals_only.auc} without, ${ce.comparison.signals_plus_token_logprobs.auc} with)`,raw(["comparison.signals_only.auc",ce.comparison.signals_only.auc],["comparison.signals_plus_token_logprobs.auc",ce.comparison.signals_plus_token_logprobs.auc]))]);}
   const c=m.qa_answer_check;
+  if(c&&c.unanswerable){const u=c.unanswerable;
+    h+=group("Does it say \"not in these archives\" when it should?",u.scope,[
+      tile(of(u.declined,u.questions),"unanswerable questions correctly declined",raw(["unanswerable.declined",u.declined],["unanswerable.questions",u.questions])),
+      tile(n(u.answered_anyway.length),"answered anyway"+(u.answered_anyway.length?": "+u.answered_anyway.slice(0,3).join(" · "):""),raw(["unanswerable.answered_anyway",u.answered_anyway.length]),LOW),
+      tile(of(c.declined_as_not_in_sources,c.answers),"real questions answered \"not in these archives\" (questions about a recognised place get \"no direct answer\" with the passages instead)",raw(["declined_as_not_in_sources",c.declined_as_not_in_sources],["no_direct_answer",c.no_direct_answer]),LOW)]);}
   if(c)h+=group("Are the numbers in Apertus' answers backed by the cited source?",c.scope+". Check: "+c.number_check_definition,[
     tile(of(c.accepted,c.answers),"answers shown as written by Apertus",raw(["accepted",c.accepted],["answers",c.answers])),
     tile(n(c.rejected_number_not_in_cited_source),"answers stopped because a number was not in the source it cited (all checked by hand: real errors)",raw(["rejected_number_not_in_cited_source",c.rejected_number_not_in_cited_source]),LOW),

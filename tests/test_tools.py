@@ -86,6 +86,98 @@ def test_word_numbers():
     assert {"41", "8"} <= word_numbers("einundvierzig Kinder, acht Uhr")
 
 
+def test_agent_v4_tool_specs_and_repair():
+    from archai import agent as A
+    specs = {s["function"]["name"]: s["function"]["parameters"] for s in A.tool_specs()}
+    assert set(specs) == {"normalize_dates", "lookup_place", "parse_signature", "lookup_archive_unit", "extract_quantities", "verify_in_source", "clean_markup", "finish"}
+    assert "text" not in specs["extract_quantities"]["properties"]  # text tools are bound to the record
+    assert A.repair_args("lookup_place", {"place": "Hörnli"})[:2] == ({"name": "Hörnli"}, ["place->name"])
+    assert A.repair_args("lookup_archive_unit", {"sig": "E1#2000/1#2"})[0] == {"signature": "E1#2000/1#2"}
+    assert A.repair_args("parse_signature", {})[2].startswith("missing argument")
+    assert A.repair_args("nope", {})[2].startswith("unknown tool")
+
+
+def test_answer_input_gate_and_not_found():
+    from archai import qa, llm
+    class Idx:  # minimal stand-in for qa.Index
+        def search(self, q, k, rewrite):
+            return [{"id": "a", "doc_id": "d", "kind": "stapfer", "qno": "III.12", "text": "Hörnli 1799. Schulkinder 24.", "cite": "BAR B0 1000/1483, Nr. 1421", "url": "u", "facsimile": None}], {"intents": [], "places": []}
+    o = qa.answer(Idx(), "🦄🦄🦄 ???", use_llm=True)
+    assert o["answer_source"] == "invalid_input" and o["sources"] == []
+    orig = llm.chat_text
+    try:
+        llm.chat_text = lambda *a, **k: ("The sources do not contain any information about Dhoni, who is a cricketer.", {})
+        o = qa.answer(Idx(), "who is Dhoni")
+        assert o["answer_source"] == "not_found" and "cricketer" not in o["answer"] and o["sources"]  # fixed text, passages kept
+        llm.chat_text = lambda *a, **k: ("24 Kinder [1].", {})
+        assert qa.answer(Idx(), "Wie viele Kinder in Hörnli?")["answer_source"] == "apertus"
+        # a refusal that cites all sources as a block is still a refusal
+        llm.chat_text = lambda *a, **k: ("Die Quellen [1] bis [6] enthalten keinerlei Angaben zu Drachen.", {})
+        assert qa.answer(Idx(), "Erfinde eine Geschichte über einen Drachen")["answer_source"] == "not_found"
+        # with a recognised place the sheet exists but states nothing direct
+        class IdxPlace(Idx):
+            def search(self, q, k, rewrite):
+                h, r = Idx.search(self, q, k, rewrite); return h, {"intents": ["salary"], "places": ["immensee"]}
+        llm.chat_text = lambda *a, **k: ("Die Quellen enthalten keine Angaben zum Verdienst des Schulmeisters.", {})
+        o = qa.answer(IdxPlace(), "Was verdiente der Schulmeister in Immensee?")
+        assert o["answer_source"] == "no_direct_answer" and o["sources"]
+        # a per-school list that says "no information" for one school stays an answer
+        llm.chat_text = lambda *a, **k: ("[1] Saint Laurent: 24 L.\n[2] Le Bourg: aucune information.", {})
+        two = [dict(Idx().search("", 6, "off")[0][0], id=x) for x in ("a", "b")]
+        class Idx2(Idx):
+            def search(self, q, k, rewrite):
+                return [dict(two[0], text="Saint Laurent 24 L."), dict(two[1], text="Le Bourg")], {"intents": ["salary"], "places": ["lausanne"]}
+        assert qa.answer(Idx2(), "Salaire à Lausanne?")["answer_source"] == "apertus"
+    finally:
+        llm.chat_text = orig
+
+
+def test_quantities_bilingual():
+    """French and German pupil counts and money, both writing orders, number words; no counts from labels or family."""
+    cases = {"[III.12] Zu Sommers zeit 24. Knaben 16. Töchteren.": [("male", 24), ("female", 16)],
+             "Jm weinter Knaben 15 Mädchen – 13": [("male", 15), ("female", 13)],
+             "[III.12] Dix huit Enfant": [("unspecified", 18)], "[III.12.a] Environt Nonanté, tant Garçons que filles": [("all", 90)],
+             "[II.10] Jls Sont distribuës tant Garçons que filles en trois Classes": [],
+             "[III.11.e] 4 enfans\n\n[III.12] 30 Ecoliers": [("unspecified", 30)], "[I.1.a] Ce sont quatre Villages, un enfant": []}
+    for s, want in cases.items():
+        assert sorted((p["sex"], p["count"]) for p in T.extract_quantities(s)["pupils"]) == sorted(want), s
+    money = lambda s: [(m["amount"], m["unit"]) for m in T.extract_quantities(s)["money"]]
+    assert money("vingt-Cinq florins") == [(25.0, "florins")] and money("vier und zwanzig Batzen") == [(24.0, "Batzen")]
+    assert money("Chandon L. 9.") == [(9.0, "L.")] and money("un fort quart d'heure") == []
+
+
+def test_records_conform_to_json_schema():
+    import json
+    from jsonschema import Draft202012Validator
+    v = Draft202012Validator(json.load(open("docs/record.schema.json", encoding="utf-8")))
+    bad = [r["record_id"] for r in map(json.loads, open("data/out/records.jsonl", encoding="utf-8")) if next(v.iter_errors(r), None)]
+    assert not bad, bad[:5]
+
+
+def test_croissant_metadata_loads_records():
+    import pytest
+    mlc = pytest.importorskip("mlcroissant")
+    import os
+    cwd = os.getcwd(); os.chdir("data/out")
+    try:
+        ds = mlc.Dataset(jsonld="croissant.json")
+        r = next(iter(ds.records(record_set="records")))
+    finally:
+        os.chdir(cwd)
+    assert r["records/record_id"] and r["records/archive_signature"]
+
+
+def test_records_expand_as_json_ld():
+    import json
+    import pytest
+    jsonld = pytest.importorskip("pyld.jsonld")
+    ctx = json.load(open("data/out/records.context.jsonld", encoding="utf-8"))
+    r = json.loads(open("data/out/records.jsonl", encoding="utf-8").readline())
+    exp = jsonld.expand(dict(ctx, **r))[0]
+    assert exp["@id"].startswith("https://") and "http://purl.org/dc/terms/title" in exp
+    assert not [k for k in r if k != "record_id" and k not in ctx["@context"]]  # every field has a mapping
+
+
 def test_quantities_reads_the_corpus_phrasings():
     """Every string is a real corpus row (data/out/stapfer_answers.parquet); the counts are the teacher's own."""
     def pupils(t):
@@ -98,7 +190,9 @@ def test_quantities_reads_the_corpus_phrasings():
     assert pupils("Knaben deren 12") == [("male", 12)]
     # "34. Knaben und 21 Mädchen" states 21 girls; the number after "Knaben" is not a boys' count, and neither
     # is a count that already follows a sex word ("Knaben 36-40. Mädchen 60-70" is not 40 girls)
-    assert pupils("55. – darunder 34. Knaben und 21 Mädchen") == [("female", 21)]
+    # ArchAI merge: "darunder 34. Knaben und 21 Mädchen" is "among them 34 boys and 21 girls"; the bilingual extractor
+    # reads the count-first "34. Knaben" (period between count and word), which the earlier pattern could not
+    assert pupils("55. – darunder 34. Knaben und 21 Mädchen") == [("male", 34), ("female", 21)]
     assert pupils("Knaben 18 Mädchen 22") == [("male", 18), ("female", 22)]
     assert pupils("Knaben 36-40. Mädchen 60-70.") == [("male", 36), ("female", 60)]
     assert pupils("Knaben bis 20") == []
