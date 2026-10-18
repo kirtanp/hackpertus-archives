@@ -48,6 +48,28 @@ languages). Its output is validated: unknown intents are dropped and the place m
 returned; `route.intents_from` / `places_from` say who decided. Accuracy of each mode: `data/out/qa_eval.json`
 (`PYTHONPATH=src python -m archai.qa_eval`, needs Apertus).
 
+## `GET /api/stats`
+Aggregates over the whole corpus in SQL (DuckDB, `src/archai/stats.py`), not over the passages retrieved for one place: the parquet is scanned with `read_parquet` and never loaded into pandas.
+Query parameters are `query` (`all` default, or `sections`, `documents`, `pages`, `sheets`, `markup`, `content`), `section` (questionnaire number such as `III.12`, matching the section and its sub-questions) and `page` (answers whose `page_start`..`page_end` covers it).
+A `section` filter also matches its sub-questions (`IV.16` includes `IV.16.B.c`) and a `page` filter matches answers whose page range covers that page.
+An unsupported `query` or a malformed `section`/`page` returns `400`; an absent corpus returns `503`.
+Every response carries `corpus` (file, engine, rows, columns) and `scope` (rows counted, filters, plain-language description) so a whole-corpus figure cannot be read as a per-place one, plus `blocks` with the requested aggregates.
+
+| Block | Meaning |
+|---|---|
+| `sections` | answers per questionnaire section (`question_no` first two parts: `III.11.b` -> `III.11`) |
+| `documents` | answers counted and distinct sheets (`doc_id`) represented |
+| `pages` | answers per page within the transcription |
+| `sheets` | sheet-size histogram (`answers_per_sheet`, `pages_per_sheet`) plus min/median/max |
+| `markup` | answers carrying transcription markup, unbalanced markup, uncertain readings, margin notes, editor comments |
+| `content` | per section: `answers`, `empty`, `trivial` (fewer than 3 characters after trimming), `non_empty` |
+
+```bash
+curl 'localhost:8791/api/stats?query=sections'               # answers per questionnaire section
+curl 'localhost:8791/api/stats?query=content&section=IV.16'  # non-empty vs empty/trivial in IV.16
+curl 'localhost:8791/api/stats?query=pages&page=1'           # answers on page 1, with the scope they cover
+```
+
 ## `GET /api/places`
 One point per geocoded Stapfer sheet (2,249): `id, name` (1799), `today` (municipality), `school, type, lang, conf`
 (confession), `pupils` (largest count stated), `district, lat, lon, url`. Feeds the map and its filters.
