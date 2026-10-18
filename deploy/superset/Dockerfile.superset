@@ -1,10 +1,11 @@
 # Secondary (Docker) route for the Superset prototype: the official image plus the DuckDB SQLAlchemy driver
 # that duckdb-engine provides, so the container can read data/out/stapfer_stats.duckdb (mounted read-only).
 #
-# Not built or run on the machine this prototype was developed on (no Docker daemon there); the primary
-# route in deploy/superset/README.md was run end to end instead.
+# Built and run on omen (single container, SQLite metadata; see README "Route C").
 FROM apache/superset:6.1.0
 
 USER root
-RUN pip install --no-cache-dir "duckdb-engine==0.17.0"
+# Superset runs from /app/.venv, which has no pip: a plain `pip install` lands in the system Python and Superset
+# never sees the driver ("Connection failed"). Install into the venv with the image's uv instead.
+RUN uv pip install --no-cache --python /app/.venv/bin/python "duckdb-engine==0.17.0"
 USER superset

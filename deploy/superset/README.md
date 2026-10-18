@@ -165,7 +165,36 @@ docker compose -f deploy/superset/docker-compose.yml up --build -d
 **This route was not run here**: `/var/run/docker.sock` does not exist on this machine, so no container was
 started and no compose output is claimed. It is written from Superset's official image and configuration and
 uses the same provisioning script as the primary route, but expect to adjust image tags or credentials on
-another host.
+another host. The image itself has since been built and run (Route C, below), which found and fixed two bugs
+that also affected this route: `Dockerfile.superset` installed duckdb-engine into the system Python instead of
+Superset's `/app/.venv`, and a read-write DuckDB open fails on the read-only `data/out` mount (the provisioning
+script now registers the connection with `read_only`).
+
+### Route C: one container on a small host (run on the team demo host)
+
+On a host with ~1 GB of RAM to spare, Postgres and Redis are not needed: the same image runs alone with a
+SQLite metadata database in a named volume (`superset_config_docker.py` reads `SUPERSET_METADATA_DB`). Measured
+there: ~250 MB resident under a 1.2 GB limit.
+
+```bash
+docker build -t archai-superset -f deploy/superset/Dockerfile.superset deploy/superset
+# secrets live outside the repository, mode 600: SUPERSET_SECRET_KEY, SUPERSET_ADMIN_USER, SUPERSET_ADMIN_PASSWORD
+# (generate both secrets with python -c "import secrets; print(secrets.token_urlsafe(42))")
+docker run -d --name archai-superset --restart unless-stopped --memory 1200m --env-file ~/.config/archai/superset.env \
+  -e SUPERSET_CONFIG_PATH=/app/pythonpath/superset_config_docker.py \
+  -e SUPERSET_METADATA_DB=sqlite:////app/superset_home/superset.db -e SUPERSET_LOAD_EXAMPLES=no \
+  -v $PWD/deploy/superset/superset_config_docker.py:/app/pythonpath/superset_config_docker.py:ro \
+  -v $PWD/data/out:/app/data/out:ro -v archai-superset-home:/app/superset_home -p 127.0.0.1:8088:8088 \
+  archai-superset /bin/sh -c 'superset db upgrade && (superset fab create-admin --username "$SUPERSET_ADMIN_USER" \
+    --firstname ArchAI --lastname Admin --email admin@localhost.invalid --password "$SUPERSET_ADMIN_PASSWORD" || true) \
+    && superset init && exec superset run -h 0.0.0.0 -p 8088 --with-threads'
+# with the same env file loaded, so the generated admin password is used
+set -a; . ~/.config/archai/superset.env; set +a
+python3 deploy/superset/provision_superset.py --uri duckdb:////app/data/out/stapfer_stats.duckdb
+```
+
+The provisioning run read every chart back through Superset: 92,524 answers over 2,250 sheets, 19 sections,
+146 sheet-size buckets, 16 pages.
 
 ## 4. What was actually run, and what it showed
 

@@ -132,7 +132,10 @@ class Superset:
 def ensure_database(api, uri):
     body = {"database_name": DATABASE_NAME, "sqlalchemy_uri": uri, "expose_in_sqllab": True,
             "allow_ctas": False, "allow_cvas": False, "allow_dml": False, "allow_file_upload": False,
-            "allow_run_async": False}
+            "allow_run_async": False,
+            # read-only: Superset never writes here, and the Docker route mounts data/out read-only, where a
+            # read-write DuckDB open fails with "Read-only file system"
+            "extra": json.dumps({"engine_params": {"connect_args": {"read_only": True}}})}
     existing = api.first("/api/v1/database/", database_name=DATABASE_NAME)
     if existing:
         api.put(f"/api/v1/database/{existing['id']}", body)
