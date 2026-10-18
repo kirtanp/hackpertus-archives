@@ -5,15 +5,22 @@ workload: aggregate questions over every row of the corpus at once (``data/out/s
 92,524 answers over 2,250 sheets), optionally sliced by questionnaire section and page. DuckDB scans the
 parquet with ``read_parquet``; the table is never loaded into pandas, and no data file is ever written.
 
-Read-only: DuckDB refuses a read-only in-memory database ("Cannot launch in-memory database in read-only
-mode") and the corpus is a parquet file rather than a DuckDB database, so the connection is in-memory and
-read-only by construction: it holds no table that could be mutated, every statement below is a SELECT over
-``read_parquet``, and :func:`execute` refuses anything that is not SELECT or WITH.
+Read-only, two mechanisms because either one alone is incomplete:
+
+* The connection itself is opened with ``read_only=True`` over an empty catalog (:func:`_catalog`), so DuckDB
+  itself refuses to create, insert, drop or attach anything. DuckDB cannot launch an *in-memory* database in
+  read-only mode ("Cannot launch in-memory database in read-only mode", the same on 1.4.1 and 1.5.6) and the
+  corpus is a parquet file rather than a DuckDB database, so read-only mode needs some catalog file to attach
+  to; that file holds no tables and no data, lives outside the repository in the system temp directory, and is
+  removed on exit.
+* :func:`execute` accepts only SELECT/WITH, because DuckDB's read-only mode protects the *catalog* and not the
+  filesystem: ``COPY (SELECT ...) TO '<file>'`` succeeds on a read-only connection, which is exactly the write
+  that must never touch ``data/out``. All SQL in this module is also a plain SELECT over ``read_parquet``.
 
 Every response states the corpus it read and the exact scope it counted (:func:`summary`), so a whole-corpus
 figure cannot be mistaken for the per-place aggregate the /api/ask path produces.
 """
-import re
+import atexit, re, shutil, tempfile, threading
 from pathlib import Path
 import duckdb
 
@@ -29,6 +36,9 @@ EMPTY = "trim(coalesce(text_clean, '')) = ''"
 TRIVIAL = f"trim(coalesce(text_clean, '')) <> '' and length(trim(coalesce(text_clean, ''))) < {TRIVIAL_CHARS}"
 PLAIN = f"not ({EMPTY}) and not ({TRIVIAL})"
 
+_CATALOG = {}  # {"path": <empty DuckDB catalog in the temp dir>}, created once per process
+_CATALOG_LOCK = threading.Lock()
+
 
 class CorpusMissing(RuntimeError):
     """The corpus parquet is not where the application keeps it."""
@@ -43,7 +53,7 @@ class InvalidFilter(ValueError):
 
 
 class NotReadOnly(RuntimeError):
-    """A statement other than SELECT/WITH was handed to the corpus connection."""
+    """A statement other than SELECT/WITH was handed to the corpus connection (COPY ... TO writes files)."""
 
 
 def corpus_path(corpus=None):
@@ -54,14 +64,30 @@ def corpus_path(corpus=None):
     return path
 
 
+def _catalog():
+    """An empty DuckDB catalog outside the repository, created once so the corpus connection can be read-only.
+
+    Read-only mode needs a database file to attach to, and DuckDB will not open one in memory that way. The
+    file carries no tables and no data, and its directory is deleted at interpreter exit.
+    """
+    with _CATALOG_LOCK:
+        if "path" not in _CATALOG:
+            home = Path(tempfile.mkdtemp(prefix="archai-stats-"))
+            atexit.register(shutil.rmtree, home, ignore_errors=True)
+            path = home / "catalog.duckdb"
+            duckdb.connect(str(path)).close()  # create the empty catalog, then reopen it read-only
+            _CATALOG["path"] = path
+        return _CATALOG["path"]
+
+
 def connect(corpus=None):
-    """In-memory DuckDB connection that scans the corpus parquet in place; read-only, see the module docstring."""
+    """Read-only DuckDB connection that scans the corpus parquet in place (see the module docstring)."""
     corpus_path(corpus)
-    return duckdb.connect(":memory:")
+    return duckdb.connect(str(_catalog()), read_only=True)
 
 
 def execute(con, sql, params=()):
-    """Run one read-only statement. SELECT/WITH only: the corpus connection must never mutate anything."""
+    """Run one statement. SELECT/WITH only: read-only mode guards the catalog, this guards the filesystem."""
     head = sql.strip().split(None, 1)[0].lower()
     if head not in ("select", "with"):
         raise NotReadOnly(f"only SELECT/WITH is allowed on the corpus connection, not {head!r}")

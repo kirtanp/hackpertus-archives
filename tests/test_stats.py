@@ -1,5 +1,7 @@
 """Statistics module: every DuckDB figure is checked against the same figure computed independently with pandas."""
+import tempfile
 from pathlib import Path
+import duckdb
 import pandas as pd
 import pytest
 
@@ -171,15 +173,46 @@ def test_missing_corpus_fails_clearly(tmp_path):
         stats.connect(absent)
 
 
-def test_connection_refuses_to_mutate():
+def test_connection_is_really_read_only():
+    """DuckDB itself, not only the module guard, must refuse to change the connection's catalog."""
     con = stats.connect()
     try:
         assert stats.execute(con, "select 1 as one").fetchone() == (1,)
-        for sql in ("create table t(a int)", "insert into t values (1)", "drop table t", "copy (select 1) to 'x.parquet'", "attach 'x.db'"):
-            with pytest.raises(stats.NotReadOnly):
-                stats.execute(con, sql)
+        assert con.execute("select count(*) from read_parquet(?)", [str(stats.CORPUS)]).fetchone() == (ANSWERS,)
+        with pytest.raises(duckdb.Error) as e:
+            con.execute("create table t(a int)")  # straight to DuckDB, bypassing stats.execute
+        assert "read-only" in str(e.value)
     finally:
         con.close()
+
+
+def test_execute_refuses_anything_but_select():
+    """Read-only mode still allows COPY ... TO a file, so the module guard is what protects data/out."""
+    con = stats.connect()
+    try:
+        for sql in ("create table t(a int)", "insert into t values (1)", "drop table t", "update t set a = 1",
+                    "copy (select 1 as a) to 'x.parquet'", "export database 'x'", "attach 'x.db'"):
+            with pytest.raises(stats.NotReadOnly):
+                stats.execute(con, sql)
+        assert not Path("x.parquet").exists() and not Path("x.db").exists()
+    finally:
+        con.close()
+
+
+def test_nothing_is_written_to_the_data_directory():
+    """A full aggregate run leaves data/out byte-identical and keeps its scratch catalog out of the repository."""
+    def snapshot():
+        return {p.name: (p.stat().st_size, p.stat().st_mtime_ns) for p in stats.OUT.iterdir()}
+
+    before = snapshot()
+    out = stats.summary(query="all")
+    assert snapshot() == before
+    assert out["scope"]["rows_counted"] == ANSWERS
+    catalog = stats._catalog()
+    assert catalog.parent.name.startswith("archai-stats-")
+    assert Path(tempfile.gettempdir()) in catalog.parents
+    assert [p.name for p in catalog.parent.iterdir()] == ["catalog.duckdb"]  # empty catalog, no data, no spill file
+    assert stats.OUT.resolve() not in (catalog, *catalog.parents)
 
 
 def test_endpoint_returns_the_same_summary():

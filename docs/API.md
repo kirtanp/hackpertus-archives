@@ -51,6 +51,7 @@ returned; `route.intents_from` / `places_from` say who decided. Accuracy of each
 ## `GET /api/stats`
 Aggregates over the whole corpus in SQL (DuckDB, `src/archai/stats.py`), not over the passages retrieved for one place: the parquet is scanned with `read_parquet` and never loaded into pandas.
 Query parameters are `query` (`all` default, or `sections`, `documents`, `pages`, `sheets`, `markup`, `content`), `section` (questionnaire number such as `III.12`, matching the section and its sub-questions) and `page` (answers whose `page_start`..`page_end` covers it).
+The connection is opened read-only over an empty catalog in the system temp directory, and every statement is a SELECT, so neither the corpus nor `data/out` is ever written.
 A `section` filter also matches its sub-questions (`IV.16` includes `IV.16.B.c`) and a `page` filter matches answers whose page range covers that page.
 An unsupported `query` or a malformed `section`/`page` returns `400`; an absent corpus returns `503`.
 Every response carries `corpus` (file, engine, rows, columns) and `scope` (rows counted, filters, plain-language description) so a whole-corpus figure cannot be read as a per-place one, plus `blocks` with the requested aggregates.

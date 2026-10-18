@@ -8,7 +8,7 @@ This file is the project's committed home for project-intrinsic agent knowledge:
 
 - `src/archai/stats.py` is the only place that queries the corpus with DuckDB, and `tests/test_stats.py` re-derives every figure it returns with pandas: copy that pattern for new aggregates instead of asserting SQL against itself.
 - `data/out/stapfer_answers.parquet` is committed and present in CI, so a test may read it directly without building the pipeline.
-- DuckDB cannot open an in-memory database read-only ("Cannot launch in-memory database in read-only mode") and the corpus is a parquet file rather than a DuckDB database, so `stats.execute` enforces read-only by refusing any statement that is not SELECT/WITH.
+- DuckDB cannot open an in-memory database read-only ("Cannot launch in-memory database in read-only mode") and a read-only connection still allows `COPY ... TO` on the filesystem, so `src/archai/stats.py` opens read-only over an empty catalog in the system temp directory *and* refuses any statement that is not SELECT/WITH.
 
 ## Maintaining this file
 
