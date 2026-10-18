@@ -21,16 +21,26 @@ Body: `{"question": "Wie viele Kinder besuchten die Schule in Hörndli?"}` (2–
 
 | Field | Meaning |
 |---|---|
-| `answer` | Apertus answer with `[n]` citations, or the extractive fallback |
-| `answer_source` | `apertus` or `extractive` |
+| `answer` | Apertus answer with `[n]` citations, the extractive fallback, or the pupil total computed from the sources |
+| `answer_source` | `apertus`, `extractive` or `aggregate` |
 | `cited` | source numbers cited in the answer |
 | `route` | deterministic router output: `intents`, `places`, `filtered_pool`, optional `fallback` |
 | `sources[]` | `id`, `doc_id` (= `record_id`), `kind` (`stapfer`/`consultation`), `qno`, `text`, `cite` (archive signature, page, question), `page`, `url` (archive viewer), `facsimile`, `score` |
 | `llm_meta` | model, attempts, errors |
 | `llm_rejected` | present when Apertus answered without citations or with a blanket "no information": the answer is discarded |
+| `number_check` | `ok` and the numbers of the answer that the cited sources do not contain |
 
 Example `cite`: `BAR B0 1000/1483, Nr. 1421, fol. 228-229v, S. 2, Frage III.12`.
 Consultations cite the linked dossier signature (e.g. `E6100C#1998/106#1039*`) or the metadata row.
+
+### Pupil totals (`answer_source: aggregate`)
+A question that asks for a number of pupils ("Wie viele Schülerinnen gab es total in Bern?") is answered by
+`archai.qa.aggregate_pupils`, not by the model: `archai.tools.extract_quantities` reads the counts out of the retrieved
+answers, the counts are grouped by sheet and by sex, and only unambiguous figures are summed. The answer lists every
+sheet with its own value and citation, names the sheets outside the total with the reason (a range, several figures, no
+figure for that sex), and states the total as computed from those sources. Boys and girls are never added together.
+Without a place the question is not aggregated, and a route selecting more than `qa.AGG_SOURCES_MAX` sources is left to
+the normal answer path. The whole routed pool is returned in `sources[]` for the aggregate, so `[n]` stays resolvable.
 
 ## `GET /api/record/{record_id}`
 One record of `data/out/records.jsonl`, e.g. `/api/record/stapfer:transkription:16`, `/api/record/consultation:417`.

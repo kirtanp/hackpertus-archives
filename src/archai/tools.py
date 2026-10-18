@@ -113,12 +113,36 @@ def _units():
     return sorted({x.strip(". ") for x in w if x}, key=len, reverse=True)
 
 
+PUPIL_SEX = {"male": r"(?:Knaben|Buben|garçons|garcons)",
+             "female": r"(?:Mädchen|Mägdchen|Mägdlein|Mägdli|Meitli|filles)"}  # Mägdchen/Mägdlein: 290 corpus rows
+# A count stands up to 12 non-digits after its sex word ("Knaben 17.", "Knaben? – 100", "Mädchen circa 65"), but a
+# closing bracket may not: the questionnaire header "(Knaben/Mädchen)): 40" is not an answer. Gaps that name another
+# sex or bind the count to something else are rejected, because "Knaben und 21 Mädchen" states 21 girls (corpus row)
+# and "Knaben bis 20" is a bound; that keeps most letter-gaps unread instead of reading them as a count.
+PUPIL_GAP = r"[^0-9)]"
+PUPIL_STOP = re.compile(r"\b(?:und|vnd|et|oder|sowie|plus|mit|ohne|bis|zwischen|à|to)\b|" + "|".join(PUPIL_SEX.values()), re.I)
+# "21 Mädchen": a count before its sex word, read as the original pattern did. A count that already follows an
+# earlier sex word is not claimed twice ("Knaben 18 Mädchen 22" is 18 boys and 22 girls, not 18 of each).
+PUPIL_FILL = r"[\s.,:;!?–—/'’-]"  # what may stand between a sex word and the count it already owns
+PUPIL_OWN = re.compile(r"(?:" + "|".join(PUPIL_SEX.values()) + r")" + PUPIL_FILL + r"*(?:\d|" + PUPIL_FILL + r")*$", re.I)
+
+
 def extract_quantities(text: str):
-    """Pupil counts (Knaben/Mädchen/garçons/filles) and money amounts with 1799 currency units."""
+    """Pupil counts (Knaben/Buben/Mädchen/Mägdlein/garçons/filles) and money amounts with 1799 currency units."""
     t = text or ""; out = {"pupils": [], "money": []}
-    for sex, pat in (("male", r"(?:Knaben|garçons|garcons)"), ("female", r"(?:Mädchen|Meitli|filles)")):
-        for m in re.finditer(pat + r"\D{0,12}?(\d{1,3})|(\d{1,3})\s*" + pat, t, re.I):
-            out["pupils"].append({"sex": sex, "count": int(m.group(1) or m.group(2)), "surface": m.group(0)})
+    for sex, pat in PUPIL_SEX.items():
+        rx = re.compile(rf"({pat})({PUPIL_GAP}{{0,12}}?)(\d{{1,3}})(?!\d)|(?<!\d)(\d{{1,3}})\s*({pat})", re.I)
+        pos = 0
+        while (m := rx.search(t, pos)):
+            if m.group(4) is not None:  # count first: after it the sex word is still free for its own "Mägdchen 85"
+                pos = m.start() + 1
+                if PUPIL_OWN.search(t[max(0, m.start(4) - 24):m.start(4)]):
+                    continue  # the count belongs to the sex word before it
+            else:
+                pos = m.end()
+                if PUPIL_STOP.search(m.group(2)):
+                    continue
+            out["pupils"].append({"sex": sex, "count": int(m.group(3) or m.group(4)), "surface": m.group(0)})
     units = "|".join(re.escape(u) for u in _units())
     for m in re.finditer(rf"(?:\b({units})\.?\s*(\d+(?:[.,]\d+)?)|(\d+(?:[.,]\d+)?)\s*({units})\b\.?)", t, re.I):
         out["money"].append({"amount": float((m.group(2) or m.group(3)).replace(",", ".")), "unit": m.group(1) or m.group(4), "surface": m.group(0)})
