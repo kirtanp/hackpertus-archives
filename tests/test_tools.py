@@ -130,3 +130,49 @@ def test_answer_input_gate_and_not_found():
         assert qa.answer(Idx2(), "Salaire à Lausanne?")["answer_source"] == "apertus"
     finally:
         llm.chat_text = orig
+
+
+def test_quantities_bilingual():
+    """French and German pupil counts and money, both writing orders, number words; no counts from labels or family."""
+    cases = {"[III.12] Zu Sommers zeit 24. Knaben 16. Töchteren.": [("male", 24), ("female", 16)],
+             "Jm weinter Knaben 15 Mädchen – 13": [("male", 15), ("female", 13)],
+             "[III.12] Dix huit Enfant": [("unspecified", 18)], "[III.12.a] Environt Nonanté, tant Garçons que filles": [("all", 90)],
+             "[II.10] Jls Sont distribuës tant Garçons que filles en trois Classes": [],
+             "[III.11.e] 4 enfans\n\n[III.12] 30 Ecoliers": [("unspecified", 30)], "[I.1.a] Ce sont quatre Villages, un enfant": []}
+    for s, want in cases.items():
+        assert sorted((p["sex"], p["count"]) for p in T.extract_quantities(s)["pupils"]) == sorted(want), s
+    money = lambda s: [(m["amount"], m["unit"]) for m in T.extract_quantities(s)["money"]]
+    assert money("vingt-Cinq florins") == [(25.0, "florins")] and money("vier und zwanzig Batzen") == [(24.0, "Batzen")]
+    assert money("Chandon L. 9.") == [(9.0, "L.")] and money("un fort quart d'heure") == []
+
+
+def test_records_conform_to_json_schema():
+    import json
+    from jsonschema import Draft202012Validator
+    v = Draft202012Validator(json.load(open("docs/record.schema.json", encoding="utf-8")))
+    bad = [r["record_id"] for r in map(json.loads, open("data/out/records.jsonl", encoding="utf-8")) if next(v.iter_errors(r), None)]
+    assert not bad, bad[:5]
+
+
+def test_croissant_metadata_loads_records():
+    import pytest
+    mlc = pytest.importorskip("mlcroissant")
+    import os
+    cwd = os.getcwd(); os.chdir("data/out")
+    try:
+        ds = mlc.Dataset(jsonld="croissant.json")
+        r = next(iter(ds.records(record_set="records")))
+    finally:
+        os.chdir(cwd)
+    assert r["records/record_id"] and r["records/archive_signature"]
+
+
+def test_records_expand_as_json_ld():
+    import json
+    import pytest
+    jsonld = pytest.importorskip("pyld.jsonld")
+    ctx = json.load(open("data/out/records.context.jsonld", encoding="utf-8"))
+    r = json.loads(open("data/out/records.jsonl", encoding="utf-8").readline())
+    exp = jsonld.expand(dict(ctx, **r))[0]
+    assert exp["@id"].startswith("https://") and "http://purl.org/dc/terms/title" in exp
+    assert not [k for k in r if k != "record_id" and k not in ctx["@context"]]  # every field has a mapping

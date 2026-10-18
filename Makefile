@@ -4,7 +4,7 @@ BIN := $(VENV)/bin
 PORT ?= 8791
 export PYTHONPATH := src
 
-.PHONY: setup run test notebook docker eval onboard-example clean
+.PHONY: setup run test check notebook docker eval onboard-example clean
 
 setup:            ## create the virtual env and install pinned dependencies
 	$(PY) -m venv $(VENV) && $(BIN)/pip install -q -r requirements.txt
@@ -21,8 +21,11 @@ notebook:         ## execute notebooks/demo.ipynb in place
 docker:           ## build and run the container (same as docker compose up)
 	docker compose up --build
 
-eval:             ## retrieval + answer evaluation (needs APERTUS_API_KEY)
-	set -a; [ -f .env ] && . ./.env; set +a; $(BIN)/python -m archai.qa_eval && $(BIN)/python -m archai.qa_eval --answers && $(BIN)/python -m archai.evaluate > /dev/null
+eval:             ## retrieval + answer evaluation (needs APERTUS_API_KEY); interop last: croissant.json hashes metrics.json
+	set -a; [ -f .env ] && . ./.env; set +a; $(BIN)/python -m archai.qa_eval && $(BIN)/python -m archai.qa_eval --confidence && $(BIN)/python -m archai.evaluate > /dev/null && $(BIN)/python -m archai.interop
+
+check:            ## lint + all tests incl. JSON Schema / Croissant / JSON-LD validation
+	$(BIN)/pip install -q -r requirements-dev.txt && $(BIN)/ruff check . && $(BIN)/python -m pytest -q tests
 
 onboard-example:  ## onboard the consultations table generically and compare with the hand-built records
 	$(BIN)/python -m archai.onboard data/out/consultations.csv --id example-consultations --no-llm \

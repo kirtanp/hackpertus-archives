@@ -45,3 +45,14 @@ sous
 Xr
 xr
 ß
+florins
+Florins
+francs
+Francs
+écus
+ecus
+creutzer
+Creutzer
+sols
+piecette
+piecettes

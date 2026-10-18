@@ -43,7 +43,7 @@ def merge_apertus(rec, a):
     places = [p for p in o.get("places") or [] if isinstance(p, str) and not p.startswith("stapfer:")]
     chk = T.verify_in_source(persons + places, text + " " + rec["title"])
     ok = {c["entity"] for c in chk if c["grounded"]}
-    rec["persons"] += [{"name": p, "source": "apertus", "grounded": True} for p in persons if p in ok]
+    rec["persons"] += [{"person_id": None, "name": p, "role": "mentioned", "source": "apertus", "grounded": True} for p in persons if p in ok]
     rec["places_mentioned"] = [p for p in places if p in ok]
     rec["enrichment"] = {"source": f"apertus:{a['source']}", "model": a["model"], "prompt_version": a["prompt_version"],
                          "title_generated": o.get("title") if isinstance(o.get("title"), str) else None,
@@ -89,7 +89,7 @@ def consultation_records():
             "title": c["title"], "language": "de",
             "text": f'{c["title"]}. {c["type"]}, {c["department"]}. Adressaten: {", ".join(c["addressees"])}.',
             "dates": dates, "places": [], "persons": [],
-            "organisations": [{"name": c["department"], "abbr": c["department_abbr"], "role": "lead_department"}]
+            "organisations": [{"name": c["department"], "abbr": c["department_abbr"], "role": "lead_department"}] if c["department"] else []
                              + [{"name": a, "role": "addressee"} for a in c["addressees"]],
             "archive_units": [{k: u[k] for k in ("unit_id", "signature", "title", "begin", "end", "level", "access", "url")}
                               | {"path": [h["title"] for h in u["hierarchy"]]} for u in units],

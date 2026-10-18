@@ -44,6 +44,41 @@ def stapfer_metrics():
     }
 
 
+def bias_metrics(threshold=0.10):
+    """Bias-aware preprocessing check: does each extraction step work equally well for every source language? Rates are
+    per Stapfer sheet; a gap above `threshold` between German and French is flagged. "before_fix" are the rates of the
+    German-only extractor (October 2026), kept for transparency."""
+    recs = [json.loads(l) for l in open(OUT / "records.jsonl", encoding="utf-8")]
+    st = [r for r in recs if r["dataset"] == "stapfer-enquete-1799"]
+    checks = {"pupil_counts_extracted": lambda r: bool(r["quantities"]["pupils"]), "money_amounts_extracted": lambda r: bool(r["quantities"]["money"]),
+              "dates_found": lambda r: bool(r["dates"]), "place_geocoded": lambda r: any(p.get("lat") for p in r["places"]),
+              "teacher_named": lambda r: bool(r["persons"]), "apertus_enriched": lambda r: r["enrichment"]["source"] != "deterministic"}
+    out = {"scope": "Stapfer sheets by detected language (it: 3 sheets, too few to compare)", "threshold": threshold,
+           "rates": {}, "gaps_de_fr": {}, "flagged": [],
+           "before_fix": {"pupil_counts_extracted": {"de": 0.77, "fr": 0.43}, "money_amounts_extracted": {"de": 0.78, "fr": 0.36}},
+           "fix": "extract_quantities reads French and German number words, both writing orders, French pupil/currency words "
+                  "and bare numbers in the pupils question (III.12); precision of newly added extractions 36/40 in a hand-checked sample"}
+    for lang in ("de", "fr", "it"):
+        rs = [r for r in st if r["language"] == lang]
+        out["rates"][lang] = {"sheets": len(rs), **{k: round(sum(f(r) for r in rs) / len(rs), 3) for k, f in checks.items()}} if rs else {"sheets": 0}
+    # dates: the sources themselves differ (French sheets are dated less often), so parity is measured on the sheets that
+    # carry a year where the pipeline looks for the date of writing (letterhead + end of the sheet)
+    docs = {json.loads(l)["doc_id"]: json.loads(l) for l in open(OUT / "stapfer_documents.jsonl", encoding="utf-8")}
+    dated = lambda r: bool(re.search(r"\b1[78]\d\d\b", (docs[r["record_id"]]["letterhead_clean"] or "") + " " + docs[r["record_id"]]["text_clean"][-400:]))
+    for lang in ("de", "fr"):
+        rs = [r for r in st if r["language"] == lang]; d = [r for r in rs if dated(r)]
+        out["rates"][lang]["sheets_with_a_year_in_source"] = round(len(d) / len(rs), 3)
+        out["rates"][lang]["dates_found_where_source_dated"] = round(sum(bool(r["dates"]) for r in d) / len(d), 3)
+    out["source_side_gaps"] = {"dates_found": "French sheets carry a date less often (year in letterhead/end of sheet: see "
+                                              "sheets_with_a_year_in_source); parity is checked on dates_found_where_source_dated"}
+    for k in list(checks) + ["dates_found_where_source_dated"]:
+        gap = round(out["rates"]["de"][k] - out["rates"]["fr"][k], 3)
+        out["gaps_de_fr"][k] = gap
+        if abs(gap) > threshold and k not in out["source_side_gaps"]:
+            out["flagged"].append(k)
+    return out
+
+
 def link_metrics():
     s = json.load(open(OUT / "link_stats.json"))
     recs = [json.loads(l) for l in open(OUT / "consultations.jsonl", encoding="utf-8")]
@@ -174,6 +209,7 @@ def main(with_runtime=False):
            "apertus_enrichment": {f.name: apertus_metrics(f) for f in sorted(OUT.glob("apertus_enrichment*.jsonl"))}, "apertus_agent": agent_metrics()}
     if (OUT / "qa_eval.json").exists():  # written by archai.qa_eval (needs Apertus)
         rep["qa_retrieval"] = json.load(open(OUT / "qa_eval.json"))
+    rep["bias_by_language"] = bias_metrics()
     if (OUT / "tool_bench.json").exists():  # written by archai.tool_bench (needs Apertus)
         rep["tool_calling_benchmark"] = json.load(open(OUT / "tool_bench.json"))
     if (OUT / "agent_traces_v4.jsonl").exists():  # same 80 records, same environment: v3 re-run locally vs v4

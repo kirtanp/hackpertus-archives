@@ -279,42 +279,7 @@ def _nums(t):
     return {n.replace(",", ".") for n in NUM.findall(t)}
 
 
-# number words in the sources (FR/DE), so "Quarante-un" in a source grounds "41" in an answer
-_NW = {"un": 1, "une": 1, "deux": 2, "trois": 3, "quatre": 4, "cinq": 5, "six": 6, "sept": 7, "huit": 8, "neuf": 9, "dix": 10,
-       "onze": 11, "douze": 12, "treize": 13, "quatorze": 14, "quinze": 15, "seize": 16, "vingt": 20, "vingts": 20, "trente": 30,
-       "quarante": 40, "cinquante": 50, "soixante": 60, "septante": 70, "huitante": 80, "octante": 80, "nonante": 90,
-       "cent": 100, "cents": 100, "mille": 1000,
-       "ein": 1, "eins": 1, "eine": 1, "zwei": 2, "drei": 3, "vier": 4, "funf": 5, "sechs": 6, "sieben": 7, "acht": 8, "neun": 9,
-       "zehn": 10, "elf": 11, "zwolf": 12, "dreizehn": 13, "vierzehn": 14, "funfzehn": 15, "sechzehn": 16, "siebzehn": 17,
-       "achtzehn": 18, "neunzehn": 19, "zwanzig": 20, "dreissig": 30, "dreizig": 30, "vierzig": 40, "funfzig": 50, "sechzig": 60,
-       "siebzig": 70, "achtzig": 80, "neunzig": 90, "hundert": 100, "tausend": 1000}
-_DE_COMPOUND = re.compile(r"(ein|zwei|drei|vier|funf|sechs|sieben|acht|neun)und(zwanzig|dreissig|vierzig|funfzig|sechzig|siebzig|achtzig|neunzig)")
-
-
-def word_numbers(t):
-    """Values of FR/DE number words and runs of them ("quarante six" 46, "deux cent soixante" 260, "einundvierzig" 41)."""
-    t = _ascii(t)
-    out = {str(_NW[m.group(1)] + _NW[m.group(2)]) for m in _DE_COMPOUND.finditer(t)}
-    cur, total, run = 0, 0, False
-    for w in re.findall(r"[a-z]+", t) + [""]:
-        v = _NW.get(w)
-        if v is None:
-            if w == "et" and run:  # "vingt et un"
-                continue
-            if run:
-                out.add(str(total + cur))
-            cur, total, run = 0, 0, False
-            continue
-        out.add(str(v)); run = True
-        if v == 100:
-            cur = (cur or 1) * 100
-        elif v == 1000:
-            total += (cur or 1) * 1000; cur = 0
-        elif v == 20 and cur % 100 == 4:  # quatre-vingt(s) = 80
-            cur += 76
-        else:
-            cur += v
-    return out
+from .tools import word_numbers  # FR/DE number words, shared with extract_quantities
 
 
 def check_numbers(a, hits, q):

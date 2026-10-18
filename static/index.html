@@ -410,6 +410,14 @@ function results(m){
       tile(pct(A.simple.exact),`single calls right (native API: ${pct(N.simple.exact)})`,raw(["70b/json.simple.exact",A.simple.exact])),
       tile(pct(A.parallel.exact),`"same tool several times" right — often only one of the values is looked up (native API: ${pct(N.parallel.exact)}, one call per turn)`,raw(["70b/json.parallel.exact",A.parallel.exact],["70b/native.parallel.exact",N.parallel.exact])),
       tile(pct(A.irrelevance.exact),`requests no tool can serve correctly answered without a call (8B JSON: ${S?pct(S.irrelevance.exact):"–"})`,raw(["70b/json.irrelevance.exact",A.irrelevance.exact]))]);}
+  const bl=m.bias_by_language;
+  if(bl&&bl.rates&&bl.rates.de&&bl.rates.fr){const de=bl.rates.de,fr=bl.rates.fr,bf=bl.before_fix||{};
+    const pair=(k)=>`${pct(de[k])} · ${pct(fr[k])}`;
+    h+=group("Does the pipeline work equally well for German and French sheets?",`${bl.scope}; German ${n(de.sheets)} sheets, French ${n(fr.sheets)}; gaps above ${pct(bl.threshold)} are flagged`,[
+      tile(pair("pupil_counts_extracted"),`sheets with pupil counts extracted, German · French (before the fix: ${bf.pupil_counts_extracted?pct(bf.pupil_counts_extracted.de)+" · "+pct(bf.pupil_counts_extracted.fr):"–"})`,raw(["rates.de.pupil_counts_extracted",de.pupil_counts_extracted],["rates.fr.pupil_counts_extracted",fr.pupil_counts_extracted])),
+      tile(pair("money_amounts_extracted"),`sheets with money amounts extracted (before: ${bf.money_amounts_extracted?pct(bf.money_amounts_extracted.de)+" · "+pct(bf.money_amounts_extracted.fr):"–"})`,raw(["rates.de.money_amounts_extracted",de.money_amounts_extracted],["rates.fr.money_amounts_extracted",fr.money_amounts_extracted])),
+      tile(pair("dates_found_where_source_dated"),`dates found where the sheet carries a year (French sheets are dated less often: ${pct(de.sheets_with_a_year_in_source)} · ${pct(fr.sheets_with_a_year_in_source)})`,raw(["rates.fr.dates_found_where_source_dated",fr.dates_found_where_source_dated])),
+      tile(bl.flagged.length?bl.flagged.join(", "):"none","gaps above the threshold",raw(["flagged",JSON.stringify(bl.flagged)]),LOW)]);}
   const ce=m.qa_confidence;
   if(ce){const rel=ce.reliability||[];
     h+=group("Is the confidence percentage honest?",ce.scope+". "+ce.method+". "+ce.caveat,[

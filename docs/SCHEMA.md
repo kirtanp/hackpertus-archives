@@ -37,5 +37,17 @@ text_clean, annotations, uncertain_readings, dash_marks, markup_errors, margin_n
 Apertus output is never the only source of a field: every model value sits under `enrichment` with model and prompt
 version, and entities not literally present in the source text are moved to `rejected_ungrounded`.
 
-The challenge mentions a shared specification across submissions; it was not available to us. Field names follow the
-plain conventions above so a mapping is a rename, not a restructure.
+## Interoperability: three published standards, each checked by machine
+The challenge mentions a shared specification across submissions; it was not available to us. Instead the dataset conforms
+to published standards that other submissions and tools already read (`PYTHONPATH=src python -m archai.interop` regenerates 2 and 3):
+
+| File | Standard | What it gives a reader | Check (in `tests/`, run by CI) |
+|---|---|---|---|
+| `docs/record.schema.json` | JSON Schema 2020-12 | the exact shape and types of a record | all 2,819 records validate |
+| `data/out/croissant.json` | MLCommons Croissant 1.0 + Responsible-AI fields | files with SHA-256, licence, citation, fields, biases, personal data, use cases; loadable by Hugging Face / Kaggle / TFDS tooling | `mlcroissant` validates it and loads records through it |
+| `data/out/records.context.jsonld` | JSON-LD 1.1 with Dublin Core and schema.org terms | records read as linked data (e.g. `title` → `dct:title`, `places` → `dct:spatial` with `schema:latitude`, `provenance.repository` → `schema:holdingArchive`) | a record expands with every field mapped; ids become `https://…/record/stapfer:transkription:16` |
+
+A mapping to another submission's format is then a field rename, not a restructure.
+
+Writing the schema surfaced two export defects, now fixed: Apertus-found names had no `role` (they are now
+`role: "mentioned"`), and three consultations without a lead department carried an organisation with no name.

@@ -267,6 +267,67 @@
    }
   }
  },
+ "bias_by_language": {
+  "scope": "Stapfer sheets by detected language (it: 3 sheets, too few to compare)",
+  "threshold": 0.1,
+  "rates": {
+   "de": {
+    "sheets": 1737,
+    "pupil_counts_extracted": 0.969,
+    "money_amounts_extracted": 0.804,
+    "dates_found": 0.5,
+    "place_geocoded": 0.999,
+    "teacher_named": 0.997,
+    "apertus_enriched": 0.995,
+    "sheets_with_a_year_in_source": 0.516,
+    "dates_found_where_source_dated": 0.919
+   },
+   "fr": {
+    "sheets": 510,
+    "pupil_counts_extracted": 0.941,
+    "money_amounts_extracted": 0.88,
+    "dates_found": 0.343,
+    "place_geocoded": 1.0,
+    "teacher_named": 0.996,
+    "apertus_enriched": 0.998,
+    "sheets_with_a_year_in_source": 0.345,
+    "dates_found_where_source_dated": 0.96
+   },
+   "it": {
+    "sheets": 3,
+    "pupil_counts_extracted": 0.0,
+    "money_amounts_extracted": 0.0,
+    "dates_found": 0.667,
+    "place_geocoded": 1.0,
+    "teacher_named": 0.667,
+    "apertus_enriched": 1.0
+   }
+  },
+  "gaps_de_fr": {
+   "pupil_counts_extracted": 0.028,
+   "money_amounts_extracted": -0.076,
+   "dates_found": 0.157,
+   "place_geocoded": -0.001,
+   "teacher_named": 0.001,
+   "apertus_enriched": -0.003,
+   "dates_found_where_source_dated": -0.041
+  },
+  "flagged": [],
+  "before_fix": {
+   "pupil_counts_extracted": {
+    "de": 0.77,
+    "fr": 0.43
+   },
+   "money_amounts_extracted": {
+    "de": 0.78,
+    "fr": 0.36
+   }
+  },
+  "fix": "extract_quantities reads French and German number words, both writing orders, French pupil/currency words and bare numbers in the pupils question (III.12); precision of newly added extractions 36/40 in a hand-checked sample",
+  "source_side_gaps": {
+   "dates_found": "French sheets carry a date less often (year in letterhead/end of sheet: see sheets_with_a_year_in_source); parity is checked on dates_found_where_source_dated"
+  }
+ },
  "tool_calling_benchmark": {
   "scope": "64 single-turn cases on this project's 8 tools (BFCL-style categories: simple 26, parallel 16, parallel_multiple 12, irrelevance 10); seed 5",
   "scoring": "exact = the multiset of (tool, required arguments) equals gold after case/space normalisation (BFCL AST style); irrelevance is exact only with no call; optional arguments are ignored",
