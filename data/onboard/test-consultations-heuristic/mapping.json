@@ -1,0 +1,30 @@
+{
+ "source": "heuristic",
+ "id": "doc_id",
+ "title": [
+  "title"
+ ],
+ "text": [
+  "title",
+  "addressees"
+ ],
+ "dates": [
+  "year",
+  "consultation_start",
+  "consultation_end",
+  "consultation_start_raw"
+ ],
+ "places": [],
+ "persons": [],
+ "organisations": [
+  "department",
+  "department_abbr"
+ ],
+ "signature": null,
+ "url": "provenance.source_dataset",
+ "coordinates": null,
+ "language": null,
+ "kind": "record",
+ "description": null,
+ "validation_notes": []
+}

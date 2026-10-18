@@ -1,0 +1,87 @@
+{
+ "started": "2026-10-18T10:16:38",
+ "host": "Linux-6.8.0-1061-aws-x86_64-with-glibc2.35",
+ "apertus": {
+  "base_url": "https://gateway.keera.ch/api/v1",
+  "model": "apertus-v1-5-70b",
+  "reachable": null
+ },
+ "stages": [
+  {
+   "stage": "ingest_stapfer",
+   "optional": false,
+   "status": "ok",
+   "seconds": 2.4,
+   "outputs": {
+    "data/interim/stapfer/t_transkription.parquet": "4f98542e2a31f083"
+   }
+  },
+  {
+   "stage": "ingest_consultations",
+   "optional": false,
+   "status": "ok",
+   "seconds": 0.0,
+   "outputs": {
+    "data/interim/consultations.parquet": "4a7be2d549f8b086"
+   }
+  },
+  {
+   "stage": "ingest_olr",
+   "optional": false,
+   "status": "ok",
+   "seconds": 171.9,
+   "outputs": {
+    "data/interim/olr/tbs_vrzng_enht.0000.parquet": "a5bb9795d7684f9c"
+   }
+  },
+  {
+   "stage": "clean_stapfer",
+   "optional": false,
+   "status": "ok",
+   "seconds": 19.9,
+   "outputs": {
+    "data/out/stapfer_documents.jsonl": "23bfeba561979bd3"
+   }
+  },
+  {
+   "stage": "link_consultations",
+   "optional": false,
+   "status": "ok",
+   "seconds": 7.5,
+   "outputs": {
+    "data/out/consultations.jsonl": "9895829caf22e303"
+   }
+  },
+  {
+   "stage": "apertus_enrich",
+   "optional": true,
+   "status": "skipped:not_requested",
+   "outputs": {}
+  },
+  {
+   "stage": "apertus_agent",
+   "optional": true,
+   "status": "skipped:not_requested",
+   "outputs": {}
+  },
+  {
+   "stage": "export",
+   "optional": false,
+   "status": "ok",
+   "seconds": 5.0,
+   "outputs": {
+    "data/out/records.jsonl": "226c3180aba22709"
+   }
+  },
+  {
+   "stage": "evaluate",
+   "optional": false,
+   "status": "ok",
+   "seconds": 12.7,
+   "outputs": {
+    "data/out/metrics.json": "60018e28c6bbc22a"
+   }
+  }
+ ],
+ "finished": "2026-10-18T10:20:18"
+}

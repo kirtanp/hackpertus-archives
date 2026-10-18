@@ -1,0 +1,25 @@
+{
+ "dataset": "test-consultations-heuristic",
+ "scope": "consultations.csv (569 rows, sha256 c6a4ccc5f4ee…)",
+ "source_url": "https://opendata.swiss/de/dataset/federal-consultations-1960-1991",
+ "licence": "terms as stated on opendata.swiss",
+ "records": 569,
+ "schema_invalid": 0,
+ "mapping_source": "heuristic",
+ "mapping_notes": [],
+ "apertus_mapping": null,
+ "coverage": {
+  "title": 1.0,
+  "text": 1.0,
+  "dates": 1.0,
+  "places": 0.0,
+  "places_geocoded": 0.0,
+  "persons": 0.0,
+  "archive_signature": 0.0
+ },
+ "records_with_privacy_flags": {},
+ "pii_masked": false,
+ "enriched": 0,
+ "published_to_qa": false,
+ "seconds": 0.1
+}

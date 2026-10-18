@@ -1,0 +1,16 @@
+.venv/
+__pycache__/
+.pytest_cache/
+.ipynb_checkpoints/
+.playwright-mcp/
+.DS_Store
+# secrets
+.env
+*.env
+!.env.example
+# raw dumps and intermediate tables (3.6 GB; download from opendata.swiss, see README)
+data/raw/
+data/interim/
+# facsimile scans: not redistributable (Bundesarchiv copyright), never commit
+data/facsimiles/
+data/facsimiles_png/

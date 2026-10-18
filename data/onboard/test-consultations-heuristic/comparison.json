@@ -1,0 +1,11 @@
+{
+ "scope": "test-consultations-heuristic vs hand-built consultation:* records in data/out/records.jsonl",
+ "matched_records": 569,
+ "reference_records": 569,
+ "title_exact": 1.0,
+ "title_exact_definition": "identical after collapsing whitespace",
+ "reference_dates_found": 1.0,
+ "records_with_reference_dates": 546,
+ "lead_organisation_found": 0.995,
+ "records_with_reference_organisation": 569
+}

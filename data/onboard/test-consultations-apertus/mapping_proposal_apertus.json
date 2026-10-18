@@ -1,0 +1,34 @@
+{
+ "id": "doc_id",
+ "title": [
+  "doc_id"
+ ],
+ "text": [
+  "title",
+  "department",
+  "department_abbr",
+  "office",
+  "addressees",
+  "document_types"
+ ],
+ "dates": [
+  "year",
+  "consultation_start",
+  "consultation_end",
+  "consultation_start_raw",
+  "consultation_end_raw",
+  "federal_council_protocol_ref"
+ ],
+ "places": [],
+ "persons": [],
+ "organisations": [
+  "department",
+  "department_abbr",
+  "office"
+ ],
+ "signature": "federal_gazette_ref",
+ "url": "provenance.source_dataset",
+ "language": "de",
+ "kind": "federal_consultation",
+ "description": "Metadata record of a federal consultation in Switzerland from 1960 to 1991, including document ID, title, department, consultation dates, and federal gazette reference."
+}

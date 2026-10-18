@@ -1,0 +1,11 @@
+{
+ "scope": "University of Bern reference export: 14801 rows over 2245 sheets (12047 question answers, 2754 sheet-level fields not compared)",
+ "sheets_found": 1.0,
+ "answers_matched": 1.0,
+ "signature_exact_match": 1.0,
+ "text_similarity_median": 1.0,
+ "text_exact_after_normalisation": 0.8169,
+ "text_similarity_ge_0.95": 0.9982,
+ "text_similarity_lt_0.80": 0.0002,
+ "normalisation": "lowercase, HTML entities decoded, page markers / gap marks / dashes removed, whitespace collapsed"
+}

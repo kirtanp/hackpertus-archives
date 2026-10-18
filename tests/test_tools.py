@@ -1,0 +1,86 @@
+from archai import tools as T
+from archai.llm import extract_json, check_schema
+from archai.stapfer_clean import clean, balance_errors, lv03_to_wgs84
+
+
+def test_dates_1799_months():
+    got = {d["iso"] for d in T.normalize_dates("den 16.ten Hornung 1799; le 8 mars 99; 3 Merz")}
+    assert got == {"1799-02-16", "1799-03-08", "1799-03-03"}
+
+
+def test_dates_ignore_non_months():
+    assert T.normalize_dates("18 Knaben und 22 Mädchen") == []
+
+
+def test_quantities():
+    q = T.extract_quantities("Knaben 18. Mädchen 22. fl. 70 und 13 Sous")
+    assert [(p["sex"], p["count"]) for p in q["pupils"]] == [("male", 18), ("female", 22)]
+    assert {(m["unit"].lower(), m["amount"]) for m in q["money"]} >= {("fl", 70.0), ("sous", 13.0)}
+
+
+def test_signatures():
+    assert T.parse_signature("BAR B0 1000/1483, Nr. 1421, fol. 228-229v")["folio"] == "228-229v"
+    s = T.parse_signature("E6100C#1998/106#1039*")
+    assert (s["fonds"], s["accession"], s["dossier"]) == ("E6100C", "1998/106", "1039")
+
+
+def test_verify_in_source():
+    r = T.verify_in_source(["Hans Jacob Weber", "Zürich"], "Hans Jacob Weber von Fischenthal")
+    assert [x["grounded"] for x in r] == [True, False]
+
+
+def test_clean_markup_keeps_annotations():
+    t, ann, q = clean("¥Schule¥¥@1. Knaben $18$$ °-°° ||[Seite 2] Lehrer Wil=@helm #M## Buch")
+    assert "Wilhelm" in t and "Knaben 18 –" in t and "[…]" not in t and "$" not in t and "@" not in t
+    assert q == {"uncertain": 1, "dashes": 1, "errors": 0}
+    assert {"type": "uncertain_reading", "text": "M"} in ann
+
+
+def test_assign_pages():
+    import pandas as pd
+    from archai.stapfer_clean import assign_pages
+    a = pd.DataFrame({"doc_id": ["d"] * 4, "question_no": ["I.1", "I.2", "II.5", "II.6"],
+                      "text_raw": ["a", "b ||[Seite 2] c", "||[Seite 3] d", "e"]})
+    p = assign_pages(a)
+    assert list(zip(p.page_start, p.page_end)) == [(1, 1), (1, 2), (3, 3), (3, 3)]
+
+
+def test_balance_errors():
+    assert balance_errors("$open without close") == 1
+
+
+def test_lv03():
+    lat, lon = lv03_to_wgs84(600000, 200000)  # Bern old observatory
+    assert abs(lat - 46.951) < 0.01 and abs(lon - 7.439) < 0.01
+
+
+def test_extract_json_repair():
+    assert extract_json('Sure! ```json\n{"a": "x}y", "b": [1]}\n``` thanks') == {"a": "x}y", "b": [1]}
+    assert extract_json("no json") is None
+
+
+def test_schema_coerce():
+    o = {"persons": "Weber", "title": 3}
+    assert check_schema(o, {"persons": list, "title": str, "summary_en": str}) == ["type:title", "missing:summary_en"]
+    assert o == {"persons": ["Weber"]}
+
+
+def test_number_check_catches_wrong_citation():
+    from archai.qa import check_numbers
+    hits = [{"cite": "BAR B0 1000/1483, Nr. 1442, fol. 222-223v, S. 4", "text": "l'Hôpital: 76 L. deux sacs de Fromant, 16 Quarteron"},
+            {"cite": "BAR B0 1000/1483, Nr. 1442, fol. 220-221v, S. 4", "text": "Saint Laurent: deux cent Livres, bois environ 24 L."}]
+    q = "Quel est le salaire du régent à Lausanne?"
+    assert check_numbers("[2] Saint Laurent: deux cent Livres, bois environ 24 L.\n[1] l'Hôpital: 76 L.", hits, q) == []
+    bad = check_numbers("[1] Saint Laurent: deux cent Livres, bois environ 24 L.", hits, q)
+    assert [f["number"] for f in bad] == ["24"] and bad[0]["cited"] == [1]
+    assert check_numbers("Total: 1'000 fl. [1]", hits, q)[0]["number"] == "1000"  # not in source 1
+    assert check_numbers("Nr. 1442, S. 4 [1]", hits, q) == []  # signature and page numbers are part of the source
+
+
+def test_word_numbers():
+    from archai.qa import word_numbers
+    assert {"41", "10"} <= word_numbers("Quarante-un à Aran. à Villette dix.")
+    assert {"46", "50"} <= word_numbers("Quarante six a cinquante tous compris")
+    assert "260" in word_numbers("Deux Cent soixante francs de Suisse")
+    assert {"80", "21"} <= word_numbers("quatre-vingts écoliers, vingt et un garçons")
+    assert {"41", "8"} <= word_numbers("einundvierzig Kinder, acht Uhr")

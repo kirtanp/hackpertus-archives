@@ -1,0 +1,13 @@
+{
+ "file": "consultations.csv",
+ "bytes": 323117,
+ "sha256": "c6a4ccc5f4ee106d2da023fc3f07a04bb87fd4228b35b996af785eafdce4878c",
+ "encoding": "utf-8-sig",
+ "delimiter": ",",
+ "rows": 569,
+ "columns": 22,
+ "path": "data/out/consultations.csv",
+ "source_url": "https://opendata.swiss/de/dataset/federal-consultations-1960-1991",
+ "licence": "terms as stated on opendata.swiss",
+ "description": "Federal consultations (Vernehmlassungen) 1960-1991, metadata index of the Federal Chancellery"
+}
