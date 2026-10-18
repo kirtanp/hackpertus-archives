@@ -85,7 +85,7 @@
    "description": "unified AI-ready records (one JSON object per line)",
    "contentUrl": "records.jsonl",
    "encodingFormat": "application/jsonlines",
-   "sha256": "198060830c9af3d0e8835df7a5316cae8cb6f458f382e34f0eaac1892d91fd5b"
+   "sha256": "ca3638d2e79fdedfa8a55e5f82f3f3301de889ecdfc4bf703ab1a53c28173631"
   },
   {
    "@type": "cr:FileObject",
@@ -112,7 +112,7 @@
    "description": "every measurement with its scope",
    "contentUrl": "metrics.json",
    "encodingFormat": "application/json",
-   "sha256": "9ac525c30e181b7f34a93ac48ab02e9c5581ebc1060e432636fbe516e8b545da"
+   "sha256": "622f811d798273f560a3d1d8e404217a68e991ef73936ded57e1fff064943b29"
   }
  ],
  "recordSet": [

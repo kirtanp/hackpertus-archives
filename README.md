@@ -27,6 +27,9 @@ extractively: the cited passages, no generated text. Never commit `.env`.
 **What the demo does**
 - Cited Q&A in German, French and English: Apertus rewrites the question → validated route → hybrid search → Apertus
   answer with `[n]` citations to archive signature, page and question number → deterministic citation and number checks.
+  A question that asks for a number of pupils ("Wie viele Schülerinnen gab es total in Bern?") is instead summed by
+  `extract_quantities` over the retrieved sheets, per sex, with every contributing school and every exclusion listed
+  (`answer_source: aggregate`, see `docs/API.md`).
 - Map of all 2,249 geocoded schools on today's swisstopo map with a slider to the 1850s Dufour map; filters (language,
   confession, school type, pupils, name); cited schools highlighted.
 - "Guess the school": read a teacher's own 1799 answers (place names masked) and find the village on the map.
@@ -39,7 +42,7 @@ raw SQL/CSV ──► ingest (streaming SQL parser) ──► clean (markup → 
             ──► Apertus agent: plan tools ─► deterministic tools ─► compose ─► validate (grounding)
             ──► export records.jsonl/csv (one schema, provenance on every record) ──► metrics.json
             ──► Q&A: Apertus query rewrite (validated) + rule router → hybrid TF-IDF → Apertus answer with [n] citations
-                 → citation + number check (extractive fallback)
+                 → citation + number check (extractive fallback); pupil counts summed in code (qa.aggregate_pupils)
 any new table ──► onboard: profile → Apertus column mapping (validated) → transform → privacy screen → validate
 ```
 Deterministic tools (`src/archai/tools.py`): `clean_markup`, `normalize_dates` (1799 month names: Hornung, Merz, …; French dates),

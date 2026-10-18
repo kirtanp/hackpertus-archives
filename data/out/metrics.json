@@ -273,7 +273,7 @@
   "rates": {
    "de": {
     "sheets": 1737,
-    "pupil_counts_extracted": 0.969,
+    "pupil_counts_extracted": 0.967,
     "money_amounts_extracted": 0.804,
     "dates_found": 0.5,
     "place_geocoded": 0.999,
@@ -304,7 +304,7 @@
    }
   },
   "gaps_de_fr": {
-   "pupil_counts_extracted": 0.028,
+   "pupil_counts_extracted": 0.026,
    "money_amounts_extracted": -0.076,
    "dates_found": 0.157,
    "place_geocoded": -0.001,

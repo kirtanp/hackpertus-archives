@@ -176,3 +176,124 @@ def test_records_expand_as_json_ld():
     exp = jsonld.expand(dict(ctx, **r))[0]
     assert exp["@id"].startswith("https://") and "http://purl.org/dc/terms/title" in exp
     assert not [k for k in r if k != "record_id" and k not in ctx["@context"]]  # every field has a mapping
+
+
+def test_quantities_reads_the_corpus_phrasings():
+    """Every string is a real corpus row (data/out/stapfer_answers.parquet); the counts are the teacher's own."""
+    def pupils(t):
+        return [(p["sex"], p["count"]) for p in T.extract_quantities(t)["pupils"]]
+    assert pupils("Knaben 17. Mägdlein 60. denn Knaben werden so bald sie gut Lesen können") == [("male", 17), ("female", 60)]
+    # "Kaben" is a misspelling of "Knaben" (real row), so 90 is also read as a girls' figure; the sheet's real
+    # girls' figure 85 is found, and the aggregate treats the sheet as two competing figures instead of summing it
+    assert ("female", 85) in pupils("im Winter … heür Kaben 90 Mägdchen 85 175")
+    assert pupils("Mädchen circa 65.") == [("female", 65)]
+    assert pupils("Knaben deren 12") == [("male", 12)]
+    # "34. Knaben und 21 Mädchen" states 21 girls; the number after "Knaben" is not a boys' count, and neither
+    # is a count that already follows a sex word ("Knaben 36-40. Mädchen 60-70" is not 40 girls)
+    # ArchAI merge: "darunder 34. Knaben und 21 Mädchen" is "among them 34 boys and 21 girls"; the bilingual extractor
+    # reads the count-first "34. Knaben" (period between count and word), which the earlier pattern could not
+    assert pupils("55. – darunder 34. Knaben und 21 Mädchen") == [("male", 34), ("female", 21)]
+    assert pupils("Knaben 18 Mädchen 22") == [("male", 18), ("female", 22)]
+    assert pupils("Knaben 36-40. Mädchen 60-70.") == [("male", 36), ("female", 60)]
+    assert pupils("Knaben bis 20") == []
+    # the questionnaire header in every III.12.a/b passage is not an answer
+    assert pupils("Bern 1799. Frage III.12.a (Im Winter. (Knaben/Mädchen)): 40 à 50. Knaben.") == []
+
+
+def _sheet(n, answer, qno="III.12", question="Schulkinder. Wie viele Kinder besuchen überhaupt die Schule?"):
+    """A retrieved passage, shaped as qa.passages() builds them; same doc_id = same archival sheet."""
+    return {"id": f"stapfer:antwort:{n}", "doc_id": f"stapfer:transkription:{n}", "kind": "stapfer", "qno": qno,
+            "text": f"Bern, Testquartier (Lehrer: Test) 1799. Frage {qno} ({question}): {answer}",
+            "cite": f"BAR B0 1000/1483, Nr. {n}, S. 1", "page": 1, "url": "u", "facsimile": None, "score": 0.5}
+
+
+def test_pupil_total_keeps_the_sexes_apart():
+    from archai.qa import aggregate_pupils, render_pupil_totals
+    q = "Wie viele Schülerinnen gab es total in Bern?"
+    hits = [_sheet(1, "Knaben 47."), _sheet(2, "Mädchen 60.")]
+    agg = aggregate_pupils(hits, q)
+    assert agg["sex"] == "female" and [s["sex"] for s in agg["scopes"]] == ["female"]
+    assert agg["scopes"][0]["total"] == 60 and [c["value"] for c in agg["scopes"][0]["contributors"]] == [60]
+    assert "47" not in render_pupil_totals(agg, q)  # the boys' count is never a girls' figure
+    assert {s["sex"]: s["total"] for s in aggregate_pupils(hits, "Wie viele Knaben gab es total in Bern?")["scopes"]} == {"male": 47}
+    both = aggregate_pupils(hits, "Wie viele Kinder gab es total in Bern?")
+    assert both["sex"] is None and {s["sex"]: s["total"] for s in both["scopes"]} == {"female": 60, "male": 47}
+
+
+def test_pupil_range_is_reported_as_a_range_and_not_summed():
+    from archai.qa import aggregate_pupils, render_pupil_totals
+    q = "Wie viele Schülerinnen gab es total in Bern?"
+    hits = [_sheet(1, "Mädchen 70 bis 80."), _sheet(2, "Mädchen 60.")]
+    sc = aggregate_pupils(hits, q)["scopes"][0]
+    assert sc["total"] == 60 and [u["reason"] for u in sc["unclear"]] == ["range"]
+    text = render_pupil_totals(aggregate_pupils(hits, q), q)
+    assert "70 bis 80" in text and "75" not in text  # the range is kept, not collapsed to its midpoint
+    assert "Summe der oben aufgeführten eindeutigen Angaben: 60." in text
+
+
+def test_pupil_two_figures_of_one_sheet_are_not_summed():
+    from archai.qa import aggregate_pupils, render_pupil_totals
+    q = "Wie viele Knaben gab es total in Bern?"
+    hits = [_sheet(1, "Knaben? 50 bis 60."), _sheet(1, "Knaben? 25 bis 35 und 40.")]  # winter and summer of one sheet
+    agg = aggregate_pupils(hits, q)
+    sc = agg["scopes"][0]
+    assert sc["total"] is None and sc["contributors"] == [] and len(sc["unclear"]) == 1
+    assert sc["unclear"][0]["hits"] == [0, 1]  # one school with two answers, not two schools
+    text = render_pupil_totals(agg, q)
+    assert "50 bis 60" in text and "25 bis 35 und 40" in text and "eine eindeutige Zahl" in text
+
+
+def test_pupil_total_lists_the_sources_it_did_not_use():
+    from archai.qa import aggregate_pupils, render_pupil_totals
+    q = "Wie viele Schülerinnen gab es total in Bern?"
+    hits = [_sheet(1, "Mädchen 12."), _sheet(2, "Diese Schul wurde sonst von 100 bis 130 Kindern besucht, darunter waren")]
+    agg = aggregate_pupils(hits, q)
+    assert agg["scopes"][0]["total"] == 12 and [s["label"] for s in agg["scopes"][0]["silent"]] == [hits[1]["text"].split(" 1799.")[0]]
+    text = render_pupil_totals(agg, q)
+    assert "Ohne Zahl für Mädchen (kein Beitrag): Bern, Testquartier (Lehrer: Test) [2]" in text
+    assert "100" not in text  # a school total without a sex is not counted as girls
+
+
+def test_pupil_list_and_total_agree_and_the_total_is_audited():
+    from archai.qa import aggregate_pupils, check_numbers, render_pupil_totals
+    q = "Wie viele Schülerinnen gab es total in Bern?"
+    hits = [_sheet(1, "Mädchen 12."), _sheet(2, "Mädchen 30."), _sheet(3, "Knaben 99.")]
+    agg = aggregate_pupils(hits, q)
+    sc = agg["scopes"][0]
+    assert sc["total"] == sum(c["value"] for c in sc["contributors"]) == 42
+    text = render_pupil_totals(agg, q)
+    assert "12 + 30 = 42" in text
+    assert sorted({i for c in sc["contributors"] for i in c["hits"]}) == [0, 1]
+    assert check_numbers(text, hits, q, extra=agg["extra"]) == []
+    # the sum itself is in no source: it passes only against the audited addends, and the model never gets them
+    assert [f["number"] for f in check_numbers(text, hits, q)] == ["42"]
+
+
+def test_pupil_aggregate_reads_answers_not_the_questionnaire_header():
+    from archai.qa import aggregate_pupils
+    hits = [_sheet(1, "Knaben 30.", qno="III.12.a", question="Im Winter. (Knaben/Mädchen)")]
+    agg = aggregate_pupils(hits, "Wie viele Kinder gab es total in Bern?")
+    assert {s["sex"]: s["total"] for s in agg["scopes"]} == {"female": None, "male": 30}
+
+
+class _PupilIndex:
+    """Stand-in for qa.Index: search() routes, pool() is the whole routed pool (adds no retrieval of its own)."""
+
+    def __init__(self, hits):
+        self.hits = hits
+
+    def search(self, q, k, mode):
+        return self.hits[:k], {"intents": ["pupils"], "places": ["bern"], "filtered_pool": len(self.hits)}
+
+    def pool(self, r):
+        return self.hits
+
+
+def test_answer_uses_the_deterministic_aggregate_for_a_pupil_count_question():
+    from archai.qa import answer
+    hits = [_sheet(1, "Mädchen 12."), _sheet(2, "Mädchen 30.")]
+    out = answer(_PupilIndex(hits), "Wie viele Schülerinnen gab es total in Bern?", use_llm=False)
+    assert out["answer_source"] == "aggregate" and out["number_check"] == {"ok": True, "failures": []}
+    assert out["sources"] is hits and "12 + 30 = 42" in out["answer"] and out["cited"] == [1, 2]
+    # a question that only mentions children keeps the normal answer path
+    assert answer(_PupilIndex(hits), "Wie viele Stunden waren die Kinder in der Schule?", use_llm=False)["answer_source"] == "extractive"

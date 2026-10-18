@@ -207,13 +207,18 @@ _WORDNUM = "|".join(sorted((re.escape(w) for w in _NW_SURFACE), key=len, reverse
 NUMW_RUN = rf"(?:(?:{_WORDNUM})(?:[\s-]+(?:(?:et|und)[\s-]+)?(?=(?:{_WORDNUM})\b))?)+|(?:ein|zwei|drei|vier|fünf|funf|sechs|sieben|acht|neun)und\w+zig"
 NUM = rf"((?<![\d.,/])\d{{1,3}}(?![\d/]|\s*/)|\b(?!(?:un|une|ein|eine|eins)\b)(?:{NUMW_RUN})\b)"  # "un enfant", "ein Kind": articles, not counts
 CURRENCY_WORDS = r"(?:florins?|francs?|livres|[ée]cus?|batz(?:en)?|kreuzer|creutzer|gulden|schilling|sols?|sous|kronen|bz|fl|kr|xr|rappen|piecettes?|deniers?)"  # not "Pfund" (weight), not "Livre" (book)
-PUPIL = {"male": r"(?:Knaben|Buben|garçons|garcons)", "female": r"(?:Mädchen|Maedchen|Meitli|Töchter\w*|filles)",
+PUPIL = {"male": r"(?:Knaben|Buben|garçons|garcons)", "female": r"(?:Mädchen|Maedchen|Madchen|Mägd\w*|Meitli|Töchter\w*|filles)",  # Mägdchen/Mägdlein: 290 rows
          "unspecified": r"(?:Schulkinder|Kinder|Schüler\w*|Schueler|écoliers|ecoliers|[ée]c[ôo]liers|élèves|eleves|enfants?|Enfans)"}
 BOTH = r"(?:(?:tant\s+)?garçons\s+(?:que|et)\s+filles|Knaben\s+und\s+Mädchen)"
 NOT_A_COUNT = re.compile(r"^[\s.,]*(?:M\s*:|Min\b|Uhr|heures?|h\b|Stund\w*|Jahr\w*|ans?\b|Wochen|semaines?|Minut\w*|fl\b|kr\b|batz|L\.|"
                          r"Klass\w*|[Cc]lasses?|Abteilung\w*|mois|Monat\w*|jours?|Tag\w*|Häus\w*|maisons?|Höf\w*)", re.I)
 COUNT_NOUN_BEFORE = re.compile(r"(?:H[äa]u?[üu]?(?:s|ß)\w*|Hof|Höf\w*|maisons?|feux|Hauß)[\s:.]{0,3}$", re.I)  # "Häüßer 23." = houses
 NOT_PUPILS_AFTER = re.compile(r"^\s*(?:Kla(?:ss|ß)\w*|Cla(?:ss|ß)\w*|[Cc]lasses?|ans?\b|Jahr\w*|Abteilung\w*|Stund\w*|heures?|Uhr|Jahr\w*|ans?\b|mois|Monat\w*|jours?|Tag\w*|Wochen|semaines?)", re.I)
+# From PR #8: a count may follow its sex word across up to 12 non-digits, but not across ")" -- the questionnaire header
+# "(Knaben/Mädchen)): 40" is not an answer -- and not across a gap that names another sex or binds the count to something
+# else: "Knaben und 21 Mädchen" states 21 girls, "Knaben bis 20" is a bound.
+GAP = r"([^\d)]{0,12}?)"
+PUPIL_STOP = re.compile(r"\b(?:und|vnd|et|oder|sowie|plus|mit|ohne|bis|zwischen|à|to)\b|(?:Knaben|Buben|garçons|garcons|Mädchen|Mägd\w*|Meitli|Töchter\w*|filles)", re.I)
 SECTION = re.compile(r"\[(III\.12[^\]]*)\]\s*(.*?)(?=\n\n\[|\Z)", re.S)
 
 
@@ -250,23 +255,33 @@ def extract_quantities(text: str):
         in_pupil_q = bool(lab) and lab.group(1).startswith(("III.12", "I.3"))  # the questions about pupil numbers
         if lab and not in_pupil_q:  # elsewhere only the original rule: digits next to Knaben/Mädchen/garçons/filles
             for sex in ("male", "female"):
-                for m in re.finditer(r"(\d{1,3})\.?\s*" + PUPIL[sex] + "|" + PUPIL[sex] + r"\D{0,12}?(\d{1,3})", blk, re.I):
+                for m in re.finditer(r"(?<!\d)(\d{1,3})\.?\s*" + PUPIL[sex] + "|" + PUPIL[sex] + GAP + r"(\d{1,3})(?!\d)", blk, re.I):
+                    if m.group(2) is not None and PUPIL_STOP.search(m.group(2)):
+                        continue
                     span = (off + m.start(), off + m.end())
                     if not any(a < span[1] and span[0] < b for a, b in taken):
-                        out["pupils"].append({"sex": sex, "count": int(m.group(1) or m.group(2)), "surface": m.group(0).strip()}); taken.append(span)
+                        out["pupils"].append({"sex": sex, "count": int(m.group(1) or m.group(3)), "surface": m.group(0).strip()}); taken.append(span)
             continue
         nf = next((x for x in re.finditer(NUM + r"\.?\s*(?:" + kw + ")", blk, re.I)
                    if not COUNT_NOUN_BEFORE.search(blk[max(0, x.start() - 14):x.start()])), None)  # "Haüser 7. Schulkinder 20": word-first
-        wf = re.search("(?:" + kw + r")\D{0,12}?" + NUM, blk, re.I)
+        wf = next((x for x in re.finditer("(?:" + kw + ")" + GAP + NUM, blk, re.I) if not PUPIL_STOP.search(x.group(1))), None)
         num_first = bool(nf) and (not wf or nf.start() < wf.start())
-        for sex, pat in PUPIL.items():
-            rx = NUM + r"\.?\s*" + pat if num_first else pat + r"\D{0,12}?" + NUM
+        # number-first blocks get a second, word-first pass for counts not claimed yet: a misspelt first keyword
+        # ("Kaben 90 Mägdchen 85") must not hide "Mägdchen 85"; claimed spans ("24. Knaben 16. Töchteren") stay claimed
+        for first, sex, pat in [(num_first, sx, pt) for sx, pt in PUPIL.items()] + ([(False, sx, pt) for sx, pt in PUPIL.items()] if num_first else []):
+            rx = NUM + r"\.?\s*" + pat if first else pat + GAP + NUM
             for m in re.finditer(rx, blk, re.I):
-                v = _num(m.group(1)) if m.group(1) else None
-                span = (off + m.start(), off + m.end())
-                if not num_first and NOT_PUPILS_AFTER.match(blk[m.end():]):  # "filles en trois Classes": not a pupil count
+                if not first and PUPIL_STOP.search(m.group(1)):  # "Knaben und 21 Mädchen": 21 is not boys
                     continue
-                if num_first and COUNT_NOUN_BEFORE.search(blk[max(0, m.start() - 14):m.start()]):  # "Häuser 1. Schulkinder 5"
+                gi = 1 if first else 2
+                g = m.group(gi)
+                v = _num(g) if g else None
+                span = (off + m.start(gi), off + m.end(gi))  # the number's own span: a keyword may serve two readings
+                if first and re.search(r"\d\s*(?:à|a|bis|-|–|to)\s*$", blk[max(0, m.start(gi) - 8):m.start(gi)], re.I):
+                    continue  # "40 à 50. Knaben": 50 ends a range, it is not a count of its own
+                if not first and NOT_PUPILS_AFTER.match(blk[m.end():]):  # "filles en trois Classes": not a pupil count
+                    continue
+                if first and COUNT_NOUN_BEFORE.search(blk[max(0, m.start() - 14):m.start()]):  # "Häuser 1. Schulkinder 5"
                     continue
                 if v is not None and 0 < v < 1000 and not any(a < span[1] and span[0] < b for a, b in taken):
                     out["pupils"].append({"sex": sex, "count": v, "surface": m.group(0).strip()}); taken.append(span)
