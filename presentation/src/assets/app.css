@@ -57,6 +57,10 @@
   --r-selection-background-color: #12100c;
   --r-selection-color: #ffffff;
   --deck-font-scale: 1;
+
+  /* the slide's own box: the top padding clears the header mark. Reveal's
+     ?print-pdf layout zeroes it, so the print layer restores this variable. */
+  --deck-slide-padding: 3.4rem 2.4rem 2.2rem;
 }
 
 html,
@@ -77,7 +81,7 @@ body {
   height: 100%;
   box-sizing: border-box;
   /* top padding clears the slide header mark on every slide */
-  padding: 3.4rem 2.4rem 2.2rem;
+  padding: var(--deck-slide-padding);
   text-align: left;
 }
 
@@ -226,6 +230,30 @@ body {
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
+}
+
+@layer deck-print {
+  /* Reveal's `?print-pdf` export (one PDF page per slide) needs two things the
+     deck's own stylesheet decides, and both are print-only: `html.print-pdf` is
+     set by reveal for that export and never on screen.
+     1. Tailwind's preflight turns the `hidden` attribute reveal puts on every
+        print slide into `display: none !important` (in the `base` layer, whose
+        `!important` beats unlayered `!important` — hence this layer); so give
+        each slide the deck's own layout again.
+     2. The slides keep the screen layout's inline `top` offset, which puts a
+        tall slide outside its page box (the page clips its overflow); pin every
+        slide to its page origin. */
+  html.print-pdf .reveal .slides section {
+    display: flex !important;
+    flex-direction: column !important;
+    top: 0 !important;
+    left: 0 !important;
+    padding: var(--deck-slide-padding) !important;
+  }
+
+  html.print-pdf .reveal .slides section > * {
+    flex-shrink: 0;
+  }
 }
 
 /* ---- chrome ----------------------------------------------------------- */
