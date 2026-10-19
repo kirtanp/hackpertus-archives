@@ -185,9 +185,42 @@ contains an earlier call with empty arguments (`{}`), so history calls are recor
 - API: `docs/API.md` (also interactive at `/docs`). Endpoints: `/api/ask`, `/api/record/{id}`, `/api/metrics`,
   `/api/places`, `/api/game/round`, `/api/health`.
 - The search index is built once at startup in a background thread (10–25 s, ~1.5 GB RAM).
-- Docker: `Dockerfile` (port 7860) or `docker compose up`. Hugging Face Space: `python deploy_hf.py <user>/<space>`
-  (needs `pip install huggingface_hub` and `hf auth login`), then add `APERTUS_API_KEY` as a Space secret.
+- Pages: `/` (the demo), `/site` (the presentation site; its examples come from `/api/site`), `/docs` (OpenAPI).
 - Map tiles: © swisstopo (Dufour map 1845–1865, national map). Facsimiles are linked on stapferenquete.ch, never copied.
+
+### Deploy
+The image is built with uv from the lock (`Dockerfile`: `python:3.12-slim`, `uv sync --locked --no-dev`, port 7860
+inside the container). There is no `requirements.txt`: `pyproject.toml` + `uv.lock` are the dependencies. The
+Apertus key is never baked into the image; the container reads it from an env file at run time, and without one the
+app still answers, extractively and cited.
+
+**1. Locally with Docker**
+```bash
+cp .env.example .env          # optional: set APERTUS_API_KEY
+just docker                   # = docker compose up --build  ->  http://localhost:8791
+```
+
+**2. On your own server (any Linux host with Docker, reached over SSH)**
+```bash
+# once, on the server: the key, readable only by you (skip it for extractive answers only)
+ssh HOST 'mkdir -p ~/.config/archai && umask 077 && printf "APERTUS_API_KEY=...\n" > ~/.config/archai/apertus.env'
+
+# from the repository root, every time you deploy:
+just deploy HOST              # or deploy/server.sh HOST
+just deploy HOST 100.x.y.z    # also listen on a second address, e.g. the server's Tailscale IP
+```
+`deploy/server.sh` syncs the tree to `~/archai-demo` on the host (no `.git`, `.venv` or `.env`), builds the image,
+replaces the `archai-demo` container (`--restart unless-stopped`, 2.5 GB memory, port 8791 on `127.0.0.1` plus the
+optional second address), waits until `/api/health` reports ready, then checks that the served `static/` pages and
+`app.py` are byte-identical to your checkout. Overrides: `DEPLOY_DIR`, `DEPLOY_PORT`, `DEPLOY_NAME`,
+`DEPLOY_ENV_FILE`. Deploy from an up-to-date `main` (`git pull`) so the server runs what GitHub has.
+
+**3. Hugging Face Space**
+```bash
+uv run --with huggingface_hub hf auth login
+uv run --with huggingface_hub python deploy_hf.py <user>/<space>
+```
+Then add `APERTUS_API_KEY` as a Space secret.
 
 ## Statistics in SQL (Apache Superset prototype)
 `/api/stats` answers the corpus aggregates as JSON, which a BI tool cannot chart. `src/archai/statssql.py` writes

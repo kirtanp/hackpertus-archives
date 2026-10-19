@@ -4,7 +4,8 @@ FastAPI app in `app.py`. Interactive docs (OpenAPI) are served at `/docs` and `/
 
 ```bash
 .venv/bin/uvicorn app:app --port 8791            # local
-docker build -t archai-demo . && docker run -p 7860:7860 --env-file ~/.config/archai/apertus.env archai-demo
+just docker                                        # docker compose up --build -> http://localhost:8791
+just deploy HOST                                   # a Docker host over SSH (README, "Deploy")
 ```
 
 Configuration (environment, all optional): `APERTUS_BASE_URL`, `APERTUS_MODEL`, `APERTUS_API_KEY`, `APERTUS_TIMEOUT`.
