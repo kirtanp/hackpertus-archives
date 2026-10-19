@@ -1,0 +1,90 @@
+---
+title: "qwen3.5-9B vs the recorded baseline"
+description: "What this repository has recorded about model answer accuracy and latency, and why qwen3.5-9B from Melious could not be measured here"
+---
+
+# qwen3.5-9B vs the recorded baseline
+
+This page reports the model measurements this repository actually holds, and states plainly that
+`qwen3.5-9b` from Melious could **not** be measured here. No accuracy and no latency figure is given
+for `qwen3.5-9b`, because none was produced.
+
+## Recorded baseline (committed, real)
+
+Both recorded baselines were produced with the same model, `apertus-v1-5-70b`, and are committed under
+`data/out/`. They are the repository's own definition of correct; nothing on this page re-derives them.
+
+### Answer accuracy and end-to-end latency — `data/out/data_eval.json`
+
+16 hand-checked data questions, each run 3 times end to end (dynamic rewrite, data engine, Apertus 70B),
+so 48 runs in total. A run passes only when the code-written result line matches the hand-checked gold.
+
+| Model | Runs | Passed | Rate | Median per run |
+| --- | --- | --- | --- | --- |
+| `apertus-v1-5-70b` | 48 | 46 | 95.8% | 7.8 s |
+
+Passed / runs per category: schools 6/6, teachers 6/6, consultations 9/9, pupils 10/12, condition 3/3,
+pay 3/3, lookup 9/9. 15 of the 16 questions passed in every one of their three runs.
+
+### Retrieval accuracy — `data/out/qa_eval.json`
+
+380 templated questions (360 Stapfer + 14 consultation paraphrases + 6 with a year), all with
+`apertus-v1-5-70b`. Gold is the passage or consultation the question was written from, not a model's
+answer.
+
+| Mode | Cases | Hit@1 | Hit@6 | Median per question |
+| --- | --- | --- | --- | --- |
+| rules only (`off`) | 380 | 0.245 | 0.418 | 0.11 s |
+| fixed-intent rewrite (`apertus`) | 380 | 0.642 | 0.784 | 1.16 s |
+| dynamic rewrite (`dynamic`, deployed) | 380 | 0.924 | 0.984 | 1.27 s |
+
+## qwen3.5-9B (Melious): not measured
+
+`qwen3.5-9b` at `https://api.melious.ai/v1` authenticates — `GET /v1/models` returns HTTP 200 with the
+key — but **every** chat completion is refused by the provider:
+
+```
+HTTP 429 {"error":{"message":"Insufficient credits for request. Required: 0.000361 EUR, Available: -0.001576 EUR","type":"billing_error","code":"insufficient_quota"}}
+```
+
+The provider account has a negative balance, so it cannot serve a single request. This is not a missing
+or wrong API key, and it is not something a change in this repository can fix. Until the account is
+topped up, the model cannot be exercised at all.
+
+| Model | Endpoint | Questions | Runs | Passed | Rate | Median per run |
+| --- | --- | --- | --- | --- | --- | --- |
+| `apertus-v1-5-70b` (recorded baseline) | local 70B deployment | 16 | 48 | 46 | 95.8% | 7.8 s |
+| `qwen3.5-9b` | `https://api.melious.ai/v1` | 16 | 0 | — | not measured | not measured |
+
+Selecting `qwen3.5-9b` does not crash a run: the archive client's circuit breaker opens after three
+failed calls and the app answers from its deterministic fallback (rules routing, data engine, passage
+extraction). Those fallback answers are the application working without a model, so they are not
+reported here as a measurement of `qwen3.5-9b`.
+
+## Method
+
+The measurement this page lacks would use the repository's existing entry points, with the model client
+pointed at the hosted endpoint through the environment:
+
+```bash
+# answers and latency (writes data/out/data_eval.json)
+export APERTUS_BASE_URL=https://api.melious.ai/v1
+export APERTUS_API_KEY=<melious key>
+export APERTUS_MODEL=qwen3.5-9b
+uv run --all-groups python -m archai.data_eval
+
+# retrieval accuracy (writes data/out/qa_eval.json)
+uv run --all-groups python -m archai.qa_eval
+```
+
+`src/archai/llm.py` reads `APERTUS_BASE_URL`, `APERTUS_API_KEY` and `APERTUS_MODEL`, so no code change
+is needed to point it at any OpenAI-compatible endpoint.
+
+## Caveats
+
+- The recorded baseline is the committed result, read here as-is; it was not re-run for this page.
+- A 9B model against a 70B model is a deliberately uneven comparison. Any future run must say so rather
+  than present the two as an even contest.
+- The `qwen3.5-9b` side is *absent*, not zero: it has no score, and an empty score must not be read as a
+  bad one.
+- Every rate on this page is backed by the question count in the same row; none is a bare percentage.
