@@ -34,3 +34,6 @@ presentation/.astro/
 deploy/superset/.venv/
 deploy/superset/*.db
 deploy/superset/superset_config.py
+
+# LLM model benchmark output (scripts/model-bench.sh)
+bench-out/
