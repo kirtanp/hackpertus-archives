@@ -1220,7 +1220,10 @@ button{font:inherit}
     <h2 data-scramble="1" style="margin:0;font-family:'Instrument Serif',serif;font-weight:400;font-size:clamp(40px,5vw,72px);line-height:1">The whole pipeline, <em style="color:#e2553a">drawn out.</em></h2>
     <p style="margin:0;color:#c9bfa8;font-size:17px;text-wrap:pretty">The architecture page follows the batch pipeline and the answer path end to end: every stage, the deterministic tools, the grounding checks and two rendered diagrams - one for engineers, one in plain language. It is part of the documentation site, built and served separately from this app.</p>
   </div>
-  <a href="{{ archUrl }}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:10px;background:#e2553a;color:#12100c;padding:16px 26px;font-weight:600;border-radius:2px;font-family:'IBM Plex Mono',monospace;font-size:14px;text-decoration:none" style-hover="background:#eee4cc">Open the architecture page ↗</a>
+  <div style="display:flex;gap:12px;flex-wrap:wrap">
+    <a href="{{ archUrl }}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:10px;background:#e2553a;color:#12100c;padding:16px 26px;font-weight:600;border-radius:2px;font-family:'IBM Plex Mono',monospace;font-size:14px;text-decoration:none" style-hover="background:#eee4cc">Open the architecture page ↗</a>
+    <a href="{{ archTechnicalUrl }}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:10px;background:transparent;color:#eee4cc;border:1px solid #4a4336;padding:15px 25px;border-radius:2px;font-family:'IBM Plex Mono',monospace;font-size:14px;text-decoration:none" style-hover="border-color:#e2553a">Open the technical architecture diagram ↗</a>
+  </div>
 </div>
 </sc-if>
 
@@ -2488,6 +2491,7 @@ class Component extends DCLogic {
       sweepY: st2 < 140 ? ((st2 % 40) / 40 * 110 - 10).toFixed(1) + '%' : '-200%',
       tabs, tabProgress: ((s.tab + 1) / TABS.length).toFixed(4), enterOp: enter, enterY: ((1 - enter) * 14).toFixed(1) + 'px', pulse,
       archUrl: window.ARCH_DOCS_BASE + 'architecture/',
+      archTechnicalUrl: window.ARCH_DOCS_BASE + 'diagrams/technical/',
       isT0: s.tab === 0, isT1: s.tab === 1, isT2: s.tab === 2, isT3: s.tab === 3, isT4: s.tab === 4, isT7: s.tab === 7,
       goHome: () => this.go(0), goT1: () => this.go(1), goT3: () => this.go(3),
       nextTab: () => this.go((s.tab + 1) % TABS.length), nextLabel: s.tab === TABS.length - 1 ? '↺ Back to start' : 'Next: ' + TABS[s.tab + 1][1] + ' →',
