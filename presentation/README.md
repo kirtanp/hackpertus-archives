@@ -52,14 +52,14 @@ as a blank page. The layer restores the padding (from `--deck-slide-padding`) an
 | # | Section | Slide |
 |---|---|---|
 | 1 | — | Title |
-| 2 | Introduce | Challenge: the question the introduction answers |
+| 2 | Introduce | The searchability question alone (no title) |
 | 3 | Introduce | The archive's own search for “Bern” — picture only |
 | 4 | Introduce | One source entry in detail — picture only |
 | 5 | Introduce | The goal: archives that are easily digestible — title and the handwritten original |
 | 6 | Product | Our product — centred and large, the “Product demo” link and the address beneath it |
 | 7 | Try it | **ArchAI, live** — the link to the live website |
 
-The outline is the content plan; slides stay at that density. Timings (`Introduce`, `Product`, `Business`) are presenter
+Every slide centres its content horizontally and vertically (`src/assets/app.css`, on the slide that reveal shows and in the print layer), which holds for the picture slides too. The outline is the content plan; slides stay at that density. Timings (`Introduce`, `Product`, `Business`) are presenter
 notes on the slide that opens the section.
 
 ## The header mark

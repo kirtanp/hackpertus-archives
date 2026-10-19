@@ -58,9 +58,11 @@
   --r-selection-color: #ffffff;
   --deck-font-scale: 1;
 
-  /* the slide's own box: the top padding clears the header mark. Reveal's
-     ?print-pdf layout zeroes it, so the print layer restores this variable. */
-  --deck-slide-padding: 3.4rem 2.4rem 2.2rem;
+  /* the slide's own box. Symmetric, so the centred content sits in the middle
+     of the slide, and tall enough at the top to clear the header mark (which
+     ends at 50 px). Reveal's ?print-pdf layout zeroes the padding, so the print
+     layer restores this variable. */
+  --deck-slide-padding: 3rem 2.4rem 3rem;
 }
 
 html,
@@ -95,9 +97,16 @@ body {
   height: 2.25rem;
 }
 
+/* Every slide centres its content, horizontally and vertically: the deck's
+   slides are one statement, a picture or a link each, and the same centring
+   holds for the picture slides and for the print layout below (all slides are
+   `.present` in reveal's ?print-pdf export). */
 .reveal .slides section.present {
   display: flex !important;
   flex-direction: column !important;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
 }
 
 .reveal .slides section > * {
@@ -165,7 +174,7 @@ body {
   line-height: 1.42;
   color: var(--color-muted);
   max-width: 32em;
-  margin: 0 0 0.8em;
+  margin: 0;
 }
 
 .reveal .deck-list {
@@ -234,6 +243,25 @@ body {
   border-bottom: none;
 }
 
+/* ---- the closing slide: the credits ----------------------------------- */
+
+/* Five names, centred, with the three links the captain gave shown as the
+   address beside the name. Nothing else. */
+.reveal .deck-credits {
+  list-style: none;
+  margin: 0.2em 0 0;
+  padding: 0;
+  font-size: 0.62em;
+  line-height: 1.65;
+  text-align: center;
+}
+
+.reveal .deck-credits a {
+  color: var(--color-brand);
+  text-decoration: underline;
+  text-underline-offset: 0.16em;
+}
+
 /* ---- the product slide: the demo link --------------------------------- */
 
 /* Two short lines: the labelled link and the local address of the running
@@ -266,7 +294,6 @@ body {
 .reveal .slides section > .deck-shot-full {
   flex: 1 1 auto;
   min-height: 0;
-  margin-top: 0.5em;
   display: flex;
   align-items: center;
   justify-content: center;

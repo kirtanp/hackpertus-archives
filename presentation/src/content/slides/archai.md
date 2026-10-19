@@ -26,8 +26,6 @@ fontScale: 1
 
 <div class="deck-center deck-question">
 
-<div class="deck-eyebrow">Challenge</div>
-
 <h2 class="deck-question__text">How can we make archives easily searchable?</h2>
 
 </div>
@@ -91,3 +89,19 @@ Product — spoken budget 3 min. This is the demo moment: open the app, ask one 
 
 Note:
 Close on the live site: click the link to open it in a new tab (reachable over the team's Tailscale network).
+
+---
+
+<div class="deck-center">
+
+<h2 class="deck-heading">Thank you! Team Education and Apertus hackathon team for the great event!</h2>
+
+<ul class="deck-credits">
+  <li>Kirtan Padh - <a href="https://github.com/kirtanp">https://github.com/kirtanp</a></li>
+  <li>Dhruv Mulay - <a href="https://github.com/Mulaydm10">https://github.com/Mulaydm10</a></li>
+  <li>Jorgo Ananiadis</li>
+  <li>Pratik Waghmode</li>
+  <li>Philipp Baumann - <a href="https://github.com/philipp-baumann">https://github.com/philipp-baumann</a></li>
+</ul>
+
+</div>
