@@ -1,6 +1,6 @@
 ---
 title: "ArchAI"
-description: "Eight slides: the challenge, the problem and the datasets, the goal, the product, provenance, future plans and the cost in tokens."
+description: "Nine slides: the challenge, the search and the source it leads to, the goal, the product, provenance, future plans and the cost in tokens."
 pubDate: 2026-10-19
 order: 1
 minutes: 7
@@ -30,59 +30,28 @@ fontScale: 1
 
 Note:
 Introduce — spoken budget ~1:30 (the sketch writes "1:30 mins"; it may mean 30 minutes — the captain can correct this
-one line). This slide asks the question; the two after it carry the detail — first the problem, the material and what
-the product solves, then the goal and how it is organised.
+one line). This slide asks the question; the three after it answer it in pictures — the archive's own search, the
+transcription that search leads to, and the handwritten original it was typed from — before the goal slide.
 
 ---
 
-<div class="deck-split">
-  <div class="deck-split__main">
-
-<div class="deck-eyebrow">Introduce · The problem and the material</div>
-
-<h2 class="deck-heading">The problem, and what the product solves</h2>
-
-<ul class="deck-list">
-  <li>2,250 handwritten 1799 school sheets in German, French and Italian, with 92,524 answers; 569 federal consultations from 1960–1991, whose dossiers open only through a 4.5 M-unit archive database.</li>
-  <li>Not centralised databases: the sources stay where they are, and only 329 of the 569 consultations point at a dossier at all — 858 archive references between them.</li>
-  <li>The datasets become a PDF transcript plus data: the raw transcription is never overwritten, and beside it stand 2,819 records in one schema, each with its provenance.</li>
-  <li>What the product solves: ask in plain language, and get the archive page the answer came from.</li>
-</ul>
-
-<div class="deck-shot-frame"><img class="deck-shot" src="/archive-search-bern.png" alt="A German archive search for Bern: a result table of school places and municipalities listing nine transcriptions with links to each fragment." /></div>
-
-  </div>
-  <div class="deck-split__aside">
-    <img class="deck-shot" src="/stapfer-questionnaire-answers.png" alt="A detail of one 1799 transcription: German questionnaire rows III.11.e to IV.14 with the teacher's answers beside them, the answer about 82 schoolchildren highlighted." />
-  </div>
+<div class="deck-shot-full">
+  <img class="deck-shot" src="/archive-search-bern.png" alt="A German archive search for Bern: a result table of school places and municipalities listing nine transcriptions with links to each fragment." />
 </div>
 
-<p class="deck-source">data/out/metrics.json → stapfer, linking, export · README.md</p>
-
 ---
 
-<div class="deck-split deck-split--text">
-  <div class="deck-split__main">
+<div class="deck-shot-full">
+  <img class="deck-shot" src="/stapfer-questionnaire-answers.png" alt="A detail of one 1799 transcription: German questionnaire rows III.11.e to IV.14 with the teacher's answers beside them, the answer about 82 schoolchildren highlighted." />
+</div>
 
-<div class="deck-eyebrow">Introduce · The goal and how it is organised</div>
+---
 
 <h2 class="deck-heading">The goal: archives that are easily digestible</h2>
 
-<ul class="deck-list">
-  <li>Ask in German, French or English, in plain language; the answer names the archive signature, the sheet and the question it came from. Every number is checked against the source it cites, and totals are computed by code, never by the model.</li>
-  <li>Accessible to everyone: no key, no database, no raw dump. <span class="deck-mono">uv run app.py</span> reads data/out/, and without an Apertus key the app still answers — with the cited passages themselves.</li>
-  <li>An AI framework is what organises it: Apertus rewrites the question, enriches the records and writes the answer; deterministic code validates the route, the citations and every number.</li>
-</ul>
-
-<p class="deck-cite">BAR B0 1000/1483, Nr. 1421, fol. 228-229v, S. 2, Frage III.12</p>
-
-  </div>
-  <div class="deck-split__aside">
-    <img class="deck-shot" src="/stapfer-original-scan.png" alt="A scan of the handwritten 1798 original in Kurrent script: the archival page this entry was transcribed from, showing the answer about 82 schoolchildren." />
-  </div>
+<div class="deck-shot-full">
+  <img class="deck-shot" src="/stapfer-original-scan.png" alt="A scan of the handwritten 1798 original in Kurrent script: the archival page this entry was transcribed from, showing the answer about 82 schoolchildren." />
 </div>
-
-<p class="deck-source">docs/reference/api.mdx (citation format) · data/out/qa_answer_check.json (number check) · README.md</p>
 
 ---
 

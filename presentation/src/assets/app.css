@@ -1,3 +1,9 @@
+/* Declared first so it is the first cascade layer: for `!important`
+   declarations the layer order is reversed, and this is what lets the deck's
+   print rule below win over Tailwind's preflight `[hidden] { display: none
+   !important }`, which lives in the `base` layer. */
+@layer deck-print;
+
 /* Latin subsets only: the deck is English, German and French, and the
    single-file build inlines every font file as a data URI. */
 @import "@fontsource/instrument-serif/latin-400.css";
@@ -195,59 +201,21 @@ body {
   border-bottom: none;
 }
 
-/* ---- the introduction slide: statement + evidence --------------------- */
+/* ---- picture slides: the source material, nothing else ----------------- */
 
-
-/* Two regions: the slide's own text with the search overview beneath it on the
-   left, the transcription detail on the right. The text never shrinks; the
-   images take the room that is left. */
-.reveal .slides section > .deck-split {
+/* A slide whose only content is an image (or an image under its title): the
+   image takes the whole box that is left, at its own aspect ratio, framed so
+   its own light background does not float on the white slide. */
+.reveal .slides section > .deck-shot-full {
   flex: 1 1 auto;
   min-height: 0;
-  display: grid;
-  grid-template-columns: minmax(0, 1.9fr) minmax(0, 1fr);
-  gap: 1.2rem;
-}
-
-.reveal .deck-split > * {
+  margin-top: 0.5em;
   display: flex;
-  flex-direction: column;
-  min-width: 0;
-  min-height: 0;
-}
-
-/* the slide after it: the same split, but the text needs a little more room */
-.reveal .slides section > .deck-split--text {
-  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
-}
-
-/* the slide's own text keeps its natural height and is never squeezed */
-.reveal .deck-split__main > *:not(.deck-shot-frame) {
-  flex-shrink: 0;
-}
-
-/* the search overview sits in whatever height is left under the text; the
-   frame carries the hairline, so the image never has to be distorted to fill
-   a wider box than its own ratio allows */
-.reveal .deck-split__main > .deck-shot-frame {
-  flex: 1 1 0;
-  min-height: 0;
-  margin-top: 0.9em;
-  display: flex;
-  align-items: flex-start;
-}
-
-.reveal .deck-split__aside {
-  justify-content: center;
   align-items: center;
+  justify-content: center;
 }
 
-.reveal .deck-shot-frame {
-  display: flex;
-  align-items: flex-start;
-}
-
-.reveal .deck-shot-frame > img,
+.reveal .deck-shot-full > img,
 .reveal .deck-shot {
   border: 1px solid var(--color-line);
   border-radius: 2px;
