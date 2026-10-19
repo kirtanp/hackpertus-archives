@@ -57,9 +57,9 @@ transcription that search leads to, and the handwritten original it was typed fr
 
 <h2 class="deck-heading">Our product</h2>
 
-<p class="deck-demo"><a href="https://github.com/kirtanp/hackpertus-archives/tree/main/static/site">Product demo</a></p>
+<p class="deck-demo"><a href="http://100.120.107.76:8791/site/" target="_blank" rel="noopener noreferrer">Product demo</a></p>
 
-<p class="deck-demo deck-demo--address">http://localhost:8791/site</p>
+<p class="deck-demo deck-demo--address">http://100.120.107.76:8791/site/</p>
 
 Note:
 Product — spoken budget 3 min. This is the demo moment: open the app, ask one question, then show the map and
