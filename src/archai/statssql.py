@@ -15,7 +15,7 @@ changed, and nothing here is imported by ``app.py``: no endpoint changes.
 The corpus stays the parquet file committed in ``data/out/``; this database file is a *derived build artifact*.
 It is written to a path the project gitignores (``data/out/*.duckdb``) and can be rebuilt at any time with::
 
-    make statssql             # or: PYTHONPATH=src python -m archai.statssql
+    just statssql             # or: PYTHONPATH=src python -m archai.statssql
 
 SQL tables written (all cover the whole corpus, 92,524 answers over 2,250 sheets; row counts are the ones the
 committed parquet produces, and the ~41 MB file is mostly the materialised ``answers`` table):
@@ -86,7 +86,7 @@ def connect(db=None, read_only=True):
     """Open the datasource file; read-only by default so querying it never writes a WAL next to it."""
     path = Path(db or DEFAULT_DB)
     if not path.is_file():
-        raise FileNotFoundError(f"datasource not built: {path} (run `make statssql` or `python -m archai.statssql`)")
+        raise FileNotFoundError(f"datasource not built: {path} (run `just statssql` or `python -m archai.statssql`)")
     return duckdb.connect(str(path), read_only=read_only)
 
 

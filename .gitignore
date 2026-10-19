@@ -15,7 +15,7 @@ data/interim/
 data/facsimiles/
 data/facsimiles_png/
 # derived build artifact: the DuckDB datasource Apache Superset reads, rebuilt from the corpus parquet
-# with `make statssql`; the committed corpus is data/out/stapfer_answers.parquet, not this file
+# with `just statssql`; the committed corpus is data/out/stapfer_answers.parquet, not this file
 data/out/*.duckdb
 # Apache Superset prototype (deploy/superset): its virtualenv, metadata database and generated secret
 deploy/superset/.venv/

@@ -1,5 +1,5 @@
 # Secondary (Docker) route for the Superset prototype: Superset 6.1.0 with a Postgres metadata database and
-# Redis, reading the DuckDB datasource that `make statssql` writes into data/out/ (mounted read-only).
+# Redis, reading the DuckDB datasource that `just statssql` writes into data/out/ (mounted read-only).
 #
 # NOT RUN in this prototype: Docker's daemon is not running on the machine it was built on. The primary route
 # (deploy/superset/README.md, section 2) is the one that was executed and verified.

@@ -3,7 +3,7 @@
 Superset is a separate application (its own venv, metadata database and web UI); this script is the reproducible
 form of the click-through that builds the prototype dashboard, so the view can be rebuilt instead of re-clicked:
 
-* the DuckDB database connection that ``make statssql`` writes (``data/out/stapfer_stats.duckdb``),
+* the DuckDB database connection that ``just statssql`` writes (``data/out/stapfer_stats.duckdb``),
 * one dataset per datasource table the dashboard uses,
 * five charts (corpus size, answers per section, sheet-size distribution, answers per page, markup rates),
 * one dashboard that lays the charts out, published and owned by the admin user.
@@ -237,14 +237,14 @@ def main(argv=None):
     ap.add_argument("--password", default=os.environ.get("SUPERSET_ADMIN_PASSWORD", "archai-prototype-1"),
                     help="the local prototype admin password created by `superset fab create-admin`")
     ap.add_argument("--db-path", default=str(DEFAULT_DB),
-                    help=f"the DuckDB file the datasource points at (default {DEFAULT_DB}; build it with `make statssql`)")
+                    help=f"the DuckDB file the datasource points at (default {DEFAULT_DB}; build it with `just statssql`)")
     ap.add_argument("--uri", default=None, help="register this SQLAlchemy URI instead of duckdb:///<--db-path>, "
                                                 "e.g. duckdb:////app/data/out/stapfer_stats.duckdb for the Docker route")
     args = ap.parse_args(argv)
 
     db_path = Path(args.db_path).resolve()
     if not args.uri and not db_path.is_file():
-        print(f"error: {db_path} is missing; build the datasource first: make statssql", file=sys.stderr)
+        print(f"error: {db_path} is missing; build the datasource first: just statssql", file=sys.stderr)
         return 1
     # duckdb-engine wants duckdb:// plus an absolute path, which reads as four slashes: duckdb:////abs/path.
     uri = args.uri or f"duckdb:///{db_path}"

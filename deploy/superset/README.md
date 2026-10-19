@@ -21,11 +21,11 @@ The DuckDB database file is **derived** from it, is a build artifact, and is nev
 `data/out/`, which `.gitignore` covers with `data/out/*.duckdb`.
 
 ```bash
-# from the repository root; needs the Python 3.12 virtualenv that `make setup` creates
-make statssql
+# from the repository root; needs the Python 3.12 virtualenv that `just setup` creates
+just statssql
 ```
 
-`make statssql` is `PYTHONPATH=src .venv/bin/python -m archai.statssql`; the module also takes `--db PATH`,
+`just statssql` is `PYTHONPATH=src uv run --all-groups python -m archai.statssql`; the module also takes `--db PATH`,
 `--corpus PATH` and `--report` (print what an existing file contains without rebuilding), and prints a JSON
 report of every relation it wrote. The ~41 MB file is mostly the materialised `answers` table.
 
@@ -115,7 +115,7 @@ In a second shell, with the server running:
 
 ```bash
 # 1. the DuckDB datasource the repository produces
-make statssql
+just statssql
 
 # 2. the database connection, five datasets, five charts and one dashboard, over Superset's REST API
 .venv/bin/python deploy/superset/provision_superset.py
@@ -198,7 +198,7 @@ The provisioning run read every chart back through Superset: 92,524 answers over
 
 ## 4. What was actually run, and what it showed
 
-Commands: the install, configure, initialise and run steps above, then `make statssql` (41,431,040 bytes,
+Commands: the install, configure, initialise and run steps above, then `just statssql` (41,431,040 bytes,
 13 relations) and `.venv/bin/python deploy/superset/provision_superset.py`.
 
 ```bash
@@ -250,7 +250,7 @@ same figures rendered by Superset: `92524` / `2250` in the corpus table, the `II
 
 - Run the compose route on a Docker host and record the same verification, then make it the documented route
   for a server deployment (the local-venv route stays the developer route).
-- Turn the DuckDB file into a scheduled artifact (a CI or cron step after `make statssql`) and let Superset
+- Turn the DuckDB file into a scheduled artifact (a CI or cron step after `just statssql`) and let Superset
   read it from a fixed path instead of a worktree path.
 - Add the dimensions the dashboard will want next: per-school-type and per-language cuts from the geocoded
   places, per-decade trends from the consultation corpus, and native dashboard filters over `section` and
