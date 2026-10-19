@@ -29,7 +29,7 @@ With [`just`](https://just.systems/): `just build`, `just html` (single files), 
 | # | Section | Slide |
 |---|---|---|
 | 1 | — | Title |
-| 2 | Introduce | Challenge: an overview of the introduction |
+| 2 | Introduce | Challenge: the question the introduction answers |
 | 3 | Introduce | The problem, and what the product solves |
 | 4 | Introduce | The goal: archives that are easily digestible |
 | 5 | Product | The product: the working thing itself |

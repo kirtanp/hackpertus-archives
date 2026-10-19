@@ -25,24 +25,14 @@ provenance-preserving dataset, served as a cited Q&amp;A demo.</p>
 
 ---
 
-<div class="deck-eyebrow">Introduce</div>
-
 <h2 class="deck-heading">Challenge</h2>
 
-<p class="deck-lead">Readable, but not answerable — and not one central database. Here is what the introduction
-lays out.</p>
-
-<ul class="deck-list">
-  <li>The problem and examples: 1799 handwritten sheets and 1960s consultation dossiers that nobody can ask a question about.</li>
-  <li>The datasets: three open Swiss sources that have to become a PDF transcript plus data.</li>
-  <li>The goal: archives that are easily digestible.</li>
-  <li>The result: not centralised databases, but something accessible to everyone and organised by an AI framework.</li>
-</ul>
+<p class="deck-lead">How can we make archives more easily digestible?</p>
 
 Note:
 Introduce — spoken budget ~1:30 (the sketch writes "1:30 mins"; it may mean 30 minutes — the captain can correct this
-one line). This slide frames the challenge; the two after it carry the detail — first the problem, the material and
-what the product solves, then the goal and how it is organised.
+one line). This slide asks the question; the two after it carry the detail — first the problem, the material and what
+the product solves, then the goal and how it is organised.
 
 ---
 
