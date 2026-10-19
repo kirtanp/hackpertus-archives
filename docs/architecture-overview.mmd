@@ -12,9 +12,13 @@ flowchart LR
 
   DATA[("A trustworthy dataset<br/>2,250 school records<br/>2,819 records in all<br/>each traceable<br/>to its source page")]
 
-  ASK["Ask a question<br/>in plain language<br/>how many girls went<br/>to school in Bern?"]
+  ASK["Ask a question<br/>in plain language"]
 
   ANSWER(["A cited answer<br/>exact totals<br/>every school listed<br/>every number cited"])
+
+  COUNT["Questions about the whole dataset<br/>how many schools in Bern?<br/>average age of the teachers?<br/>which schools taught Latin?<br/>counted across every record,<br/>not read off one page"]
+
+  STORY["A guided tour<br/>the same real records,<br/>shown with their<br/>archive signatures"]
 
   DASH["Dashboards<br/>how many schools<br/>where they were<br/>how big they were<br/>record quality"]
 
@@ -25,7 +29,11 @@ flowchart LR
   AI --> DATA
   DATA --> ASK
   ASK --> ANSWER
+  ASK --> COUNT
   ANSWER --> PEOPLE
+  COUNT --> PEOPLE
+  DATA --> STORY
+  STORY --> PEOPLE
   DATA --> DASH
   DASH --> PEOPLE
 
@@ -34,6 +42,6 @@ flowchart LR
   classDef ai    fill:#ffe0b2,stroke:#b46504,stroke-width:2px
   classDef ends  fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
   class DATA store
-  class DIGITISE,ASK,DASH svc
+  class DIGITISE,ASK,COUNT,STORY,DASH svc
   class AI ai
   class ARCHIVE,ANSWER,PEOPLE ends
