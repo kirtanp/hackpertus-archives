@@ -526,6 +526,83 @@ button{font:inherit}
       </div>
     </sc-for>
   </div>
+
+  <div style="margin-top:80px;display:flex;flex-direction:column;gap:16px;max-width:820px">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#c9a45c">Benchmark report · Apertus 70B</div>
+    <blockquote data-reveal="1" style="margin:0;border-left:3px solid #e2553a;padding:6px 0 6px 22px;font-family:'Instrument Serif',serif;font-size:clamp(22px,2.4vw,30px);line-height:1.25;color:#eee4cc;text-wrap:pretty">“{{ benchLine }}”</blockquote>
+  </div>
+
+  <div data-reveal="1" style="margin-top:32px;border:1px solid #2e2a22;overflow-x:auto">
+    <div style="padding:20px 22px 6px;display:flex;flex-direction:column;gap:4px">
+      <div style="font-family:'Instrument Serif',serif;font-size:26px">Retrieval by question set · right top source (hit@1)</div>
+      <div style="font-size:13px;color:#7d735f">Gold = the database passages for that place and questionnaire section. Paraphrases avoid the rule keywords, so rules-only is a floor there.</div>
+    </div>
+    <div style="min-width:640px;font-size:14px">
+      <div style="display:grid;grid-template-columns:2.4fr .6fr 1fr 1fr 1fr 1fr;gap:10px;padding:12px 22px;border-bottom:1px solid #2e2a22;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#7d735f">
+        <span>Question set</span><span style="text-align:right">n</span><span style="text-align:right">Rules only</span><span style="text-align:right">Fixed intents</span><span style="text-align:right;color:#e2553a">Dynamic</span><span style="text-align:right">Dynamic hit@6</span>
+      </div>
+      <sc-for list="{{ retrRows }}" as="rr" hint-placeholder-count="6">
+        <div style="display:grid;grid-template-columns:2.4fr .6fr 1fr 1fr 1fr 1fr;gap:10px;padding:10px 22px;border-bottom:1px solid #221e18;font-variant-numeric:tabular-nums;font-weight:{{ rr.fw }};background:{{ rr.bg }}">
+          <span style="color:#c9bfa8">{{ rr.l }}</span><span style="text-align:right;color:#7d735f;font-family:'IBM Plex Mono',monospace">{{ rr.n }}</span>
+          <span style="text-align:right;color:#7d735f;font-family:'IBM Plex Mono',monospace">{{ rr.off }}</span><span style="text-align:right;color:#c9a45c;font-family:'IBM Plex Mono',monospace">{{ rr.fix }}</span>
+          <span style="text-align:right;color:#e2553a;font-family:'IBM Plex Mono',monospace">{{ rr.dyn }}</span><span style="text-align:right;color:#eee4cc;font-family:'IBM Plex Mono',monospace">{{ rr.dyn6 }}</span>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="margin-top:28px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:28px">
+    <sc-for list="{{ report }}" as="rp" hint-placeholder-count="4">
+      <div data-reveal="1" style="border:1px solid #2e2a22;padding:22px;display:flex;flex-direction:column;gap:12px">
+        <div style="font-family:'Instrument Serif',serif;font-size:24px;line-height:1.1">{{ rp.k }}</div>
+        <div style="font-size:12.5px;color:#7d735f;text-wrap:pretty">{{ rp.s }}</div>
+        <div style="display:flex;flex-direction:column">
+          <sc-for list="{{ rp.items }}" as="it" hint-placeholder-count="4">
+            <div style="display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-top:1px solid #221e18;font-size:13.5px">
+              <span style="color:#c9bfa8">{{ it.l }}</span><span style="font-family:'IBM Plex Mono',monospace;color:{{ it.c }}">{{ it.v }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="margin-top:80px;display:flex;flex-direction:column;gap:14px;max-width:880px">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#6fa58f">Context · AstaBench (Ai2), the reference for research-assistant RAG</div>
+    <h3 style="margin:0;font-family:'Instrument Serif',serif;font-weight:400;font-size:clamp(30px,3.4vw,46px);line-height:1.05">Beside the best published RAG agents. <em style="color:#e2553a">Not a ranking.</em></h3>
+    <p style="margin:0;color:#c9bfa8;font-size:15.5px;text-wrap:pretty">AstaBench scores agents on scientific papers in Ai2's corpus; ArchAI is measured on Swiss archive records. The tasks, corpora and metrics differ, so these numbers show scale, not who wins. AstaBench figures are copied from the paper with their 95% intervals.</p>
+  </div>
+  <div style="margin-top:28px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:28px">
+    <sc-for list="{{ asta }}" as="as" hint-placeholder-count="3">
+      <div data-reveal="1" style="border:1px solid #2e2a22;padding:22px;display:flex;flex-direction:column;gap:16px">
+        <div style="font-family:'Instrument Serif',serif;font-size:26px;line-height:1.1">{{ as.task }}</div>
+        <div style="background:#1d1914;border:1px solid #3a2a22;padding:14px;display:flex;flex-direction:column;gap:6px">
+          <div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#e2553a">ArchAI · Apertus 70B (open)</span>
+            <span style="font-family:'Instrument Serif',serif;font-size:34px;line-height:1;color:#e2553a;font-variant-numeric:tabular-nums">{{ as.oursV }}</span>
+          </div>
+          <div style="height:8px;background:#221e18;position:relative"><div style="position:absolute;inset:0;background:#e2553a;transform-origin:left;transform:scaleX({{ as.oursW }})"></div></div>
+          <div style="font-size:12.5px;color:#c9bfa8">{{ as.oursL }}</div>
+          <div style="font-size:11.5px;color:#7d735f;font-family:'IBM Plex Mono',monospace">{{ as.oursS }}</div>
+        </div>
+        <div style="font-size:12px;color:#6fa58f;font-family:'IBM Plex Mono',monospace">AstaBench · {{ as.theirs }}</div>
+        <sc-for list="{{ as.rows }}" as="ar" hint-placeholder-count="4">
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <div style="display:flex;justify-content:space-between;gap:10px;font-size:13.5px">
+              <span style="color:#eee4cc">{{ ar.who }} <span style="color:#7d735f;font-size:12px">{{ ar.model }}</span></span>
+              <span style="font-family:'IBM Plex Mono',monospace;color:#a89d86;white-space:nowrap">{{ ar.v }} <span style="color:#5a5142">{{ ar.ci }}</span></span>
+            </div>
+            <div style="height:6px;background:#221e18;position:relative"><div style="position:absolute;inset:0;background:#6fa58f;opacity:.75;transform-origin:left;transform:scaleX({{ ar.w }})"></div></div>
+          </div>
+        </sc-for>
+      </div>
+    </sc-for>
+  </div>
+  <div style="margin-top:18px;display:flex;flex-wrap:wrap;gap:8px 22px;font-family:'IBM Plex Mono',monospace;font-size:11.5px">
+    <a href="{{ astaSrc }}" target="_blank" rel="noopener noreferrer" style="color:#7d735f;text-decoration:none" style-hover="color:#c9a45c">↗ Bragg et al., AstaBench, ICLR 2026 · Tables 5 and 6</a>
+    <a href="https://allenai.org/asta/bench" target="_blank" rel="noopener noreferrer" style="color:#7d735f;text-decoration:none" style-hover="color:#c9a45c">↗ allenai.org/asta/bench · live leaderboard</a>
+    <a href="/api/metrics" target="_blank" rel="noopener noreferrer" style="color:#7d735f;text-decoration:none" style-hover="color:#c9a45c">↗ ArchAI figures · /api/metrics</a>
+  </div>
 </div>
 </sc-if>
 
@@ -1480,6 +1557,17 @@ const IMPACT_RISKS = [
   ['Personal data', 'Privacy screen: flag or mask', null, ''],
   ['Mislabelled column', 'Every mapping checked; caught in the run above', null, '']
 ];
+// 05 Evidence, AstaBench context. Every figure is read from Tables 5 and 6 of the paper (arXiv 2510.21652v2, ICLR 2026):
+// scientific-literature tasks on Ai2's corpus, so it sits beside ArchAI's archive figures, never in one ranking.
+const ASTA_SRC = 'https://arxiv.org/abs/2510.21652';
+const ASTA = [
+  { task: 'Find the right source', ours: 'hit6', theirs: 'LitQA2-FullText-Search · recall@30, 75 biomedical questions',
+    rows: [['Asta Paper Finder', 'gemini-2-flash, gpt-4o', .907, '± 6.6'], ['ReAct', 'gpt-5', .827, '± 8.6'], ['ReAct', 'o3', .573, '± 11.3'], ['Smolagents Coder', 'claude-sonnet-4', .52, '± 11.4']] },
+  { task: 'Answer correctly', ours: 'data', theirs: 'LitQA2-FullText · multiple-choice accuracy, 75 questions',
+    rows: [['ReAct', 'gpt-5', .827, '± 8.6'], ['ReAct', 'o3', .80, '± 9.1'], ['FutureHouse Falcon', 'gpt-4.1-mini, gemini-2.5-flash, o3-mini', .747, '± 9.9'], ['Asta v0', 'mixture', .707, '± 10.4']] },
+  { task: 'Cited long-form answer', ours: 'accepted', theirs: 'ScholarQA-CS2 · rubric score (LLM-judged), 100 CS questions',
+    rows: [['Asta Scholar QA (w/ tables)', 'claude-sonnet-4', .879, '± 1.2'], ['Elicit', '–', .855, '± 1.6'], ['OpenAI Deep Research', 'o3 / o4-mini deep-research', .794, '± 1.4'], ['OpenSciLM (only open-weight entry)', 'llama-3.1-openscholar-8b', .58, '± 2.6']] }
+];
 let ONB = {"dataset": "test-consultations-apertus", "file": "consultations.csv", "rows": 569, "columns": 22, "sha256": "c6a4ccc5f4ee106d2da023fc3f07a04bb87fd4228b35b996af785eafdce4878c", "encoding": "utf-8-sig", "source_url": "https://opendata.swiss/de/dataset/federal-consultations-1960-1991", "stages": [{"stage": "acquire", "seconds": 0.01, "rows": 569, "sha256": "c6a4ccc5f4ee106d2da023fc3f07a04bb87fd4228b35b996af785eafdce4878c", "took": 0.01}, {"stage": "profile", "seconds": 0.03, "columns": 22, "took": 0.02}, {"stage": "map", "seconds": 4.46, "source": "apertus", "notes": 3, "took": 4.43}, {"stage": "transform", "seconds": 4.53, "records": 569, "took": 0.07}, {"stage": "privacy", "seconds": 4.57, "masked": false, "took": 0.04}, {"stage": "enrich", "seconds": 40.5, "requested": 20, "enriched": 20, "took": 35.93}, {"stage": "validate", "seconds": 40.52, "invalid": 0, "took": 0.02}], "chips": [{"col": "doc_id", "roles": ["id"], "rejected": [{"role": "title", "why": "not readable text (an id or code)"}]}, {"col": "title", "roles": ["title", "text"], "rejected": []}, {"col": "department_abbr", "roles": ["text", "organisations"], "rejected": []}, {"col": "office", "roles": ["text", "organisations"], "rejected": []}, {"col": "addressees", "roles": ["text"], "rejected": []}, {"col": "document_types", "roles": ["text"], "rejected": []}, {"col": "department", "roles": ["text", "organisations"], "rejected": []}, {"col": "year", "roles": ["dates"], "rejected": []}, {"col": "consultation_start_raw", "roles": ["dates"], "rejected": []}, {"col": "consultation_start", "roles": ["dates"], "rejected": []}, {"col": "consultation_end", "roles": ["dates"], "rejected": []}, {"col": "federal_council_protocol_ref", "roles": [], "rejected": [{"role": "dates", "why": "dropped by validation"}]}, {"col": "consultation_end_raw", "roles": [], "rejected": [{"role": "dates", "why": "dropped by validation"}]}, {"col": "provenance.source_dataset", "roles": ["url"], "rejected": []}, {"col": "federal_gazette_ref", "roles": [], "rejected": [{"role": "signature", "why": "values do not look like archive signatures"}]}], "roles": {"id": ["doc_id"], "title": ["title"], "text": ["addressees", "department", "department_abbr", "document_types", "office", "title"], "dates": ["consultation_end", "consultation_start", "consultation_start_raw", "year"], "organisations": ["department", "department_abbr", "office"], "url": ["provenance.source_dataset"], "signature": []}, "notes": ["title: 'doc_id' dropped (not readable text (an id or code))", "signature: 'federal_gazette_ref' dropped (values do not look like archive signatures)", "title: Apertus proposal empty after validation — heuristic used"], "model": "apertus-v1-5-70b", "enriched": 20, "invalid": 0, "published": false, "coverage": {"title": 1.0, "text": 1.0, "dates": 1.0, "places": 0.0, "places_geocoded": 0.0, "persons": 0.0, "archive_signature": 0.0}, "comparison": {"matched_records": 569, "title_exact": 1.0, "reference_dates_found": 1.0, "lead_organisation_found": 0.995}, "record": {"title": "Vorentwurf zu einem Bundesgesetz über das Filmwesen", "kind": "federal_consultation", "dates": ["1960"], "organisations": ["Eidgenössisches Departement des Innern", "EDI"]}, "privacy_flags": 0, "seconds": 40.5};
 const ONB_T = { acquire: [0, 10], profile: [10, 24], map: [24, 64], transform: [64, 76], privacy: [76, 90], enrich: [90, 106], validate: [106, 122], publish: [122, 132] };
 const ONB_END = 140;
@@ -2129,6 +2217,36 @@ class Component extends DCLogic {
         rows:[{ l:'70B · JSON protocol', v:'81%', col: C.red, ...bar(.812,0) }, { l:'70B · native API', v:'50%', col: C.dim, ...bar(.5,1) }, { l:'8B · JSON protocol', v:'59%', col: C.gold, ...bar(.594,2) }] }
     ];
 
+    // benchmark report: the full metrics.json breakdown, then AstaBench beside it
+    const RS = RQ || {}, SUBS = [['stapfer_rules_wording','Stapfer · rule wording'],['stapfer_paraphrased','Stapfer · paraphrased'],['stapfer_new_sections','Stapfer · sections without an intent'],['consultations_paraphrased','Consultations · paraphrased'],['consultations_with_year','Consultations · with a year'],['all','All questions']];
+    const cellOf = (m, k, f) => { const d = (RS[m] || {})[k]; return d && d[f] != null ? p1(d[f]) : '–'; };
+    const retrRows = SUBS.map(([k, l]) => { const d = (RS.dynamic || {})[k] || {};
+      return { l, n: d.cases != null ? fmt(d.cases) : '–', off: cellOf('off', k, 'hit_at_1'), fix: cellOf('apertus', k, 'hit_at_1'), dyn: cellOf('dynamic', k, 'hit_at_1'), dyn6: cellOf('dynamic', k, 'hit_at_6'),
+        fw: k === 'all' ? '600' : '400', bg: k === 'all' ? '#1d1914' : 'transparent' }; });
+    const AC = MX.qa_answer_check || {}, DQ = MX.data_questions || {}, TB = ((MX.tool_calling_benchmark || {}).results || {})['apertus-v1-5-70b / json'];
+    const share = (a, b) => b ? p1(a / b) : '–';
+    const report = [
+      { k:'Answer check', s: (AC.answers || 380) + ' full answers, Apertus 70B · every digit must occur in the cited source',
+        items: [['accepted', AC.accepted, C.green], ['pupil totals by code', AC.aggregate, C.green], ['no direct answer', AC.no_direct_answer, C.dim], ['rejected: uncited / no information', AC.rejected_uncited_or_no_information, C.red], ['rejected: number not in source', AC.rejected_number_not_in_cited_source, C.red], ['declined as not in sources', AC.declined_as_not_in_sources, C.dim]] },
+      { k:'Unanswerable questions', s: (Un ? Un.questions : 24) + ' off-topic, fictional, wrong-period, injection and gibberish questions',
+        items: [['declined', Un && Un.declined, C.green], ['answered anyway', Un && (Un.answered_anyway || []).length, C.red], ['showed passages instead', Un && (Un.shown_passages_as_answer || []).length, C.dim]] },
+      { k:'Data questions', s: (DQ.runs || 48) + ' end-to-end runs of 16 hand-checked questions · a pass needs the exact gold result',
+        items: Object.entries(DQ.by_category || {}).map(([c, v]) => [c + ' · ' + v.runs + ' runs', v.passed + '/' + v.runs, v.passed === v.runs ? C.green : C.gold]) },
+      { k:'Tool calling, 70B JSON protocol', s:'64 BFCL-style cases on the 8 tools · exact match',
+        items: TB ? ['simple','parallel','parallel_multiple','irrelevance'].map(c => [c.replace('_', ' ') + ' · ' + TB[c].cases + ' cases', p1(TB[c].exact), TB[c].exact >= .75 ? C.green : C.gold]) : [] }
+    ].map(b => ({ ...b, items: b.items.filter(x => x[1] != null).map(([l, v, c]) => ({ l, v: typeof v === 'number' ? fmt(v) : v, c })) }));
+    const hit6 = RS.dynamic && RS.dynamic.all ? RS.dynamic.all.hit_at_6 : .984;
+    const dataPass = DQ.runs ? DQ.runs_passed / DQ.runs : 46 / 48, accRate = AC.answers ? (AC.accepted + AC.aggregate) / AC.answers : 321 / 380;
+    const OURS = {
+      hit6: [hit6, 'hit@6 · a gold passage among the 6 Apertus answers from', (RS.dynamic && RS.dynamic.all ? RS.dynamic.all.cases : 380) + ' archive questions, DE/FR/EN'],
+      data: [dataPass, 'exact gold result, data questions', (DQ.runs_passed || 46) + ' of ' + (DQ.runs || 48) + ' runs'],
+      accepted: [accRate, 'answers that pass the code citation check', (AC.accepted || 302) + ' + ' + (AC.aggregate || 19) + ' of ' + (AC.answers || 380) + ' · a check, not a judged score']
+    };
+    const asta = ASTA.map((a, ai) => { const [v, l, sub] = OURS[a.ours];
+      return { task: a.task, theirs: a.theirs, oursV: p1(v * e(ai)), oursL: l, oursS: sub, oursW: pct(v * e(ai)),
+        rows: a.rows.map(([who, model, x, ci], ri) => ({ who, model: model === '–' ? '' : '· ' + model, v: (x * 100 * e(ai + ri * .3)).toFixed(1) + '%', ci, w: pct(x * e(ai + ri * .3)) })) }; });
+    const benchLine = 'We measured Apertus, not a competitor. With 70B open weights it puts the right source first for ' + p1(r2) + ' of ' + ((RS.dynamic && RS.dynamic.all) ? RS.dynamic.all.cases : 380) + ' questions, declines ' + (Un ? Un.declined + ' of ' + Un.questions : '22 of 24') + ' unanswerable ones and answers none anyway, and every number is checked by code.';
+
     const cc = since / 16, io = x => x < .5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2;
     const curtA = cc >= 1 ? '-200%' : (100 - 200 * io(cl(cc))).toFixed(2) + '%';
     const curtB = cc >= 1.2 ? '-200%' : (100 - 200 * io(cl((cc - 0.12) / 1))).toFixed(2) + '%';
@@ -2378,7 +2496,7 @@ class Component extends DCLogic {
       chatChips: CHIPS.map(c => ({ t: c, go: () => this.chatSend(c) })),
       chatStatus: s.simBusy ? 'apertus-70b · thinking' + '.'.repeat(1 + Math.floor(t / 4) % 3) : 'Enter to send · Shift+Enter for a new line',
       chatStatusCol: s.simBusy ? C.gold : C.dim,
-      bigStats, charts
+      bigStats, charts, retrRows, report, asta, benchLine, astaSrc: ASTA_SRC
     };
   }
 }
