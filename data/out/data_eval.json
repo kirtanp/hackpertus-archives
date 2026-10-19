@@ -3,7 +3,7 @@
  "caveat": "a small hand-made set around the cases the engine was built on; a pass needs the exact gold result",
  "model": "apertus-v1-5-70b",
  "runs": 48,
- "runs_passed": 45,
+ "runs_passed": 46,
  "questions_passed_every_run": 15,
  "by_category": {
   "schools": {
@@ -20,7 +20,7 @@
   },
   "pupils": {
    "runs": 12,
-   "passed": 9
+   "passed": 10
   },
   "condition": {
    "runs": 3,
@@ -128,12 +128,12 @@
   },
   "How many girls went to school in Bern in 1799?": {
    "category": "pupils",
-   "passed": 0,
+   "passed": 1,
    "runs": 3,
    "details": [
-    "result [208, 238] more=True",
-    "result [208, 238] more=True",
-    "result [208, 238] more=True"
+    "result [268, 298] more=True",
+    "result [353, 383] more=True",
+    "result [268, 298] more=True"
    ]
   },
   "Wie viele Knaben gingen 1799 in Bern zur Schule?": {
@@ -197,5 +197,5 @@
    ]
   }
  },
- "seconds_median": 8.5
+ "seconds_median": 7.8
 }

@@ -112,7 +112,7 @@
    "description": "every measurement with its scope",
    "contentUrl": "metrics.json",
    "encodingFormat": "application/json",
-   "sha256": "b846ecf2aec5fc5f8cbbc3f56330c7c35e045e87ed5887a1b27ef2117f364fc7"
+   "sha256": "4dbcdffe872cab9e28cf32e6c40b46542ae992f17a0c42963a22b7c88df0e755"
   }
  ],
  "recordSet": [

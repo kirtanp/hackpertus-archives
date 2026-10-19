@@ -314,8 +314,8 @@ def geo_rounds(game_round, records, docs, n=5):
 
 
 # ---------------------------------------------------------------- 04 Simulator: the example questions, answered live
-SIM_QS = ["Was verdiente der Schulmeister in Hörndli?", "how many students where there in the schoool in bern in 1799 ?",
-          "Quels livres utilisait-on à l'école de Moudon ?", "Which consultation in 1984 dealt with data protection?",
+SIM_QS = ["Wie alt war der Lehrer in Hörndli?", "how many students where there in the schoool in bern in 1799 ?",
+          "Combien d'écoles y avait-il à Lausanne en 1799 ?", "Which consultation in 1984 dealt with data protection?",
           "Who won the 1998 football World Cup?"]
 _SIM = {"answers": None, "running": False}
 _LOCK = threading.Lock()

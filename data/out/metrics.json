@@ -707,7 +707,7 @@
   "caveat": "a small hand-made set around the cases the engine was built on; a pass needs the exact gold result",
   "model": "apertus-v1-5-70b",
   "runs": 48,
-  "runs_passed": 45,
+  "runs_passed": 46,
   "questions_passed_every_run": 15,
   "by_category": {
    "schools": {
@@ -724,7 +724,7 @@
    },
    "pupils": {
     "runs": 12,
-    "passed": 9
+    "passed": 10
    },
    "condition": {
     "runs": 3,
@@ -739,6 +739,6 @@
     "passed": 9
    }
   },
-  "seconds_median": 8.5
+  "seconds_median": 7.8
  }
 }

@@ -536,6 +536,7 @@ def resolve(figs, sex, single, complete=True):
         k = (f["sex"], f["lo"], f["hi"], f["more"], unit_key(f["unit"]), f.get("period"))
         if k not in seen:
             seen.add(k); uniq.append(f)
+    uniq += _other_sex(uniq)
     boys, girls = [f for f in uniq if f["sex"] == "boys"], [f for f in uniq if f["sex"] == "girls"]
     rest = [f for f in uniq if f["sex"] not in ("boys", "girls")]
     zero = {"label": "", "sex": None, "season": None, "current": True, "asked": True, "lo": 0, "hi": 0, "more": False, "unit": None,
@@ -555,6 +556,22 @@ def resolve(figs, sex, single, complete=True):
     else:
         chosen, ok = [], False
     return {"parts": chosen, "complete": bool(ok) and complete and bool(chosen)} if chosen else None, out
+
+
+def _other_sex(figs):
+    """A verified quote naming both sexes with one figure each ("Knaben 17. Mägdlein 60.") also settles the figure of
+    the sex Apertus did not return: code takes it from the same quote. Quotes with a range are left to the reader."""
+    have, out = {f["sex"] for f in figs}, []
+    for f in figs:
+        q = _ascii(plain(f["quote"] or ""))
+        if f["sex"] not in ("boys", "girls") or _RANGE.search(_norm(q)):
+            continue
+        for n in {int(x) for x in re.findall(r"\d+", q)} - {f["lo"], f["hi"]}:
+            s = _sex_before(q, n)
+            if s in ("boys", "girls") and s not in have:
+                have.add(s)
+                out.append(f | {"sex": s, "lo": n, "hi": n, "more": False, "label": f"{s} (same quote)"})
+    return out
 
 
 def _passages(idx, rid, sections):

@@ -374,3 +374,13 @@ def test_a_number_after_the_last_sexed_figure_is_the_sheets_total():
     t, _ = dataq.verify_figure(_fig(q, 175, sex="girls"), "number", text, ctx)
     f, _ = dataq.verify_figure(_fig(q, 85, sex="all"), "number", text, ctx)
     assert (t["sex"], f["sex"]) == ("all", "girls")
+
+
+def test_a_quote_naming_both_sexes_settles_the_figure_apertus_left_out():
+    f = {"label": "pupils", "sex": "boys", "season": "winter", "current": True, "asked": True, "lo": 17, "hi": 17,
+         "more": False, "unit": None, "quote": "Knaben 17. Mägdlein 60.", "period": None, "part": False}
+    v, _ = dataq.resolve([f, dict(f)], None, "female")
+    assert v["complete"] and sorted((p["sex"], p["lo"]) for p in v["parts"]) == [("boys", 17), ("girls", 60)]
+    t = f | {"quote": "Kaben 90 Mägdchen 85 175.", "lo": 90, "hi": 90}  # 175 is the total, not a sex's figure
+    v, _ = dataq.resolve([t], None, None)
+    assert sorted((p["sex"], p["lo"]) for p in v["parts"]) == [("boys", 90), ("girls", 85)]
