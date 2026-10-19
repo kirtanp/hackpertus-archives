@@ -1,0 +1,30 @@
+---
+import type { CollectionEntry } from "astro:content";
+import { getCollection } from "astro:content";
+import SlideLayout from "../../layouts/SlideLayout.astro";
+
+export async function getStaticPaths() {
+  const slides = await getCollection("slides");
+  return slides.map((slide) => ({
+    params: { slug: slide.id.replace(/\.(md|mdx)$/, "") },
+    props: { slide },
+  }));
+}
+
+const { slide } = Astro.props as { slide: CollectionEntry<"slides"> };
+const { data } = slide;
+// The deck body is raw markdown injected into the Reveal textarea; strip the
+// frontmatter defensively the way the Astro 5 content loader returns it.
+const body = (slide.body ?? "").replace(/^---[\s\S]*?---\n?/, "");
+---
+
+<SlideLayout
+  title={data.title}
+  theme={data.theme}
+  transition={data.transition}
+  controls={data.controls}
+  progress={data.progress}
+  pubDate={data.pubDate}
+  body={body}
+  fontScale={data.fontScale}
+/>

@@ -1,0 +1,25 @@
+# list available recipes
+_default:
+  @just --list
+
+# install the deck toolchain from the committed lock (bun.lock)
+setup:
+  bun install --frozen-lockfile
+
+# development server (copies reveal.js into public/ first)
+dev:
+  bun run dev
+
+# static build into ./dist
+build:
+  bun run build
+
+# one self-contained HTML file per deck in ./single
+html:
+  bun run build:single
+
+# zip the single-file build for distribution
+html-zip: html
+  rm -f archai-presentation-single.zip
+  cd single && zip -q -r -9 ../archai-presentation-single.zip *
+  du -h archai-presentation-single.zip

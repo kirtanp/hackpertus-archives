@@ -22,6 +22,14 @@ data/out/*.duckdb
 docs/node_modules/
 docs/dist/
 docs/.astro/
+# slide deck (presentation/): its own bun toolchain, separate from the Python one above;
+# `presentation/bun.lock` is committed and `public/reveal/` is copied from node_modules on every build
+presentation/node_modules/
+presentation/dist/
+presentation/dist-single/
+presentation/single/
+presentation/public/reveal/
+presentation/.astro/
 # Apache Superset prototype (deploy/superset): its virtualenv, metadata database and generated secret
 deploy/superset/.venv/
 deploy/superset/*.db

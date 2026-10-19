@@ -1,0 +1,90 @@
+---
+import "../assets/app.css";
+
+interface Props {
+  title: string;
+  theme?: string;
+  transition?: string;
+  controls?: boolean;
+  progress?: boolean;
+  body: string;
+  pubDate?: Date;
+  fontScale?: number;
+}
+
+const {
+  title,
+  theme = "black",
+  transition = "slide",
+  controls = true,
+  progress = true,
+  body,
+  pubDate,
+  fontScale = 1,
+} = Astro.props;
+
+const dateStr = pubDate ? pubDate.toISOString().slice(0, 10) : "";
+const deckBody = body;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <meta name="description" content="ArchAI: three open Swiss archive datasets, one AI-ready dataset, served as a cited Q&A demo." />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/reveal/dist/reveal.css" />
+    <link rel="stylesheet" href={`/reveal/dist/theme/${theme}.css`} />
+  </head>
+  <body style={`--deck-font-scale: ${fontScale};`}>
+    <div class="reveal">
+      <div class="slides">
+        <section data-markdown data-separator="^---$">
+          <textarea data-template id="slide-body"></textarea>
+        </section>
+      </div>
+    </div>
+
+    <script is:inline define:vars={{ deckBody, transition, controls, progress }}>
+      document.getElementById("slide-body").textContent = deckBody;
+      window.__revealConfig = {
+        transition,
+        controls,
+        progress,
+        width: 1280,
+        height: 720,
+      };
+    </script>
+
+    <script>
+      import Reveal from "reveal.js";
+      import Markdown from "reveal.js/plugin/markdown";
+      import Notes from "reveal.js/plugin/notes";
+
+      const config = (window as any).__revealConfig ?? {};
+
+      await Reveal.initialize({
+        width: config.width ?? 1280,
+        height: config.height ?? 720,
+        margin: 0.045,
+        hash: true,
+        history: true,
+        transition: config.transition ?? "slide",
+        controls: config.controls ?? true,
+        progress: config.progress ?? true,
+        slideNumber: "c/t",
+        showSlideNumber: "all",
+        plugins: [Markdown, Notes],
+      });
+    </script>
+
+    <footer
+      class="deck-mono"
+      style="position:fixed;left:1.2rem;bottom:0.7rem;z-index:30;font-size:11px;color:#6f6754"
+    >
+      ArchAI · {dateStr}
+    </footer>
+  </body>
+</html>
