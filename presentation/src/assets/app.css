@@ -243,6 +243,25 @@ body {
   border-bottom: none;
 }
 
+/* ---- the closing slide: the credits ----------------------------------- */
+
+/* Five names, centred, with the three links the captain gave shown as the
+   address beside the name. Nothing else. */
+.reveal .deck-credits {
+  list-style: none;
+  margin: 0.2em 0 0;
+  padding: 0;
+  font-size: 0.62em;
+  line-height: 1.65;
+  text-align: center;
+}
+
+.reveal .deck-credits a {
+  color: var(--color-brand);
+  text-decoration: underline;
+  text-underline-offset: 0.16em;
+}
+
 /* ---- the product slide: the demo link --------------------------------- */
 
 /* Two short lines: the labelled link and the local address of the running
