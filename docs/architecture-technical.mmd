@@ -2,11 +2,11 @@
 %% Names the real modules, the real HTTP surface and the real data stores.
 %% Labels are short bullet points. Exactly one edge enters Apertus, from the batch
 %% pipeline, so it stays short and never runs the width of the canvas; the qa.py
-%% caller is stated in that node's text instead.
+%% and dataq callers are stated in that node's text instead.
 %% Render: mmdr -i docs/architecture-technical.mmd -o docs/architecture-technical.png -e png
 flowchart LR
 
-  APERTUS{{"archai.llm<br/>Apertus LLM<br/>OpenAI-compatible<br/>APERTUS_BASE_URL<br/>APERTUS_MODEL<br/>called by qa.py"}}:::llm
+  APERTUS{{"archai.llm<br/>Apertus LLM<br/>OpenAI-compatible<br/>APERTUS_BASE_URL<br/>APERTUS_MODEL<br/>called by qa.py<br/>and dataq"}}:::llm
 
   RAW(["Raw dumps<br/>not in this repo<br/>Stapfer transcriptions<br/>consultations<br/>OLR units"])
 
@@ -18,21 +18,27 @@ flowchart LR
 
   RECORDS[("records.jsonl<br/>2,819 records<br/>2,250 Stapfer<br/>569 consultations<br/>provenance kept")]:::store
 
-  QA["archai.qa<br/>answer path<br/>route<br/>TF-IDF search<br/>aggregate_pupils<br/>Apertus writes<br/>check_numbers"]:::svc
+  QA["archai.qa<br/>answer path<br/>route<br/>TF-IDF search<br/>aggregate_pupils<br/>Apertus writes<br/>check_numbers<br/>delegates data<br/>questions to dataq"]:::svc
+
+  DATAQ["archai.dataq<br/>data questions<br/>count / sum / average<br/>compare / list<br/>plan - Apertus<br/>select - code<br/>read - Apertus<br/>compute - code"]:::svc
+
+  DATAEVAL["archai.data_eval<br/>hand-checked gold<br/>for the data engine"]:::svc
 
   STATS["archai.stats<br/>DuckDB aggregates<br/>aggregate_sql()<br/>used by /api/stats"]:::svc
 
-  STATSSQL["archai.statssql<br/>make statssql<br/>reuses<br/>stats.aggregate_sql()<br/>not imported<br/>by app.py"]:::svc
+  STATSSQL["archai.statssql<br/>just statssql<br/>reuses<br/>stats.aggregate_sql()<br/>not imported<br/>by app.py"]:::svc
 
-  APP["app.py<br/>FastAPI<br/>POST /api/ask<br/>GET /api/stats<br/>GET /api/health<br/>GET /api/places<br/>POST /api/game/round<br/>GET /api/metrics<br/>GET /api/record/{id}<br/>GET /<br/>serves records.jsonl"]:::svc
+  SITE["archai.site<br/>real examples<br/>for the site<br/>from records,<br/>traces, manifest"]:::svc
+
+  APP["app.py<br/>FastAPI<br/>POST /api/ask<br/>GET /api/stats<br/>GET /api/site<br/>GET /api/health<br/>GET /api/places<br/>POST /api/game/round<br/>GET /api/metrics<br/>GET /api/record/{id}<br/>GET /<br/>serves records.jsonl"]:::svc
 
   DUCK[("stapfer_stats.duckdb<br/>13 relations<br/>gitignored<br/>build artifact")]:::store
 
   SUPERSET["Apache Superset 6.1<br/>separate app<br/>deploy/superset<br/>datasource:<br/>duckdb-engine<br/>read_only"]:::app
 
-  READER(["Reader in the browser<br/>cited answer<br/>map<br/>game"]):::agent
+  READER(["Reader in the browser<br/>cited answer<br/>map<br/>game"]):::reader
 
-  DASHBOARD(["Analyst<br/>corpus dashboard"]):::agent
+  DASHBOARD(["Analyst<br/>corpus dashboard"]):::reader
 
   RAW --> PIPE
   PIPE --> TOOLS
@@ -41,7 +47,13 @@ flowchart LR
   PIPE -. "Apertus API" .-> APERTUS
   CORPUS --> QA
   CORPUS --> STATS
+  QA --> DATAQ
   QA --> APP
+  DATAQ --> APP
+  DATAQ --> DATAEVAL
+  DATAQ -. "reads each<br/>record" .-> RECORDS
+  RECORDS --> SITE
+  SITE --> APP
   STATS --> APP
   STATS --> STATSSQL
   STATSSQL --> DUCK
@@ -55,6 +67,6 @@ flowchart LR
   classDef app    fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
   classDef reader fill:#eceff1,stroke:#546e7a
   class CORPUS,RECORDS,DUCK store
-  class PIPE,TOOLS,QA,STATS,STATSSQL,APP svc
+  class PIPE,TOOLS,QA,DATAQ,DATAEVAL,STATS,STATSSQL,SITE,APP svc
   class SUPERSET app
   class READER,DASHBOARD reader
