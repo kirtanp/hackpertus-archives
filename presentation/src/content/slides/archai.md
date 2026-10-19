@@ -1,6 +1,6 @@
 ---
 title: "ArchAI"
-description: "Eight slides: the challenge, the search and the source it leads to, the goal, the product with its demo link, the cost in tokens, and the link to the live website."
+description: "Seven slides: the challenge, the search and the source it leads to, the goal, the product with its demo link, and the link to the live website."
 pubDate: 2026-10-19
 order: 1
 minutes: 7
@@ -64,49 +64,6 @@ transcription that search leads to, and the handwritten original it was typed fr
 Note:
 Product — spoken budget 3 min. This is the demo moment: open the app, ask one question, then show the map and
 "guess the school".
-
----
-
-<div class="deck-eyebrow">Business · Cost</div>
-
-<h2 class="deck-heading">Cost: tokens and calls, not currency</h2>
-
-<table>
-  <thead>
-    <tr><th>Artifact</th><th>How it is served</th><th>Tokens at query time</th></tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>Starlight documentation site (docs/)</td>
-      <td>static Astro build, built in CI</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <td>This deck</td>
-      <td>Astro + reveal.js, <span class="deck-mono">SINGLE_FILE=1</span> → one HTML file that opens from disk</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <td>ArchAI Q&amp;A</td>
-      <td>Python app, search index built at startup (10–25 s)</td>
-      <td>only with an Apertus key; 0 without</td>
-    </tr>
-  </tbody>
-</table>
-
-<ul class="deck-list">
-  <li>API cost of the enrichment run: 2,250 calls, one per sheet.</li>
-  <li>Token cost of that run: 2,174,008 tokens (1,784,954 in, 389,054 out) — 966 tokens per sheet.</li>
-  <li>One question: one validated rewrite call, plus one call to write the answer.</li>
-  <li>No price per token is stated in this repository, and the gateway and model are configurable — so the honest unit here is tokens and calls, not currency.</li>
-</ul>
-
-<p class="deck-source">data/out/apertus_enrichment.apertus-v1-5-70b.jsonl (2,250 rows) · data/out/metrics.json · docs/reference/web-demo.mdx · docs/ (Starlight site)</p>
-
-Note:
-Business — spoken budget 2 min, all of it on this slide: the comparison of the three artifacts and the measured
-tokens. The earlier provenance and future-plans slides were removed at the captain's request; their figures are in
-data/out/metrics.json if a question comes up.
 
 ---
 
