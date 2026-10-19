@@ -1,0 +1,203 @@
+/* Latin subsets only: the deck is English, German and French, and the
+   single-file build inlines every font file as a data URI. */
+@import "@fontsource/instrument-serif/latin-400.css";
+@import "@fontsource/instrument-serif/latin-400-italic.css";
+@import "@fontsource/ibm-plex-sans/latin-400.css";
+@import "@fontsource/ibm-plex-sans/latin-500.css";
+@import "@fontsource/ibm-plex-sans/latin-600.css";
+@import "@fontsource/ibm-plex-mono/latin-400.css";
+@import "@fontsource/ibm-plex-mono/latin-500.css";
+@import "tailwindcss";
+
+/* ArchAI's own palette, taken from the app's presentation site (static/site/):
+   ink #12100c, orange #e2553a, gold #c9a45c, sage #6fa58f. The deck is a light
+   deck: white slides, dark text. The text colours below are the darker cuts of
+   those hues, so small labels and the mono source lines keep their contrast on
+   white (>= 4.5:1); the bright cuts are only used for accents and graphics. */
+@theme {
+  --font-sans: "IBM Plex Sans", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --font-display: "Instrument Serif", Georgia, serif;
+
+  /* surfaces */
+  --color-paper: #ffffff;
+  --color-ink: #12100c;
+
+  /* text */
+  --color-text: #2a241a;
+  --color-muted: #4a4336;
+  --color-dim: #6f6754;
+
+  /* accents: bright for graphics, dark for text */
+  --color-accent: #e2553a;
+  --color-brand: #b8391c;
+  --color-gold: #8a6a20;
+
+  --color-line: #ded6c2;
+}
+
+/* Reveal theming: variables instead of the built-in theme's colours. */
+:root {
+  --r-background-color: #ffffff;
+  --r-main-color: #2a241a;
+  --r-main-font: "IBM Plex Sans", system-ui, sans-serif;
+  --r-main-font-size: 30px;
+  --r-heading-color: #12100c;
+  --r-heading-font: "IBM Plex Sans", system-ui, sans-serif;
+  --r-heading-text-transform: none;
+  --r-heading-font-weight: 600;
+  --r-link-color: #b8391c;
+  --r-link-color-hover: #8a6a20;
+  --r-selection-background-color: #12100c;
+  --r-selection-color: #ffffff;
+  --deck-font-scale: 1;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--r-background-color);
+}
+
+.reveal {
+  font-size: calc(var(--r-main-font-size) * var(--deck-font-scale));
+}
+
+/* Reveal gives the visible slide an inline `display: block` and hides the
+   others; only the visible one becomes a flex column, so hidden slides keep
+   their `display: none` and the title slide can centre itself. */
+.reveal .slides section {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 1.6rem 2.4rem 2.2rem;
+  text-align: left;
+}
+
+.reveal .slides section.present {
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.reveal .slides section > * {
+  flex-shrink: 0;
+}
+
+.reveal .slides section > .deck-center {
+  margin: auto 0;
+}
+
+/* ---- deck content ------------------------------------------------------ */
+
+.reveal .deck-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.46em;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-brand);
+  margin-bottom: 1em;
+}
+
+.reveal .deck-heading {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 1.6em;
+  line-height: 1.04;
+  margin: 0 0 0.45em;
+}
+
+.reveal .slides section h1.deck-heading {
+  font-size: 2.4em;
+}
+
+.reveal .deck-lead {
+  font-size: 0.72em;
+  line-height: 1.42;
+  color: var(--color-muted);
+  max-width: 32em;
+  margin: 0 0 0.8em;
+}
+
+.reveal .deck-list {
+  margin: 0;
+  padding-left: 1.1em;
+  max-width: 36em;
+  font-size: 0.64em;
+  line-height: 1.5;
+}
+
+.reveal .deck-list li {
+  margin-bottom: 0.6em;
+}
+
+.reveal .deck-list li:last-child {
+  margin-bottom: 0;
+}
+
+.reveal .deck-mono {
+  font-family: var(--font-mono);
+}
+
+.reveal .deck-cite {
+  font-family: var(--font-mono);
+  font-size: 0.5em;
+  color: var(--color-gold);
+  margin: 1.2em 0 0;
+  word-break: break-all;
+}
+
+.reveal .deck-source {
+  font-family: var(--font-mono);
+  font-size: 0.4em;
+  line-height: 1.4;
+  color: var(--color-dim);
+  max-width: 46em;
+  margin: 1.6em 0 0;
+}
+
+.reveal .slides section table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.2em 0 0.8em;
+}
+
+.reveal .slides section table th,
+.reveal .slides section table td {
+  text-align: left;
+  vertical-align: top;
+  font-size: 0.56em;
+  line-height: 1.35;
+  padding: 0.45em 0.6em;
+  border-bottom: 1px solid var(--color-line);
+}
+
+.reveal .slides section table thead th {
+  font-family: var(--font-mono);
+  font-size: 0.46em;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-gold);
+  border-bottom: 1px solid var(--color-gold);
+}
+
+.reveal .slides section table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* ---- chrome ----------------------------------------------------------- */
+
+/* presenter notes stay out of the visible slide */
+.reveal aside.notes {
+  display: none;
+}
+
+.reveal .slide-number {
+  font-family: var(--font-mono);
+  font-size: 0.5em;
+  color: var(--color-dim);
+  background: none;
+}
+
+.reveal .progress span {
+  background: var(--color-accent);
+}

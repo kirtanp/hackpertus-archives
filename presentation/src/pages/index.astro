@@ -1,0 +1,46 @@
+---
+import { getCollection } from "astro:content";
+import "../assets/app.css";
+
+const slides = (await getCollection("slides")).sort(
+  (a, b) => (a.data.order ?? 99) - (b.data.order ?? 99),
+);
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ArchAI — decks</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  </head>
+  <body class="bg-ink text-cream font-sans">
+    <main class="mx-auto max-w-4xl px-8 py-20">
+      <p class="font-mono text-xs uppercase tracking-[0.2em] text-brand">Hackpertus · Archives</p>
+      <h1 class="font-display mt-4 text-6xl leading-none">ArchAI decks</h1>
+      <p class="mt-6 max-w-2xl text-lg text-[#c9bfa8]">
+        Static reveal.js decks about ArchAI: three open Swiss archive datasets, one AI-ready dataset, served as a
+        cited Q&amp;A demo. Each deck builds to one self-contained HTML file (<code class="font-mono text-base"
+          >bun run build:single</code
+        >).
+      </p>
+
+      <ul class="mt-12 grid gap-4">
+        {slides.map((slide) => (
+          <li class="border-line bg-surface rounded-sm border p-6">
+            <a class="block" href={`/slides/${slide.id.replace(/\.(md|mdx)$/, "")}/`}>
+              <span class="font-display text-3xl">{slide.data.title}</span>
+              <span class="mt-2 block text-sm text-muted">{slide.data.description}</span>
+              <span class="font-mono text-brand mt-4 block text-xs uppercase tracking-[0.12em]">Open the deck →</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+
+      <p class="mt-12 font-mono text-xs text-dim">
+        Presenter notes: open a deck and press <kbd>s</kbd> for the speaker view.
+      </p>
+    </main>
+  </body>
+</html>

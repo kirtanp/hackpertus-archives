@@ -44,6 +44,14 @@ This file is the project's committed home for project-intrinsic agent knowledge:
 
 - The app's only frontend: `/` redirects to `/site/` rather than serving the page, because it loads `./support.js` relative to `/site/` (a `FileResponse` at `/` would break it). It is a dc-runtime page (`support.js`, `{{ }}` bindings, a `text/x-dc` Component); its data constants are only fallbacks, replaced in place from `GET /api/site` (`src/archai/site.py`). Keep the array lengths the layout expects (5 tools, 4 entities, 5 geo rounds), and never show an invented passage under a real signature: take examples from `data/out` through `site.py`. Outside figures on the Impact tab (06) each carry their source URL in `SRC`; add none without one.
 
+## Slide deck (`presentation/`)
+
+- The deck is a second, isolated bun toolchain (like `docs/`): `cd presentation && bun install --frozen-lockfile && bun run build`. Build pattern: an Astro content collection with one deck per file (`src/content/slides/*.md`, slides separated by `---`, presenter notes after `Note:`), one `src/layouts/SlideLayout.astro` that injects the raw body into a reveal.js markdown textarea, and `SINGLE_FILE=1` + `scripts/single-file.mjs` (`just html`) to inline CSS, scripts, fonts and images into one HTML file per deck under `single/`.
+- The deck body is `.md`, not `.mdx`: the body is only ever injected as a string, and `.md` keeps MDX's JSX rules (balanced tags, no bare `{`) out of slide copy.
+- `public/reveal/` is copied from `node_modules` by the `setup` script on every build and is gitignored; reveal's JS comes from node_modules (bundled by Vite), its CSS from `public/reveal/dist`.
+- `src/assets/app.css` carries ArchAI's palette and the Tailwind v4 theme, and overrides reveal's theme variables instead of using a reveal theme file: the deck is a **light** deck (white slides, dark text), and the palette holds two cuts per accent — a bright one for graphics and a darker one for text, so the small mono labels and source lines keep their contrast on white. Adding a colour means adding both cuts. Deck content classes must be written as `.reveal .deck-*`, because reveal's own `.reveal h1`/`.reveal p` rules otherwise win.
+- Slide copy follows the captain's outline and only ArchAI's own public material; every figure comes from this repository and names its scope in the small `deck-source` line at the bottom of the slide.
+
 ## Documentation site (`docs/`, Astro Starlight)
 
 - The site is self-contained under `docs/` with its own bun toolchain, isolated from the Python/uv one: `cd docs && bun install --frozen-lockfile && bun run check && bun run build`. `.github/workflows/docs.yml` builds it and uploads `docs/dist` as an artifact; there is no deploy (private personal repository, no GitHub Pages). `docs/bun.lock` is committed; `docs/node_modules/`, `docs/dist/` and `docs/.astro/` are gitignored.
