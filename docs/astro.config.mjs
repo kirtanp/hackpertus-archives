@@ -43,6 +43,7 @@ export default defineConfig({
             { label: 'Rebuild from the raw data', link: '/reference/rebuild/' },
             { label: 'Outputs (data/out/)', link: '/reference/outputs/' },
             { label: 'Measured results', link: '/reference/measured-results/' },
+            { label: 'Query timing', link: '/reference/query-timing/' },
             { label: 'Onboarding a new dataset', link: '/reference/onboarding/' },
             { label: 'Editing decisions (provenance)', link: '/reference/editing-decisions/' },
             { label: 'Tool agent (agent-v4)', link: '/reference/tool-agent/' },

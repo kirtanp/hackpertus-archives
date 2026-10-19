@@ -1,0 +1,36 @@
+{
+ "chart": "query_timing.png, drawn by plot_query_timing.R from measurements.csv",
+ "scope": "the deployed answer path (qa.answer, dynamic rewrite) on a fixed sample of qa_eval.all_cases: 12 Stapfer + 6 consultation questions, seed 11, one measurement per question, sequential",
+ "measurement": "wall-clock seconds around one qa.answer call, after qa.Index() has been built; llm_seconds is the share of that time spent inside archai.llm model calls",
+ "endpoint": {
+  "base_url": "http://127.0.0.1:8011/v1",
+  "kind": "local"
+ },
+ "model": "apertus-v1.5-8b-mlx-4bit",
+ "machine": {
+  "platform": "macOS-26.5-arm64-arm-64bit",
+  "machine": "Mac14,2",
+  "cpu": "Apple M2",
+  "cpu_count": 8,
+  "ram_bytes": 17179869184
+ },
+ "python": "3.12.12",
+ "commit": "fed78644fdf9c2c36845327d53417eb8548e4cc2",
+ "load_average_start": [
+  16.39,
+  24.38,
+  27.55
+ ],
+ "load_average_end": [
+  7.8,
+  12.9,
+  18.72
+ ],
+ "questions": 18,
+ "total_seconds": 747.7,
+ "total_llm_seconds": 729.7,
+ "median_seconds": 38.3,
+ "started_at": "2026-10-19T13:26:30+0200",
+ "finished_at": "2026-10-19T13:38:58+0200",
+ "caveats": "one local machine under interactive load, a 4-bit 8B model served by oMLX; per-question latency varies with question type (the data engine reads and verifies every contributing record) and with the endpoint's throughput, so the numbers compare the path's question types, not the model's quality"
+}

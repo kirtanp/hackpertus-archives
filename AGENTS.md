@@ -53,6 +53,11 @@ This file is the project's committed home for project-intrinsic agent knowledge:
 - `docs/record.schema.json` deliberately stays outside the site content: `tests/test_tools.py` loads it from that exact path.
 - The root `README.md` keeps only orientation and links into the site by source path (`docs/src/content/docs/...`), because the built site has no published URL.
 
+### Query timing (`docs/assets/query-timing/`, `/reference/query-timing/`)
+
+- `docs/assets/query-timing/` holds the whole deliverable: `measure_query_timing.py` (one `qa.answer(..., rewrite="dynamic")` call per question on a seeded sample of `qa_eval.all_cases`, writing `measurements.csv`, one row per question, and `measurements.meta.json`), `plot_query_timing.R` (ggplot2; reads only those two committed files and writes the PNG to both `docs/assets/query-timing/` and `docs/public/query-timing/`), and the page `docs/src/content/docs/reference/query-timing.mdx`. Regenerate the chart with `Rscript docs/assets/query-timing/plot_query_timing.R`; measuring needs a reachable Apertus endpoint.
+- `llm.chat_json` assumes the reply is JSON. An Apertus *thinking* build (the MLX/omni variant is one) spends its whole token budget on `<|inner_prefix|>` deliberation and never returns JSON, which looks like a broken answer path but is only a server-side template flag: turn deliberation off at the endpoint (`enable_thinking: false`) instead of changing `src/archai/llm.py`.
+
 ## Maintaining this file
 
 Keep this file for knowledge useful to almost every future agent session in this project.
