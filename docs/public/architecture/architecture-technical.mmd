@@ -30,7 +30,7 @@ flowchart LR
 
   SITE["archai.site<br/>real examples<br/>for the site<br/>from records,<br/>traces, manifest"]:::svc
 
-  APP["app.py<br/>FastAPI<br/>POST /api/ask<br/>GET /api/stats<br/>GET /api/site<br/>GET /api/health<br/>GET /api/places<br/>POST /api/game/round<br/>GET /api/metrics<br/>GET /api/record/{id}<br/>GET /<br/>serves records.jsonl"]:::svc
+  APP["app.py<br/>FastAPI<br/>POST /api/ask<br/>GET /api/stats<br/>GET /api/site<br/>GET /api/health<br/>GET /api/places<br/>POST /api/game/round<br/>GET /api/metrics<br/>GET /api/record/{id}<br/>GET / → /site<br/>serves records.jsonl"]:::svc
 
   DUCK[("stapfer_stats.duckdb<br/>13 relations<br/>gitignored<br/>build artifact")]:::store
 

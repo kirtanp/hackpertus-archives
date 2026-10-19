@@ -6,8 +6,8 @@ description: "How the demo is served and deployed: HTTP API, startup index, loca
 - API: [Web API](/reference/api/) (also interactive at `/docs`). Endpoints: `/api/ask`, `/api/record/{id}`, `/api/metrics`,
   `/api/places`, `/api/game/round`, `/api/health`.
 - The search index is built once at startup in a background thread (10–25 s, ~1.5 GB RAM).
-- Pages: `/` (the demo), `/site` (the presentation site; its examples come from `/api/site`), `/docs` (OpenAPI).
-- Map tiles: © swisstopo (Dufour map 1845–1865, national map). Facsimiles are linked on stapferenquete.ch, never copied.
+- Pages: `/site` (the presentation site; its examples come from `/api/site`; `/` redirects there), `/docs` (OpenAPI).
+- Facsimiles are linked on stapferenquete.ch, never copied.
 
 ## Deploy
 The image is built with uv from the lock (`Dockerfile`: `python:3.12-slim`, `uv sync --locked --no-dev`, port 7860
