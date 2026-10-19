@@ -43,6 +43,7 @@ This file is the project's committed home for project-intrinsic agent knowledge:
 ## Presentation site (`static/site/`, `/site`)
 
 - The app's only frontend: `/` redirects to `/site/` rather than serving the page, because it loads `./support.js` relative to `/site/` (a `FileResponse` at `/` would break it). It is a dc-runtime page (`support.js`, `{{ }}` bindings, a `text/x-dc` Component); its data constants are only fallbacks, replaced in place from `GET /api/site` (`src/archai/site.py`). Keep the array lengths the layout expects (5 tools, 4 entities, 5 geo rounds), and never show an invented passage under a real signature: take examples from `data/out` through `site.py`. Outside figures on the Impact tab (06) each carry their source URL in `SRC`; add none without one.
+- Adding a chapter means four coordinated edits in `index.html`: append to `TABS`, add a top-level `<sc-if value="{{ isTn }}">` section with its `data-screen-label`, set the matching `isTn: s.tab === <index>` in `renderVals`, and keep `tabProgress` dividing by `TABS.length`. The flag names are not in tab order (`isT5` is tab 6 / 07 Play, `isT6` is tab 5 / 06 Impact), so take the next free name instead of renumbering. The 08 Architecture link's base address is the single `window.ARCH_DOCS_BASE` in `<head>` (the documentation site is served separately from this app).
 
 ## Slide deck (`presentation/`)
 

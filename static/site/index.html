@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Base address of the architecture documentation site. It is an Astro Starlight site built and served separately from this app, so repoint this one line when it is deployed. -->
+<script>window.ARCH_DOCS_BASE = 'http://127.0.0.1:4400/';</script>
 <link rel="icon" type="image/png" href="./favicon.png">
 <script src="./support.js"></script>
 </head>
@@ -1211,6 +1213,17 @@ button{font:inherit}
 </div>
 </sc-if>
 
+<sc-if value="{{ isT7 }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="08 Architecture" style="max-width:1280px;margin:0 auto;padding:72px 32px 96px">
+  <div style="display:flex;flex-direction:column;gap:16px;max-width:820px;margin-bottom:40px">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#c9a45c">08 · Architecture</div>
+    <h2 data-scramble="1" style="margin:0;font-family:'Instrument Serif',serif;font-weight:400;font-size:clamp(40px,5vw,72px);line-height:1">The whole pipeline, <em style="color:#e2553a">drawn out.</em></h2>
+    <p style="margin:0;color:#c9bfa8;font-size:17px;text-wrap:pretty">The architecture page follows the batch pipeline and the answer path end to end: every stage, the deterministic tools, the grounding checks and two rendered diagrams - one for engineers, one in plain language. It is part of the documentation site, built and served separately from this app.</p>
+  </div>
+  <a href="{{ archUrl }}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:10px;background:#e2553a;color:#12100c;padding:16px 26px;font-weight:600;border-radius:2px;font-family:'IBM Plex Mono',monospace;font-size:14px;text-decoration:none" style-hover="background:#eee4cc">Open the architecture page ↗</a>
+</div>
+</sc-if>
+
 </div>
 
 <div style="border-top:1px solid #2e2a22">
@@ -1225,7 +1238,7 @@ button{font:inherit}
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script>
-const TABS = [['01','Overview'],['02','How it works'],['03','Agent loop'],['04','Simulator'],['05','Evidence'],['06','Impact'],['07','Play']];
+const TABS = [['01','Overview'],['02','How it works'],['03','Agent loop'],['04','Simulator'],['05','Evidence'],['06','Impact'],['07','Play'],['08','Architecture']];
 const LEVELS = ['Novice Clerk','Copyist','Registrar','Archivist','Keeper of Seals','Federal Archivist'];
 const BADGES = [['pipe','Pipeline Runner','Run all 9 stages'],['agent','Loop Closer','Finish the agent replay'],['polyglot','Polyglot','Ask in DE, FR and EN'],['gate','Gatekeeper','See a question declined'],['count','Bean Counter','Let code do the sum'],['explorer','Explorer','Open every chapter'],['geo','Cartographer','Finish 5 map rounds'],['sharp','Sharp Eye','Combo ×12 in Rush or a perfect round'],['decoder','Decoder','8 of 10 old words'],['router','Router','12 of 15 routing fields'],['calib','Calibrated','Brier score under 0.12']];
 const MODES = { casual: [['rush','Validator Rush','arcade'],['geo','Guess the school','map'],['dec','Decode 1799','quiz']], research: [['route','Route the query','Q&A rewrite'],['hal','Catch the hallucination','grounding'],['cal','Calibrate','confidence']] };
@@ -2473,8 +2486,9 @@ class Component extends DCLogic {
       stampTxt: decl ? 'Declined' : q.kind.startsWith('aggregate') ? 'Computed ∑' : 'Verified', stampCol: decl ? C.red : C.green,
       stampOp: sp.toFixed(3), stampSc: (2.4 - 1.4 * sp).toFixed(3),
       sweepY: st2 < 140 ? ((st2 % 40) / 40 * 110 - 10).toFixed(1) + '%' : '-200%',
-      tabs, tabProgress: ((s.tab + 1) / 6).toFixed(4), enterOp: enter, enterY: ((1 - enter) * 14).toFixed(1) + 'px', pulse,
-      isT0: s.tab === 0, isT1: s.tab === 1, isT2: s.tab === 2, isT3: s.tab === 3, isT4: s.tab === 4,
+      tabs, tabProgress: ((s.tab + 1) / TABS.length).toFixed(4), enterOp: enter, enterY: ((1 - enter) * 14).toFixed(1) + 'px', pulse,
+      archUrl: window.ARCH_DOCS_BASE + 'architecture/',
+      isT0: s.tab === 0, isT1: s.tab === 1, isT2: s.tab === 2, isT3: s.tab === 3, isT4: s.tab === 4, isT7: s.tab === 7,
       goHome: () => this.go(0), goT1: () => this.go(1), goT3: () => this.go(3),
       nextTab: () => this.go((s.tab + 1) % TABS.length), nextLabel: s.tab === TABS.length - 1 ? '↺ Back to start' : 'Next: ' + TABS[s.tab + 1][1] + ' →',
       morphTokens, morphAnn, scanTop, datasets, roles, roleDot, explore,
