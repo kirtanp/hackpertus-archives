@@ -47,6 +47,10 @@ notebook:
 docker:
     docker compose up --build
 
+# Deploy to a Docker host over SSH (README "Deploy"): just deploy HOST [second bind address].
+deploy host bind="":
+    deploy/server.sh {{host}} {{bind}}
+
 # Retrieval + answer evaluation (needs APERTUS_API_KEY); interop last: croissant.json hashes metrics.json.
 eval:
     uv run --all-groups python -m archai.qa_eval
