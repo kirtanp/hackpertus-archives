@@ -26,7 +26,7 @@ fontScale: 1
 
 <h2 class="deck-heading">Challenge</h2>
 
-<p class="deck-lead">How can we make archives more easily digestible?</p>
+<p class="deck-lead">How can we make archives easily searchable?</p>
 
 Note:
 Introduce — spoken budget ~1:30 (the sketch writes "1:30 mins"; it may mean 30 minutes — the captain can correct this
