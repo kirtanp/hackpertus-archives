@@ -44,6 +44,15 @@ This file is the project's committed home for project-intrinsic agent knowledge:
 
 - A separate page from `static/index.html` (`/`, owned by other UI work: leave it alone). It is a dc-runtime page (`support.js`, `{{ }}` bindings, a `text/x-dc` Component); its data constants are only fallbacks, replaced in place from `GET /api/site` (`src/archai/site.py`). Keep the array lengths the layout expects (5 tools, 4 entities, 5 geo rounds), and never show an invented passage under a real signature: take examples from `data/out` through `site.py`. Outside figures on the Impact tab (06) each carry their source URL in `SRC`; add none without one.
 
+## Documentation site (`docs/`, Astro Starlight)
+
+- The site is self-contained under `docs/` with its own bun toolchain, isolated from the Python/uv one: `cd docs && bun install --frozen-lockfile && bun run check && bun run build`. `.github/workflows/docs.yml` builds it and uploads `docs/dist` as an artifact; there is no deploy (private personal repository, no GitHub Pages). `docs/bun.lock` is committed; `docs/node_modules/`, `docs/dist/` and `docs/.astro/` are gitignored.
+- Pages are `.mdx` under `docs/src/content/docs/`. `docsSchema()` requires `title` and `description` in every frontmatter, and the sidebar in `docs/astro.config.mjs` lists every page explicitly, so a new page needs a sidebar entry to stay reachable.
+- Assets the site serves (the two architecture PNGs and their `.mmd` sources, the favicon) live in `docs/public/` and are referenced by absolute path (`/architecture/architecture-technical.png`). That is deliberate: the `.mmd` sources must stay downloadable beside their PNGs, which `src/assets/` would not do.
+- MDX traps that cost real time: a literal `{`, `<` or `$` in prose is JSX/expression syntax, so write `\{`, `&lt;` or `\$` (the Kaggle write-ups carry all three), and LaTeX (`$…$`, `$$…$$`) needs `remark-math` + `rehype-katex` wired through `markdown.processor: unified({...})` from `@astrojs/markdown-remark` — the legacy `markdown.remarkPlugins` key is deprecated and fails on `.mdx`. The top-level `@astrojs/mdx` must track the version Starlight bundles (`^8.1.0`); otherwise `@astrojs/markdown-remark` hoists too old and the build refuses to render `.mdx`.
+- `docs/record.schema.json` deliberately stays outside the site content: `tests/test_tools.py` loads it from that exact path.
+- The root `README.md` keeps only orientation and links into the site by source path (`docs/src/content/docs/...`), because the built site has no published URL.
+
 ## Maintaining this file
 
 Keep this file for knowledge useful to almost every future agent session in this project.

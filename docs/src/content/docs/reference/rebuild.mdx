@@ -1,0 +1,18 @@
+---
+title: "Rebuild from the raw data"
+description: "Regenerate `data/out` from the opendata.swiss downloads (3.6 GB, not in this repository)."
+---
+
+Only needed to regenerate `data/out` from the opendata.swiss downloads (3.6 GB, not in this repository).
+```bash
+just setup
+# raw files in data/raw/ (see links above); Apertus endpoint (any OpenAI-compatible):
+mkdir -p ~/.config/archai && cat > ~/.config/archai/apertus.env <<'X'
+APERTUS_BASE_URL=https://gateway.keera.ch/api/v1
+APERTUS_API_KEY=...            # never commit
+APERTUS_MODEL=apertus-v1-5-70b
+X
+PYTHONPATH=src python -m archai.pipeline --llm-sample 60 --agent-sample 30
+PYTHONPATH=src python -m archai.qa "Was verdiente der Schulmeister in Fischenthal?"
+```
+Local alternative: llama.cpp server with `Colby/apertus-v1.5-8b-text-Q4_K_M-GGUF` on `http://127.0.0.1:8081/v1`.

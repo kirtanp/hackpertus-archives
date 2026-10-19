@@ -1,0 +1,4 @@
+/* The Kaggle write-up pages carry LaTeX (remark-math + rehype-katex); KaTeX needs its own
+   stylesheet for the markup it emits. Imported through the site's custom CSS so the build
+   bundles it instead of loading it from a CDN. */
+@import "katex/dist/katex.min.css";

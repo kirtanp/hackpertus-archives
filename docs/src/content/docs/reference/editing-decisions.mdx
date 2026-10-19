@@ -1,0 +1,18 @@
+---
+title: "Editing decisions (provenance)"
+description: "How the cleaner treats the edition markup and what every annotation and count means; raw text is never overwritten."
+---
+
+Raw text is never overwritten: every answer keeps `text_raw` next to `text_clean` and its `annotations`.
+
+| Source markup | Meaning (Editionsregeln of stapferenquete.ch) | What we do |
+|---|---|---|
+| `#…##` | probable reading, not certain (§15) | keep the text, annotate `uncertain_reading`, count per sheet |
+| `° - °°` | dash / filler line drawn by the writer (checked on facsimiles, e.g. Töss "Detnau – welcher", sheet 1416 "Mädchen – 13") | render as `–`, count as `dash_marks`; **not** an illegible gap (versions before schema 1.1 mis-counted these as 847 "documents with illegible gaps") |
+| `\|\|[Seite N]` | page break in the transcription | removed from text, kept as `page_break` annotation; each answer gets `page_start`/`page_end` (walked in questionnaire order) |
+| `$…$$`, `¥…¥¥`, `€…€€`, `£…££`, `*…**` | Latin script, heading, underline, deletion/correction, note | text kept, markup moved to annotations |
+| unbalanced pairs | transcription error in the source | counted in `markup_errors_in_source`, never "repaired" |
+
+Counts per sheet use distinct answer texts: the database stores the same text under several sub-questions.
+Re-derive all cleaned fields from `text_raw` without the raw dumps: `PYTHONPATH=src python -m archai.stapfer_clean --reclean`.
+Record schema: [Record schema](/reference/schema/). Web API: [Web API](/reference/api/).

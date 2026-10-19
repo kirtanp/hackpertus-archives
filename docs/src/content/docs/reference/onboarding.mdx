@@ -1,0 +1,33 @@
+---
+title: "Onboarding a new dataset"
+description: "`src/archai/onboard.py` turns any tabular open-data file into records of the same schema, with code validating every model proposal."
+---
+
+`src/archai/onboard.py` turns any tabular open-data file into records of the same schema (1.1), with provenance on every
+record and the original row kept in `source_row`. Download the file from opendata.swiss yourself (no crawling) and pass
+its dataset URL and licence:
+```bash
+PYTHONPATH=src python -m archai.onboard file.csv --id my-dataset --source-url https://opendata.swiss/de/dataset/… \
+    --licence "CC BY 4.0" --description "one line about the data" [--mask-pii] [--enrich 50] [--publish]
+# review data/onboard/my-dataset/mapping.json, edit it if needed, then:
+PYTHONPATH=src python -m archai.onboard --id my-dataset --from transform [--publish]
+```
+| Stage | What happens | Who decides |
+|---|---|---|
+| acquire | CSV/TSV/JSON/JSONL/XLSX/Parquet; encoding (UTF-8, Windows-1252, Latin-1) and delimiter detected; SHA-256 recorded | code |
+| profile | per column: empty rate, distinct values, samples, roles (date, signature, URL, unique id, long text, WGS84/LV03/LV95 coordinates) | code |
+| map | which columns are id / title / text / dates / places / persons / organisations / signature / URL | **Apertus proposes** from the profile; code validates every column against the data (exists, dates parse, ids unique, title is readable text, signatures look like signatures) and falls back to heuristics; `mapping.json` lists every dropped proposal and why |
+| transform | dates → ISO, places → gazetteer coordinates, coordinates → WGS84, signatures parsed, quantities | code (tools.py) |
+| privacy | flags e-mail, phone, AHV number, IBAN, birth dates &lt; 110 years, dates inside the 30-year protection period; `--mask-pii` redacts the first four everywhere, also in `source_row` | code |
+| enrich | optional title / English summary / topics; names not literally in the source are rejected | Apertus, checked by code |
+| validate | schema check, invalid records quarantined, `report.json` (coverage, every decision), `manifest.json` (hashes, timings) | code |
+
+`--publish` makes the records searchable in the web Q&A: Apertus' query rewriting then gets one more route
+("other_dataset", with the dataset descriptions); the rules router never routes there.
+
+**Measured** (`data/onboard/test-consultations-*/comparison.json`): onboarding the 569-row consultations table generically
+reproduces the hand-built consultation records — titles 100% identical (whitespace-normalised), 100% of reference dates found,
+lead department found in 99.5%, 0 schema errors — with the heuristic mapping and with the Apertus mapping. Apertus' first
+proposal used the id column as title; validation rejected it (that rule was added after this test showed the gap).
+Robustness tests (`tests/test_onboard.py`): Windows-1252 + semicolons, LV95 coordinates, signatures, PII flagging and masking,
+rejection of a bad mapping proposal.

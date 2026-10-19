@@ -1,11 +1,15 @@
-# [6th] DPC solution - 15 models ensemble on diverse data sources
+---
+title: "[6th] DPC solution - 15 models ensemble on diverse data sources"
+description: "A write-up from the Kaggle Deep Past Initiative Machine Translation competition, place 6th."
+---
+
 https://www.kaggle.com/competitions/deep-past-initiative-machine-translation/discussion/684231
 
 First of all, I’d like to thank my teammate [@jackvd](https://www.kaggle.com/jackvd) for providing high-quality data and clever data cleaning methods, as well as for constantly bringing fresh ideas to the table. I also want to thank [@marisyn](https://www.kaggle.com/marisyn) for providing numerous excellent APIs and handling the PDF extraction work! And all personnel from the host organization, DPI.
 
 Our solution focuses on three key areas: data, training, and inference.
 
-# 1. Data Extract
+## 1. Data Extract
 
 ## PDF Data
 
@@ -17,7 +21,7 @@ After reviewing these PDFs, we have concluded that they can primarily be categor
 
 - **Text type**: Zooming in does not degrade the clarity of the PDF in any way. Furthermore, the text layer extracted using PyMuPDF has an exact one-to-one correspondence with what is visible to the naked eye. For example, using this code to handle one-to-one character error issues:
 ```python
-# AKT 5 2008
+## AKT 5 2008
 _MACRON = {
     "a": "ā", "e": "ē", "i": "ī", "u": "ū",
     "A": "Ā", "E": "Ē", "I": "Ī", "U": "Ū",
@@ -120,7 +124,7 @@ For this file, we provide a fixed number of pages to the LLM API to extract sent
 
 With that, we have obtained a parallel corpus dataset; the remaining task is now focused on data cleaning.
 
-# 2. Data Processing
+## 2. Data Processing
 
 Actually, the organizers updated the data several times. The `train.csv` I used in Step 1 to match against the PDF data was the second version, which was much better normalized.
 
@@ -138,8 +142,8 @@ For preprocessing, here’s the main stuff (mainly for pdf-data or LLM results, 
 The primary objective of the source text side is to eliminate typographical variations within the sign system and to standardize determinatives for divine names, toponyms, and similar entities.
 - Determinative and script normalization:
   - Convert subscript numbers (e.g., ₀₁₂) to standard digits.
-  - Unify superscript determinatives (e.g., ᵏⁱ, ᵈUTU) or superscripts indicated by carets (e.g., ^{ki}) into standard curly brace syntax (e.g., {ki}, {d}UTU).
-  - Intelligently identify and merge determinatives that are separated from proper nouns (e.g., d UTU -> {d}UTU).
+  - Unify superscript determinatives (e.g., ᵏⁱ, ᵈUTU) or superscripts indicated by carets (e.g., ^\{ki\}) into standard curly brace syntax (e.g., \{ki\}, \{d\}UTU).
+  - Intelligently identify and merge determinatives that are separated from proper nouns (e.g., d UTU -> \{d\}UTU).
 - Sign composition and placeholder cleanup:
   - Convert multiplication signs (×, ✖) representing sign compounding into periods (.).
   - Clean up or convert the unknown sign marker "x" attached to the end of a word or before a parenthesis (e.g., SUDx -> SUD).
@@ -167,7 +171,7 @@ Actually, this part skips over a considerable amount of manual effort—things l
 
 [clean function](https://www.kaggle.com/code/wscmisx/dpc-clean-function/notebook?scriptVersionId=306066643)
 
-# 3. Training
+## 3. Training
 - **Dynamic Context Sampling**
 
 This technique aims to address two primary issues:
@@ -215,7 +219,7 @@ def _sample_LR(K: int):
 
 Initially, we thought the extra data was too noisy and left it out of the formal training phase, but it actually performed better once we included it—probably just because of the large volume.
 
-# 5. Inference
+## 5. Inference
 
 Our final submission consists of 15 models, primarily detailed as follows:
 
@@ -244,7 +248,7 @@ The models were grouped and deployed across two T4 GPUs for execution.
 [**Final Score:** 40.7  |  **Execution Time:** 208m 50s](https://www.kaggle.com/code/wscmisx/final-dpc-ensemble-mbr-infer)
 
 
-# 6. What didn't work
+## 6. What didn't work
 
 - **Organizing the current target sentence and its context like this (during both training and inference):**
 ```text
@@ -274,4 +278,3 @@ This was likely due to the tokenizer or the fact that my data wasn't clean enoug
 
 - **Bidirectional training (adding `akk->eng`)**
 There wasn't much progress in terms of single-model improvement. We didn't have extra submission quotas to test this before ensembling, but perhaps including it in the ensemble could have provided a slight boost to the final results.
-

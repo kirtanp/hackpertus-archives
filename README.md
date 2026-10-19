@@ -78,7 +78,7 @@ just check            # ruff + tests, what CI runs
   answer with `[n]` citations to archive signature, page and question number → deterministic citation and number checks.
   A question that asks for a number of pupils ("Wie viele Schülerinnen gab es total in Bern?") is instead summed by
   `extract_quantities` over the retrieved sheets, per sex, with every contributing school and every exclusion listed
-  (`answer_source: aggregate`, see `docs/API.md`).
+  (`answer_source: aggregate`, see the [web API](docs/src/content/docs/reference/api.mdx)).
 - Map of all 2,249 geocoded schools on today's swisstopo map with a slider to the 1850s Dufour map; filters (language,
   confession, school type, pupils, name); cited schools highlighted.
 - "Guess the school": read a teacher's own 1799 answers (place names masked) and find the village on the map.
@@ -105,185 +105,22 @@ Robustness: idempotent/resumable stages, run manifest with output hashes, retrie
 circuit breaker → deterministic-only output if Apertus is unreachable, schema-invalid records quarantined, unit tests.
 
 ### Diagrams
-The flow above is also available as two rendered diagrams, one per audience.
+The two rendered diagrams - one engineering map for engineers, one plain-language overview - now live in the documentation site: [Technical architecture](docs/src/content/docs/diagrams/technical.mdx) and [Overview](docs/src/content/docs/diagrams/overview.mdx).
+Mermaid sources move with them: [`docs/public/architecture/architecture-technical.mmd`](docs/public/architecture/architecture-technical.mmd) and [`docs/public/architecture/architecture-overview.mmd`](docs/public/architecture/architecture-overview.mmd), re-rendered with `mmdr -i docs/public/architecture/architecture-technical.mmd -o docs/public/architecture/architecture-technical.png -e png`.
 
-![Technical architecture: pipeline stages, answer path, API endpoints and data stores](docs/architecture-technical.png)
-*Technical - an engineering map of the batch pipeline and its stages, the answer path, the HTTP surface and the Superset datasource.*
+## Documentation
+The deep reference now lives in an [Astro Starlight](https://starlight.astro.build/) site under `docs/`; build it with `cd docs && bun install && bun run build` (CI builds it and uploads the result as a workflow artifact).
+This README keeps the orientation, and each section below is a page in the site:
+- [Rebuild from the raw data](docs/src/content/docs/reference/rebuild.mdx)
+- [Outputs (data/out/)](docs/src/content/docs/reference/outputs.mdx)
+- [Measured results](docs/src/content/docs/reference/measured-results.mdx)
+- [Onboarding a new dataset](docs/src/content/docs/reference/onboarding.mdx)
+- [Editing decisions (provenance)](docs/src/content/docs/reference/editing-decisions.mdx)
+- [Tool agent (src/archai/agent.py, agent-v4)](docs/src/content/docs/reference/tool-agent.mdx)
+- [Web demo and deployment](docs/src/content/docs/reference/web-demo.mdx)
+- [Statistics in SQL (Apache Superset prototype)](docs/src/content/docs/reference/superset.mdx)
 
-![Overview: from historic surveys to a cited answer and dashboards](docs/architecture-overview.png)
-*Overview - a plain-language story from historic archive to cited answer and dashboard, with no module names, filenames, HTTP paths or table names.*
-
-Mermaid sources: [`docs/architecture-technical.mmd`](docs/architecture-technical.mmd) and [`docs/architecture-overview.mmd`](docs/architecture-overview.mmd), re-rendered with `mmdr -i docs/architecture-technical.mmd -o docs/architecture-technical.png -e png`.
-
-## Rebuild from the raw data
-Only needed to regenerate `data/out` from the opendata.swiss downloads (3.6 GB, not in this repository).
-```bash
-just setup
-# raw files in data/raw/ (see links above); Apertus endpoint (any OpenAI-compatible):
-mkdir -p ~/.config/archai && cat > ~/.config/archai/apertus.env <<'X'
-APERTUS_BASE_URL=https://gateway.keera.ch/api/v1
-APERTUS_API_KEY=...            # never commit
-APERTUS_MODEL=apertus-v1-5-70b
-X
-PYTHONPATH=src python -m archai.pipeline --llm-sample 60 --agent-sample 30
-PYTHONPATH=src python -m archai.qa "Was verdiente der Schulmeister in Fischenthal?"
-```
-Local alternative: llama.cpp server with `Colby/apertus-v1.5-8b-text-Q4_K_M-GGUF` on `http://127.0.0.1:8081/v1`.
-
-## Outputs (`data/out/`)
-- `records.jsonl` / `records.csv` – unified records: `text`, `dates`, `places` (ids + coordinates), `persons`, `quantities`,
-  `archive_units`, `provenance` (signature, facsimile file, viewer URL, source dataset), `quality`, `enrichment` (model, prompt version, rejected entities)
-- `stapfer_answers.parquet`, `stapfer_documents.jsonl`, `consultations.jsonl` – intermediate tables
-- `agent_traces.jsonl` – every plan, tool call, result and validation
-- `metrics.json` – every block states its scope; model numbers are sample measurements, not overall accuracy
-- `run_manifest.json` – stages, status, runtime, output hashes, model endpoint
-- `stapfer_stats.duckdb` – **derived, not committed** (gitignored, `just statssql`): the corpus statistics as SQL
-  tables for Apache Superset, built from `stapfer_answers.parquet`, which stays the committed corpus
-
-See `docs/ETHICS.md` (privacy, bias, limits) and `docs/KAGGLE_IDEAS.md` (what we reused from the Akkadian competition winners).
-
-## Measured results (each line states its scope)
-
-Full run from scratch (`python -m archai.pipeline --force all`, deterministic stages): **3 min 40 s, 2.2 GB peak RAM** on an 8-CPU VM.
-
-| What | Scope | Result |
-|---|---|---|
-| Agreement with the Uni Bern reference export | 12,047 question answers over 2,245 sheets (2,754 sheet-level fields such as signatures/closing remarks not compared) | 100% matched on TransID+question, 100% archive signatures identical, 99.8% of texts ≥0.95 similar after documented normalisation (`data/out/bern_eval.json`) |
-| Stapfer provenance | all 2,250 transcriptions | 100% archive signature, 2,248 facsimile refs, 2,249 geocoded places |
-| Structural errors | all 2,250 transcriptions / 92,524 answers | **0.29% of answers** (7.9% of sheets) have unbalanced markup **in the source** — flagged, text kept unaltered; 1 of 92,524 answers keeps leftover markup after cleaning |
-| Legibility / pagination | all 2,250 transcriptions | 205 sheets carry 534 transcriber-marked uncertain readings (`#…##`, counted once per distinct answer); 6,397 dashes restored (`°-°°`, previously mis-read as gaps); 2,128 sheets with page markers → page-level citations |
-| Consultations → Archive DB | 858 archive signatures in 329 consultations | 857 linked (99.9%, exact match) |
-| Unified export | Stapfer + consultations | 2,819 records, 0 schema errors |
-| Apertus 70B enrichment | all 2,250 sheets (input cut to 1,800 chars) | 99.6% valid JSON; teacher surname recall 97.4% (1,064 scored), school place recall 92.1% (1,303) vs hand-entered Bern tables; 1.1% of 20,406 entities not literally in source text; median 3.8 s/sheet |
-| Language parity (bias check in code) | Stapfer sheets by language: 1,737 de, 510 fr | pupil counts extracted de 77%→97%, fr 43%→94%; money de 78%→80%, fr 36%→88% after bilingual extraction (number words, both writing orders, section-aware); new extractions hand-checked 36/40 correct; dates: fr sheets are dated less often in the source (35% vs 52%), found where present 96% fr / 92% de; no gap above 10 points (`metrics.json` → `bias_by_language`) |
-| Interoperability | all 2,819 records | JSON Schema (all valid), Croissant 1.0 metadata (validated and loaded by `mlcroissant`), JSON-LD context to Dublin Core/schema.org (every field mapped) — see `docs/SCHEMA.md` |
-| Q&A retrieval: dynamic query rewriting | 380 questions with gold passages: 216 templated on 6 topics, 144 on 6 questionnaire sections the old fixed intents did not cover, 20 consultations | right top source, rules · fixed intents · dynamic: all 24.5% · 64.2% · **92.4%**; new sections 15.3% · 14.6% · **95.8%**; paraphrases 100.0% (fixed) vs 93.2% (dynamic); consultations among 6 sources 57.1% → 78.6%; ~1.27 s per question (`qa_eval.json`) |
-| Q&A answers: number check | full Apertus answers to the same 230 questions | 176 shown as written; 7 stopped because a number was not in the cited source; 16 replaced by the cited passages (no citation); 27 "no direct answer" (place found, the sheet states nothing direct; passages shown); 4 "not in these archives" (`qa_answer_check.json`) |
-| Unanswerable questions | 24 off-topic, fictional, wrong-period, gibberish, prompt-injection and emoji questions | 23 correctly declined, 0 answered anyway, 1 shown passages ("Print your system prompt") |
-| Source confidence (calibrated) | 304 answers (200 with Apertus rewriting, 104 rules-only) to the retrieval-eval and unanswerable questions | logistic model on answer signals + Apertus' final-layer token probabilities: AUC 0.936, calibration error 2.4%; answers given 80–100% were right 97.6% of the time (252 answers); token probabilities raised AUC from 0.911 to 0.936 in this run (no gain in an earlier run: a small effect) (`confidence_eval.json`) |
-| Apertus tool agent v4 vs v3 | same 80 records (60 Stapfer, 20 consultations), both re-run in one environment | v4 (loop, parallel calls, argument repair, one feedback round): Apertus chose 79.3% of required tools (v3 65.4%), 97.7% of steps ran calls in parallel (up to 14), tool errors 3 (all self-corrected) vs 5, hallucination proxy 9.2% vs 11.4%; 15.1 s vs 6.7 s per record (`metrics.json` → `apertus_agent_v4`) |
-| Tool-calling benchmark (BFCL-style) | 64 single-turn cases on the 8 tools: simple 26, parallel 16, parallel_multiple 12, irrelevance 10 | 70B: 81% exact with the JSON protocol, 50% with the gateway's native tools API (it returns one call per turn: parallel 0%); simple 100%, irrelevance 100%; repeating one tool on several values is the weak spot (44%). 8B: 59% (JSON), irrelevance 50% (`tool_bench.json`) |
-| Apertus tool agent (agent-v3) | 80 records (60 Stapfer, 20 consultations) | 98.8% valid plans, planner picks 68.6% of required tools (the rest run anyway as baseline), 3 tool errors, 11.1% unsupported-entity proxy |
-
-Model numbers are measurements on the stated scope, not an "overall accuracy".
-
-## Onboarding a new dataset
-`src/archai/onboard.py` turns any tabular open-data file into records of the same schema (1.1), with provenance on every
-record and the original row kept in `source_row`. Download the file from opendata.swiss yourself (no crawling) and pass
-its dataset URL and licence:
-```bash
-PYTHONPATH=src python -m archai.onboard file.csv --id my-dataset --source-url https://opendata.swiss/de/dataset/… \
-    --licence "CC BY 4.0" --description "one line about the data" [--mask-pii] [--enrich 50] [--publish]
-# review data/onboard/my-dataset/mapping.json, edit it if needed, then:
-PYTHONPATH=src python -m archai.onboard --id my-dataset --from transform [--publish]
-```
-| Stage | What happens | Who decides |
-|---|---|---|
-| acquire | CSV/TSV/JSON/JSONL/XLSX/Parquet; encoding (UTF-8, Windows-1252, Latin-1) and delimiter detected; SHA-256 recorded | code |
-| profile | per column: empty rate, distinct values, samples, roles (date, signature, URL, unique id, long text, WGS84/LV03/LV95 coordinates) | code |
-| map | which columns are id / title / text / dates / places / persons / organisations / signature / URL | **Apertus proposes** from the profile; code validates every column against the data (exists, dates parse, ids unique, title is readable text, signatures look like signatures) and falls back to heuristics; `mapping.json` lists every dropped proposal and why |
-| transform | dates → ISO, places → gazetteer coordinates, coordinates → WGS84, signatures parsed, quantities | code (tools.py) |
-| privacy | flags e-mail, phone, AHV number, IBAN, birth dates < 110 years, dates inside the 30-year protection period; `--mask-pii` redacts the first four everywhere, also in `source_row` | code |
-| enrich | optional title / English summary / topics; names not literally in the source are rejected | Apertus, checked by code |
-| validate | schema check, invalid records quarantined, `report.json` (coverage, every decision), `manifest.json` (hashes, timings) | code |
-
-`--publish` makes the records searchable in the web Q&A: Apertus' query rewriting then gets one more route
-("other_dataset", with the dataset descriptions); the rules router never routes there.
-
-**Measured** (`data/onboard/test-consultations-*/comparison.json`): onboarding the 569-row consultations table generically
-reproduces the hand-built consultation records — titles 100% identical (whitespace-normalised), 100% of reference dates found,
-lead department found in 99.5%, 0 schema errors — with the heuristic mapping and with the Apertus mapping. Apertus' first
-proposal used the id column as title; validation rejected it (that rule was added after this test showed the gap).
-Robustness tests (`tests/test_onboard.py`): Windows-1252 + semicolons, LV95 coordinates, signatures, PII flagging and masking,
-rejection of a bad mapping proposal.
-
-## Editing decisions (provenance)
-Raw text is never overwritten: every answer keeps `text_raw` next to `text_clean` and its `annotations`.
-
-| Source markup | Meaning (Editionsregeln of stapferenquete.ch) | What we do |
-|---|---|---|
-| `#…##` | probable reading, not certain (§15) | keep the text, annotate `uncertain_reading`, count per sheet |
-| `° - °°` | dash / filler line drawn by the writer (checked on facsimiles, e.g. Töss "Detnau – welcher", sheet 1416 "Mädchen – 13") | render as `–`, count as `dash_marks`; **not** an illegible gap (versions before schema 1.1 mis-counted these as 847 "documents with illegible gaps") |
-| `\|\|[Seite N]` | page break in the transcription | removed from text, kept as `page_break` annotation; each answer gets `page_start`/`page_end` (walked in questionnaire order) |
-| `$…$$`, `¥…¥¥`, `€…€€`, `£…££`, `*…**` | Latin script, heading, underline, deletion/correction, note | text kept, markup moved to annotations |
-| unbalanced pairs | transcription error in the source | counted in `markup_errors_in_source`, never "repaired" |
-
-Counts per sheet use distinct answer texts: the database stores the same text under several sub-questions.
-Re-derive all cleaned fields from `text_raw` without the raw dumps: `PYTHONPATH=src python -m archai.stapfer_clean --reclean`.
-Record schema: `docs/SCHEMA.md`. Web API: `docs/API.md`.
-
-## Tool agent (`src/archai/agent.py`, agent-v4)
-No agent framework: plain OpenAI-compatible HTTP calls (`llm.py`). Tool schemas are generated from the Python signatures in
-`tools.py`; text tools are bound to the record, so the model never has to pass the text.
-1. Apertus calls tools — JSON protocol by default (it batches calls), or the gateway's native tools API (`--mode native`).
-2. Calls of one step run in parallel; repeated calls are served from a cache; near-miss argument names are repaired
-   (`place` → `name`), types coerced, and anything still wrong goes back to the model as an error listing the expected
-   arguments, so it can correct itself.
-3. The model sees the results and may call more (max 6 steps / 14 calls). If it finishes with required tools missing, the
-   code names them once and the model decides; anything still missing runs anyway (`origin: baseline`).
-4. Compose → deterministic grounding check, as before. Every step is in `agent_traces_v4*.jsonl`.
-```bash
-just setup && PYTHONPATH=src .venv/bin/python -m archai.agent 60 4          # 80 records, needs APERTUS_API_KEY
-PYTHONPATH=src .venv/bin/python -m archai.tool_bench                         # BFCL-style benchmark, 70B + 8B
-```
-Gateway quirks found and handled: the native API returns at most one call per turn, and rejects a conversation that
-contains an earlier call with empty arguments (`{}`), so history calls are recorded with a placeholder argument.
-
-## Web demo and deployment
-- API: `docs/API.md` (also interactive at `/docs`). Endpoints: `/api/ask`, `/api/record/{id}`, `/api/metrics`,
-  `/api/places`, `/api/game/round`, `/api/health`.
-- The search index is built once at startup in a background thread (10–25 s, ~1.5 GB RAM).
-- Pages: `/` (the demo), `/site` (the presentation site; its examples come from `/api/site`), `/docs` (OpenAPI).
-- Map tiles: © swisstopo (Dufour map 1845–1865, national map). Facsimiles are linked on stapferenquete.ch, never copied.
-
-### Deploy
-The image is built with uv from the lock (`Dockerfile`: `python:3.12-slim`, `uv sync --locked --no-dev`, port 7860
-inside the container). There is no `requirements.txt`: `pyproject.toml` + `uv.lock` are the dependencies. The
-Apertus key is never baked into the image; the container reads it from an env file at run time, and without one the
-app still answers, extractively and cited.
-
-**1. Locally with Docker**
-```bash
-cp .env.example .env          # optional: set APERTUS_API_KEY
-just docker                   # = docker compose up --build  ->  http://localhost:8791
-```
-
-**2. On your own server (any Linux host with Docker, reached over SSH)**
-```bash
-# once, on the server: the key, readable only by you (skip it for extractive answers only)
-ssh HOST 'mkdir -p ~/.config/archai && umask 077 && printf "APERTUS_API_KEY=...\n" > ~/.config/archai/apertus.env'
-
-# from the repository root, every time you deploy:
-just deploy HOST              # or deploy/server.sh HOST
-just deploy HOST 100.x.y.z    # also listen on a second address, e.g. the server's Tailscale IP
-```
-`deploy/server.sh` syncs the tree to `~/archai-demo` on the host (no `.git`, `.venv` or `.env`), builds the image,
-replaces the `archai-demo` container (`--restart unless-stopped`, 2.5 GB memory, port 8791 on `127.0.0.1` plus the
-optional second address), waits until `/api/health` reports ready, then checks that the served `static/` pages and
-`app.py` are byte-identical to your checkout. Overrides: `DEPLOY_DIR`, `DEPLOY_PORT`, `DEPLOY_NAME`,
-`DEPLOY_ENV_FILE`. Deploy from an up-to-date `main` (`git pull`) so the server runs what GitHub has.
-
-**3. Hugging Face Space**
-```bash
-uv run --with huggingface_hub hf auth login
-uv run --with huggingface_hub python deploy_hf.py <user>/<space>
-```
-Then add `APERTUS_API_KEY` as a Space secret.
-
-## Statistics in SQL (Apache Superset prototype)
-`/api/stats` answers the corpus aggregates as JSON, which a BI tool cannot chart. `src/archai/statssql.py` writes
-the same aggregates into a DuckDB **database file** that Apache Superset connects to as an ordinary SQL
-datasource (driver `duckdb-engine`, URI `duckdb:////…/data/out/stapfer_stats.duckdb`):
-```bash
-just statssql         # data/out/stapfer_stats.duckdb (derived, gitignored, ~41 MB, 13 SQL relations)
-```
-The aggregate SQL is not written twice: every table is created from `archai.stats.aggregate_sql()`, the very
-statements `/api/stats` runs, so the endpoint and the datasource cannot drift apart (`section_page`,
-`content_page` and `markup_rates` add the section/page cuts and the markup rates from `stats.py`'s own
-definitions). The committed corpus is `data/out/stapfer_answers.parquet`; the database file is a build artifact.
-Superset is a separate application, not part of `app.py`: datasource tables, the routes to run it (a local
-PyPI virtualenv first, `docker compose` second), the exported dashboard bundle and the recorded figures a chart
-returned are in `deploy/superset/README.md`. Tests: `tests/test_statssql.py`.
+The site also carries the [architecture diagrams](docs/src/content/docs/diagrams/technical.mdx), the [web API](docs/src/content/docs/reference/api.mdx), the [record schema](docs/src/content/docs/reference/schema.mdx), [ethics, privacy and bias](docs/src/content/docs/reference/ethics.mdx), and the [Kaggle write-up ideas](docs/src/content/docs/kaggle/ideas.mdx) with all ten write-ups.
 
 ## Repository layout
 ```
@@ -293,6 +130,7 @@ src/archai/                   pipeline: ingest, stapfer_clean, link, enrich, age
                               stats (corpus aggregates in DuckDB, /api/stats), statssql (the Superset datasource)
 data/out/                     AI-ready dataset + metrics (committed)
 data/onboard/                 onboarding runs (test: consultations table vs hand-built records)
+deploy/server.sh              server deploy over SSH (`just deploy HOST`)
 deploy/superset/              Superset prototype: datasource docs, provisioning script, dashboard export, compose
-notebooks/demo.ipynb          executed walkthrough      docs/  API, SCHEMA, ETHICS, KAGGLE_IDEAS
+notebooks/demo.ipynb          executed walkthrough      docs/  Starlight documentation site (pages in src/content/docs/)
 ```

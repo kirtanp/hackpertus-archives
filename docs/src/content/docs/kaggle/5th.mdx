@@ -1,10 +1,14 @@
-# [5th] Synthetic Data via Back-Translation
+---
+title: "[5th] Synthetic Data via Back-Translation"
+description: "A write-up from the Kaggle Deep Past Initiative Machine Translation competition, place 5th."
+---
+
 https://www.kaggle.com/competitions/deep-past-initiative-machine-translation/discussion/684847
 
-# Comment
+## Comment
 Thank you to the organizers for hosting this competition. The two key elements of our approach were extracting ~20K transliteration–translation pairs from published scholarly PDFs using a VLM-based pipeline, and generating synthetic data via pseudo-labeling and back-translation.
 
-# Solution summary
+## Solution summary
 - Model: ByT5 variants (best submission: ByT5-xl)
 - Data: 
   - PDF data: ~20K transliteration–translation pairs extracted from AKT series and other scholarly PDFs with a VLM-based pipeline
@@ -16,7 +20,7 @@ Thank you to the organizers for hosting this competition. The two key elements o
   - stage3: FT on synthetic data from EvaCun checkpoint → Final FT on PDF data with tablet context
 - Inference: CTranslate2 with weight-averaged fold models and beam search (no ensemble in test time)
 
-# Data Preparation
+## Data Preparation
 
 Initially, we fine-tuned in two stages — first on [EvaCun (ORACC Akkadian Parallel Corpus)](https://zenodo.org/records/17220688), then on PDF-extracted data — so we describe the preparation for each below. 
 
@@ -114,7 +118,7 @@ Turkish/German volumes are translated to English using Gemini 3.1 Flash Lite wit
 - Quality filter: remove pairs with translation/transliteration length ratio outside [0.3, 4.0]
 
 ### API Cost
-- Approximately 15$ for the entire extraction process, OpenRouter is used as the API gateway.
+- Approximately 15\$ for the entire extraction process, OpenRouter is used as the API gateway.
 
 ## EvaCun(ORACC Akkadian Parallel Corpus) Preparation
 
@@ -133,7 +137,7 @@ was normalized to
 
 `ša LUGAL be-lí iš-pur-an-ni ma-a gul-la-a-te ša KÁ ša šap-la tim-me ša É-hi-il-la-na-te ma-a im-ma-te ú-šá-ra-qu`
 
-# Training Pipeline
+## Training Pipeline
 
 Training on ByT5 variants (best submission used byt5-xl):
 
@@ -168,19 +172,19 @@ prompt format:
 [context]   [sep]   [/context]  
 ```
 
-# Inference
+## Inference
 
 We convert trained models to CTranslate2 format, achieving ~5x speedup over HuggingFace inference. CTranslate2 also enables ByT5-xxl inference on Kaggle's dual T4 GPUs via `int8_float32` quantization and tensor parallelism (we patched CTranslate2's source to fix a bug in its TP implementation). Note that `int8_float32` quantization degrades LB score by ~-0.1. xxl was not used in our best submission due to insufficient training time (We changed the training dataset in the last day of the competition).
 
 We average weights from multiple CV fold models into a single model before inference. At inference time, we use `line_start` from `test.csv` to prepend context from previous lines of the same tablet, matching the training format. Decoding is done with beam search.
 
-# CV Strategy
+## CV Strategy
 
 We used 25% of `train.csv` as a hold-out set. The split was stratified by the transliteration/translation length ratio to preserve the distribution of examples with different source–target length characteristics.
 
 In practice, validation loss (token-level cross entropy loss) was reasonably well correlated with LB score, so we treated it as the main offline metric throughout development. As a result, we prioritized changes that reliably improved validation loss, and used the hold-out set for checkpoint selection and ablation comparison.
 
-# Ablation Study
+## Ablation Study
 
 All models in the ablation study are ByT5-xl trained with the same parameters (e.g., learning rate, batch size, number of steps)
 
@@ -193,7 +197,7 @@ All models in the ablation study are ByT5-xl trained with the same parameters (e
 | + synthetic data | ✓ | ✓ | ✓ | ✓ | 40.7 | 40.2 |
 | + 4 fold weight average | ✓ | ✓ | ✓ | ✓ | 40.8 | 40.1 |
 
-# What Didn't Work
+## What Didn't Work
 
 - ReRanking
   - LGBM reranker — Reranked beam search candidates using features such as beam confidence and reverse model score. Improved CV by ~+0.2 but had no effect on LB.

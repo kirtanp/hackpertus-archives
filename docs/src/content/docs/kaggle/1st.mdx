@@ -1,7 +1,11 @@
-# [DPC 1st] Data Quality Dictates Everything
+---
+title: "[DPC 1st] Data Quality Dictates Everything"
+description: "A write-up from the Kaggle Deep Past Initiative Machine Translation competition, place 1st."
+---
+
 https://www.kaggle.com/competitions/deep-past-initiative-machine-translation/discussion/684353
 
-# Acknowledgments
+## Acknowledgments
 
 Thanks to the hosts and Kaggle staffs, especially Adam Anderson. In the early stages of the competition, there were significant data issues that caused a lot of confusion, but Anderson worked diligently to resolve the most critical problems, which greatly reduced the difficulty of optimizing the models.
 
@@ -9,7 +13,7 @@ Thanks to my teammates mutian, zhengru, and yueting. Mutian and I have participa
 
 Datatech Club is a student club founded by mutian at his university (ShanghaiTech University), and zhengru and yueting are both members. The club received computing resource support from the School of Information Science and Technology at ShanghaiTech University, and we are extremely grateful for their strong support.
 
-# TL;DR
+## TL;DR
 
 The best submission (which we did not select) had a public score of 41.5 and a private score of 43.2. You can find the code and models in the end of this article.
 
@@ -35,7 +39,7 @@ Another selected submission did not use `ct2` or quantization. It was a conserva
 
 ![](https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F12523104%2Fd25f6a267bb163cbf24a88316024800e%2Fimage%203.png?generation=1774365918321903&alt=media)
 
-# Data is the Most Important
+## Data is the Most Important
 
 ## 1. OCR Data: Extracting Transliteration-Translation from Books
 
@@ -174,7 +178,7 @@ For comparision, some float16 transformers models results are as follows:
 | byt5-xl-0321-data2_llmlabel_synth2/all/2703 |  | ✅ |  | ✅ |  | ✅ | all |  | 40.4 | 42.0 |
 | byt5-xl-0322-data3_llmlabel/split/2364 |  |  | ✅ | ✅ |  |  | split |  | 40.7 | 41.0 |
 
-# Regarding Model Training and Inference
+## Regarding Model Training and Inference
 
 1. Beware of the model over-memorizing specific formats
 

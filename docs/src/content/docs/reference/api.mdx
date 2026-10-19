@@ -1,11 +1,14 @@
-# ArchAI web API
+---
+title: "ArchAI web API"
+description: "HTTP surface of the ArchAI demo: `/api/ask`, records, metrics, places, game rounds and the presentation site."
+---
 
 FastAPI app in `app.py`. Interactive docs (OpenAPI) are served at `/docs` and `/redoc`.
 
 ```bash
 .venv/bin/uvicorn app:app --port 8791            # local
 just docker                                        # docker compose up --build -> http://localhost:8791
-just deploy HOST                                   # a Docker host over SSH (README, "Deploy")
+just deploy HOST                                   # a Docker host over SSH (see [Web demo and deployment](/reference/web-demo/))
 ```
 
 Configuration (environment, all optional): `APERTUS_BASE_URL`, `APERTUS_MODEL`, `APERTUS_API_KEY`, `APERTUS_TIMEOUT`.
@@ -79,7 +82,7 @@ the normal answer path. The whole routed pool is returned in `sources[]` for the
 
 ## `GET /api/record/{record_id}`
 One record of `data/out/records.jsonl`, e.g. `/api/record/stapfer:transkription:16`, `/api/record/consultation:417`.
-`404` if unknown. Schema: `docs/SCHEMA.md`.
+`404` if unknown. Schema: [Record schema](/reference/schema/).
 
 ## `GET /api/metrics`
 `{"metrics": <data/out/metrics.json>, "bern_eval": <data/out/bern_eval.json>}`. Every block carries its own `scope`;

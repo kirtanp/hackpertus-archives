@@ -1,0 +1,18 @@
+---
+title: "Statistics in SQL (Apache Superset prototype)"
+description: "`src/archai/statssql.py` materialises the same corpus aggregates into a DuckDB datasource that Apache Superset reads."
+---
+
+`/api/stats` answers the corpus aggregates as JSON, which a BI tool cannot chart. `src/archai/statssql.py` writes
+the same aggregates into a DuckDB **database file** that Apache Superset connects to as an ordinary SQL
+datasource (driver `duckdb-engine`, URI `duckdb:////…/data/out/stapfer_stats.duckdb`):
+```bash
+just statssql         # data/out/stapfer_stats.duckdb (derived, gitignored, ~41 MB, 13 SQL relations)
+```
+The aggregate SQL is not written twice: every table is created from `archai.stats.aggregate_sql()`, the very
+statements `/api/stats` runs, so the endpoint and the datasource cannot drift apart (`section_page`,
+`content_page` and `markup_rates` add the section/page cuts and the markup rates from `stats.py`'s own
+definitions). The committed corpus is `data/out/stapfer_answers.parquet`; the database file is a build artifact.
+Superset is a separate application, not part of `app.py`: datasource tables, the routes to run it (a local
+PyPI virtualenv first, `docker compose` second), the exported dashboard bundle and the recorded figures a chart
+returned are in `deploy/superset/README.md`. Tests: `tests/test_statssql.py`.
