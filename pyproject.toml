@@ -10,6 +10,8 @@
 name = "archai"
 version = "0.1.0"
 description = "Deciphering Swiss archives with Apertus: three open Swiss archive datasets turned into one AI-ready, provenance-preserving dataset, served as a cited Q&A demo"
+license = "MIT"
+license-files = ["LICENSE"]
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [

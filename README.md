@@ -135,3 +135,10 @@ deploy/server.sh              server deploy over SSH (`just deploy HOST`)
 deploy/superset/              Superset prototype: datasource docs, provisioning script, dashboard export, compose
 notebooks/demo.ipynb          executed walkthrough      docs/  Starlight documentation site (pages in src/content/docs/)
 ```
+
+## License
+
+The code is released under the [MIT License](LICENSE). The archive datasets keep their own terms as published on
+[opendata.swiss](https://opendata.swiss) (Stapfer-Enquête, Federal Consultations 1960–1991, Archive Database of the
+Swiss Federal Archives); the records in `data/out/` are derived from them and carry their source and licence in their
+provenance. Apertus is a separate model under its own licence (Apache-2.0).
