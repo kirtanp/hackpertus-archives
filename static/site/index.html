@@ -438,6 +438,9 @@ button{font:inherit}
               <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">
                 <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#a89d86">{{ pg.score }}</span>
                 <div style="width:100%;height:3px;background:#2e2a22"><div style="height:3px;background:#6fa58f;width:100%;transform-origin:left;transform:scaleX({{ pg.w }})"></div></div>
+                <sc-if value="{{ pg.hasUrl }}" hint-placeholder-val="{{ false }}">
+                  <a href="{{ pg.url }}" target="_blank" rel="noopener noreferrer" title="Open the cited source in the archive" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#12100c;background:#c9a45c;padding:3px 8px;text-decoration:none;white-space:nowrap">Open source ↗</a>
+                </sc-if>
               </div>
             </div>
           </sc-for>
@@ -448,6 +451,14 @@ button{font:inherit}
             <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#c9a45c;letter-spacing:0.08em;text-transform:uppercase">④ Apertus · answer · {{ cur.source }}</div>
           </div>
           <div style="font-family:'Instrument Serif',serif;font-size:26px;line-height:1.35;color:#eee4cc;min-height:72px;text-wrap:pretty">{{ ansShown }}<span style="color:#e2553a;opacity:{{ caret }}">▌</span></div>
+          <sc-if value="{{ hasLinks }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#a89d86;letter-spacing:0.08em;text-transform:uppercase">Cited sources</span>
+              <sc-for list="{{ srcLinks }}" as="sl" hint-placeholder-count="0">
+                <a href="{{ sl.url }}" target="_blank" rel="noopener noreferrer" title="{{ sl.cite }}" style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#e2553a;border:1px solid #e2553a;padding:2px 7px;text-decoration:none">{{ sl.label }} ↗</a>
+              </sc-for>
+            </div>
+          </sc-if>
         </div>
 
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:18px;border-top:1px solid #2e2a22;padding-top:18px;opacity:{{ simOp.ck }};transition:opacity .3s">
@@ -1057,7 +1068,8 @@ const liveSim = (o, text) => {
   const srcs = o.sources || [];
   const top = Math.max(1e-9, ...srcs.map(x => +x.score || 0));
   const pass = srcs.slice(0, 3).map(x => [String(x.cite || x.doc_id || ''), String(x.text || '').replace(/\s+/g, ' ').slice(0, 180),
-    x.score != null ? Math.max(0.05, Math.min(1, (+x.score) / top)) : 0.8]);
+    x.score != null ? Math.max(0.05, Math.min(1, (+x.score) / top)) : 0.8, x.url || null]);
+  const links = srcs.map((x, i) => ({ n: i + 1, url: x.url || null, cite: String(x.cite || x.doc_id || '') })).filter(l => l.url);
   let ans = String(o.answer || '');
   if (src === 'aggregate') {  // the phrased summary and the code-written result line; the full audit is in the API reply
     const first = ans.split('\n\n')[0], res = (ans.match(/^(?:Result|Ergebnis|Résultat)[^\n]*/m) || [''])[0];
@@ -1074,7 +1086,7 @@ const liveSim = (o, text) => {
   return { custom: true, live: true, q: text, lang: detectLang(text), vk: no ? 'no' : 'ok', kind: LIVE_KIND[src] || src,
     rw: JSON.stringify(rw, null, 1), route,
     pool: src === 'aggregate' ? srcs.length + ' records cited' : r.filtered_pool ? 'top ' + srcs.length + ' of ' + r.filtered_pool + ' passages' : 'top ' + srcs.length + ' passages',
-    pass, ans, checks: checks.slice(0, 4), source: 'answer_source: ' + src, verdict: LIVE_VERDICT[src] || src, conf };
+    pass, links, ans, checks: checks.slice(0, 4), source: 'answer_source: ' + src, verdict: LIVE_VERDICT[src] || src, conf };
 };
 const localSim = text => {
   const t = text.toLowerCase();
@@ -1604,8 +1616,9 @@ class Component extends DCLogic {
     const rwShown = s.simBusy ? 'Apertus is reading the question' + '.'.repeat(1 + Math.floor(t / 4) % 3) : (q.rw.slice(0, Math.floor(st2 * 5.5)) || ' ');
     const routeRows = q.route.map(([k, v, ok], i) => { const show = st2 >= B[1] + 3 + i * 4;
       return { k, v, op: show ? 1 : 0.2, m: show ? (ok ? '✓' : '✗') : '·', col: ok ? C.green : C.red }; });
-    const passages = q.pass.map(([sig, txt, sc], i) => { const p = ease((st2 - B[2] - i * 3) / 12);
-      return { n: i + 1, sig, txt, score: (sc * p).toFixed(2), w: pct(sc * p) }; });
+    const passages = q.pass.map(([sig, txt, sc, url], i) => { const p = ease((st2 - B[2] - i * 3) / 12);
+      return { n: i + 1, sig, txt, score: (sc * p).toFixed(2), w: pct(sc * p), url: url || '#', hasUrl: !!url }; });
+    const srcLinks = (q.links || []).map(l => ({ ...l, label: '[' + l.n + ']' }));
     const ansN = Math.floor(Math.max(0, st2 - B[3]) * (q.ans.length / 56));
     const ansShown = q.ans.slice(0, ansN);
     const caret = st2 >= B[3] && ansN < q.ans.length ? pulse : 0;
@@ -1886,7 +1899,7 @@ class Component extends DCLogic {
       agentToggle: () => this.setState(x => x.agentT >= AGENT_END ? { agentT: 0, agentPlay: true } : { agentPlay: !x.agentPlay }),
       agentNext: () => { const n = AG.find(v => v > at); this.agentJump(n ?? AGENT_END); },
       agentPrev: () => { const p = [...AG].reverse().find(v => v < AG[cur]) ?? 0; this.agentJump(p); },
-      simQs, cur: cur2, simStages, simOp, rwShown, routeRows, passages, ansShown, caret, checks, verdictCol, confW,
+      simQs, cur: cur2, simStages, simOp, rwShown, routeRows, passages, srcLinks, hasLinks: srcLinks.length > 0 && st2 >= B[3], ansShown, caret, checks, verdictCol, confW,
       simRun: () => this.setState({ simT: 0 }),
       chatText: s.chatText, chatChange: e => this.setState({ chatText: e.target.value }),
       chatKey: e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); this.chatSend(); } },
