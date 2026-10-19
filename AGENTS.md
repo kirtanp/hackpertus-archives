@@ -6,10 +6,11 @@ This file is the project's committed home for project-intrinsic agent knowledge:
 
 ## Working in this repository
 
-- Run the tests the way the Makefile and CI do: `make test` (= `PYTHONPATH=src .venv/bin/python -m pytest -q tests`). CI (`.github/workflows/tests.yml`) additionally boots `app.py` and greps the JSON of `/api/ask` for a citation signature, so a change that drops `sources[]` breaks it even when the tests pass.
-- Everything in `src/archai` reads `data/out/` relative to the *working directory*: run from the repository root (`app.py` `chdir`s to its own root itself). The venv is `.venv`; `make setup` builds it.
+- Run the tests the way the Justfile and CI do: `just test` (= `uv run --all-groups python -m pytest -q tests`; `pythonpath = ["src"]` in `pyproject.toml` replaces the old `PYTHONPATH=src`). CI (`.github/workflows/tests.yml`) additionally boots `app.py` and greps the JSON of `/api/ask` for a citation signature, so a change that drops `sources[]` breaks it even when the tests pass.
+- Dependencies and tasks are `uv` + `just`: `pyproject.toml` (with the committed `uv.lock`) is the single source of dependency truth and `Justfile` the only runner — there is no `Makefile` and no `requirements*.txt`. `just setup` builds `.venv` from the lock with Python 3.12 (the runtime the Dockerfile and CI use); the recipes run through `uv run --all-groups` and export `PYTHONPATH=src`, because the project is not installed as a package.
+- Everything in `src/archai` reads `data/out/` relative to the *working directory*: run from the repository root (`app.py` `chdir`s to its own root itself).
 - `data/out/` is committed but *generated* from the 3.6 GB raw dumps that are not in the repository. Changing a pipeline stage (`ingest`, `stapfer_clean`, `enrich`, `tools`) leaves the committed outputs stale; regenerating them needs the raw data (README, "Rebuild from the raw data"). Do not hand-edit `data/out/`.
-- Lint with `ruff check src tests` (config lives in `pyproject.toml`, which is deliberately lint-only). CI does not run ruff.
+- Lint with `ruff check .` (config lives in `pyproject.toml`, alongside the uv dependency, dependency-group and pytest settings). `just check` is ruff plus the whole test suite, which is what CI runs.
 
 ## Q&A answer path (`src/archai/qa.py`)
 
@@ -35,7 +36,7 @@ This file is the project's committed home for project-intrinsic agent knowledge:
 
 ## Corpus statistics and the Superset datasource
 
-- `src/archai/stats.py` owns the corpus aggregates and their SQL; `tests/test_stats.py` re-derives every figure it returns with pandas, so copy that pattern for a new aggregate instead of asserting SQL against itself. `statssql.py` (the Apache Superset datasource, `make statssql`) consumes the same SQL: it builds its DuckDB tables from `stats.aggregate_sql()` / `SECTION` / `EMPTY` / `TRIVIAL` / `PLAIN`, so a new aggregate belongs in `stats.py` and never as fresh SQL in `statssql.py`.
+- `src/archai/stats.py` owns the corpus aggregates and their SQL; `tests/test_stats.py` re-derives every figure it returns with pandas, so copy that pattern for a new aggregate instead of asserting SQL against itself. `statssql.py` (the Apache Superset datasource, `just statssql`) consumes the same SQL: it builds its DuckDB tables from `stats.aggregate_sql()` / `SECTION` / `EMPTY` / `TRIVIAL` / `PLAIN`, so a new aggregate belongs in `stats.py` and never as fresh SQL in `statssql.py`.
 - `data/out/stapfer_stats.duckdb` is a derived, gitignored build artifact (`.gitignore`: `data/out/*.duckdb`); the committed corpus stays `data/out/stapfer_answers.parquet`.
 - Superset is a separate application under `deploy/superset/`, deliberately not imported by `app.py`. How to run it and the Superset 6.1 traps it hit (flask-caching pin, the removed `bar` chart type, a chart `query_context` that the API does not compute) are recorded in `deploy/superset/README.md`.
 

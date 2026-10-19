@@ -105,7 +105,7 @@ different place. When Apertus chooses no question, or calls the question unrelat
 `route` shows `dataset`, `sections`, `places`, `years`, `routed_by` and `rewrite.rounds`.
 Other modes: `apertus` (9 fixed intents), `off` (rules only). Measured in `data/out/qa_eval.json`.
 
-The same aggregates are also available as SQL, for BI tools that cannot chart a JSON envelope: `make statssql`
+The same aggregates are also available as SQL, for BI tools that cannot chart a JSON envelope: `just statssql`
 materialises them into a DuckDB database file (`src/archai/statssql.py`) that Apache Superset reads as a
 datasource. See `deploy/superset/README.md`.
 

@@ -1,8 +1,57 @@
-# Lint-only configuration. This project installs from requirements.txt, and the Dockerfile, Makefile and
-# .github/workflows/tests.yml all read that file directly, so this file deliberately carries no packaging
-# metadata, no [build-system] table, no [project] table and no dependency groups: it must stay inert to them.
-# The rule set below accepts the codebase's compact own style on purpose and reports only correctness and
+# Environment, test and lint configuration. The runtime dependencies live in [project].dependencies and the
+# non-runtime ones in [dependency-groups]; `uv.lock` pins the whole resolution and is committed, so the Dockerfile,
+# CI and the Justfile all install from it. This repository is an application (`PYTHONPATH=src python -m archai.<module>`)
+# and is published nowhere, so it deliberately carries no [build-system] table, no `[tool.uv] package = true` and no
+# [project.scripts] entry point: dependency management only, no packaging.
+# The ruff rule set below accepts the codebase's compact own style on purpose and reports only correctness and
 # dead-code problems, so that adding the linter does not rewrite the tree or destroy git blame.
+
+[project]
+name = "archai"
+version = "0.1.0"
+description = "Deciphering Swiss archives with Apertus: three open Swiss archive datasets turned into one AI-ready, provenance-preserving dataset, served as a cited Q&A demo"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    # pipeline
+    "pandas>=3.0.6",
+    "pyarrow>=26.0.0",
+    "numpy>=2.5.4",
+    "scikit-learn>=1.9.1",
+    "openpyxl>=3.1.5",
+    # web demo
+    "fastapi>=0.143.5",
+    "uvicorn[standard]>=0.54.0",
+    "pydantic>=2.14.1",
+    # statistics (whole-corpus aggregates over the parquet, app.py /api/stats)
+    "duckdb>=1.5.6",
+]
+
+[dependency-groups]
+# unit tests (`just test`); jsonschema validates every record, pytest runs the suite
+test = [
+    "pytest>=9.1.1",
+    "jsonschema>=4.26.0",
+]
+# interoperability validators (`just check`, CI): Croissant and JSON-LD checks behind pytest.importorskip
+dev = [
+    "mlcroissant>=1.1.1",
+    "PyLD>=3.3.0",
+]
+lint = [
+    "ruff",
+]
+# `just notebook` executes notebooks/demo.ipynb in place and needs a kernel
+notebook = [
+    "nbclient",
+    "ipykernel",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_functions = "test_*"
+pythonpath = ["src"]
 
 [tool.ruff]
 # Measured line lengths on main: p50 45, p90 114, p99 152, max 256. 120 clears p90 without a reformat;

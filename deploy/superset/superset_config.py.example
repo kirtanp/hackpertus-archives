@@ -1,7 +1,7 @@
 # Superset configuration for the ArchAI corpus-statistics prototype.
 #
 # This is the primary (non-Docker) route: Superset runs from PyPI in its own virtualenv and reads the DuckDB
-# datasource that `make statssql` writes. Superset is a separate application, not part of the FastAPI demo.
+# datasource that `just statssql` writes. Superset is a separate application, not part of the FastAPI demo.
 #
 # Setup (see deploy/superset/README.md for the full sequence):
 #

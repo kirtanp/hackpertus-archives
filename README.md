@@ -12,11 +12,12 @@ validator has the final word on everything it produces.
 
 ## Quick start
 Everything the demo needs ships in `data/out/` (no raw dumps, no API key required).
+Needs [`uv`](https://docs.astral.sh/uv/) and [`just`](https://just.systems/); the recipes are in `Justfile`.
 ```bash
 git clone <this repo> && cd <repo>
-make setup            # Python 3.12 venv + pinned requirements
-make run              # http://127.0.0.1:8791
-make test             # unit tests, no network
+just setup            # Python 3.12 venv + locked dependencies (uv, pyproject.toml + uv.lock)
+just run              # http://127.0.0.1:8791
+just test             # unit tests, no network
 ```
 or with Docker: `docker compose up --build` → http://localhost:8791.
 
@@ -58,7 +59,7 @@ circuit breaker → deterministic-only output if Apertus is unreachable, schema-
 ## Rebuild from the raw data
 Only needed to regenerate `data/out` from the opendata.swiss downloads (3.6 GB, not in this repository).
 ```bash
-make setup
+just setup
 # raw files in data/raw/ (see links above); Apertus endpoint (any OpenAI-compatible):
 mkdir -p ~/.config/archai && cat > ~/.config/archai/apertus.env <<'X'
 APERTUS_BASE_URL=https://gateway.keera.ch/api/v1
@@ -77,7 +78,7 @@ Local alternative: llama.cpp server with `Colby/apertus-v1.5-8b-text-Q4_K_M-GGUF
 - `agent_traces.jsonl` – every plan, tool call, result and validation
 - `metrics.json` – every block states its scope; model numbers are sample measurements, not overall accuracy
 - `run_manifest.json` – stages, status, runtime, output hashes, model endpoint
-- `stapfer_stats.duckdb` – **derived, not committed** (gitignored, `make statssql`): the corpus statistics as SQL
+- `stapfer_stats.duckdb` – **derived, not committed** (gitignored, `just statssql`): the corpus statistics as SQL
   tables for Apache Superset, built from `stapfer_answers.parquet`, which stays the committed corpus
 
 See `docs/ETHICS.md` (privacy, bias, limits) and `docs/KAGGLE_IDEAS.md` (what we reused from the Akkadian competition winners).
@@ -163,7 +164,7 @@ No agent framework: plain OpenAI-compatible HTTP calls (`llm.py`). Tool schemas 
    code names them once and the model decides; anything still missing runs anyway (`origin: baseline`).
 4. Compose → deterministic grounding check, as before. Every step is in `agent_traces_v4*.jsonl`.
 ```bash
-make setup && PYTHONPATH=src .venv/bin/python -m archai.agent 60 4          # 80 records, needs APERTUS_API_KEY
+just setup && PYTHONPATH=src .venv/bin/python -m archai.agent 60 4          # 80 records, needs APERTUS_API_KEY
 PYTHONPATH=src .venv/bin/python -m archai.tool_bench                         # BFCL-style benchmark, 70B + 8B
 ```
 Gateway quirks found and handled: the native API returns at most one call per turn, and rejects a conversation that
@@ -182,7 +183,7 @@ contains an earlier call with empty arguments (`{}`), so history calls are recor
 the same aggregates into a DuckDB **database file** that Apache Superset connects to as an ordinary SQL
 datasource (driver `duckdb-engine`, URI `duckdb:////…/data/out/stapfer_stats.duckdb`):
 ```bash
-make statssql         # data/out/stapfer_stats.duckdb (derived, gitignored, ~41 MB, 13 SQL relations)
+just statssql         # data/out/stapfer_stats.duckdb (derived, gitignored, ~41 MB, 13 SQL relations)
 ```
 The aggregate SQL is not written twice: every table is created from `archai.stats.aggregate_sql()`, the very
 statements `/api/stats` runs, so the endpoint and the datasource cannot drift apart (`section_page`,

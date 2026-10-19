@@ -1,5 +1,0 @@
-# interoperability validators and lint (CI and `make check`); the app itself needs only requirements.txt
--r requirements.txt
-mlcroissant==1.1.1
-PyLD==3.3.0
-ruff
