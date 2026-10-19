@@ -11,6 +11,7 @@ sys.path.insert(0, str(ROOT / "src"))
 from fastapi import FastAPI, HTTPException
 from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from archai import qa, llm, stats
 
@@ -153,6 +154,17 @@ def metrics():
             "bern_eval": json.loads((OUT / "bern_eval.json").read_text())}
 
 
+@app.get("/api/site")
+async def site_data():
+    """Real examples for every tab of the presentation site (archai.site); the simulator's example answers join once
+    they have run through the answer path in the background."""
+    if state["idx"] is None:
+        raise HTTPException(503, state["error"] or "Index is still loading, try again in a minute.")
+    from archai import site
+    out = await run_in_threadpool(site.build, state["idx"], RECORDS, game_round, json.loads((OUT / "metrics.json").read_text()))
+    return out | {"sim": site.sim_answers(state["idx"], llm.KEY not in ("", "none"))}
+
+
 @app.get("/api/stats")
 def corpus_stats(query: str = "all", section: str | None = None, page: int | None = None):
     """Aggregates over the whole corpus in SQL (stats.py / DuckDB); each block names the rows it counted."""
@@ -167,3 +179,7 @@ def corpus_stats(query: str = "all", section: str | None = None, page: int | Non
 @app.get("/")
 def index():
     return FileResponse(ROOT / "static" / "index.html")
+
+
+# the ArchAI presentation site (5 tabs); its Q&A simulator calls /api/ask and its evidence tab /api/metrics
+app.mount("/site", StaticFiles(directory=ROOT / "static" / "site", html=True), name="site")

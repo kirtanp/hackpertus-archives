@@ -39,6 +39,10 @@ This file is the project's committed home for project-intrinsic agent knowledge:
 - `data/out/stapfer_stats.duckdb` is a derived, gitignored build artifact (`.gitignore`: `data/out/*.duckdb`); the committed corpus stays `data/out/stapfer_answers.parquet`.
 - Superset is a separate application under `deploy/superset/`, deliberately not imported by `app.py`. How to run it and the Superset 6.1 traps it hit (flask-caching pin, the removed `bar` chart type, a chart `query_context` that the API does not compute) are recorded in `deploy/superset/README.md`.
 
+## Presentation site (`static/site/`, `/site`)
+
+- A separate page from `static/index.html` (`/`, owned by other UI work: leave it alone). It is a dc-runtime page (`support.js`, `{{ }}` bindings, a `text/x-dc` Component); its data constants are only fallbacks, replaced in place from `GET /api/site` (`src/archai/site.py`). Keep the array lengths the layout expects (5 tools, 4 entities, 5 geo rounds), and never show an invented passage under a real signature: take examples from `data/out` through `site.py`.
+
 ## Maintaining this file
 
 Keep this file for knowledge useful to almost every future agent session in this project.

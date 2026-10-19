@@ -330,3 +330,47 @@ def test_a_failed_reader_call_is_retried_one_sheet_at_a_time(idx, monkeypatch):
     rows = dataq.data()["rows"]
     out = dataq.read(idx, plan, [rows["stapfer:transkription:1077"], rows["stapfer:transkription:1084"]])
     assert set(out) == {"stapfer:transkription:1077", "stapfer:transkription:1084"}
+
+
+def test_past_or_present_is_read_from_the_figures_own_answer():
+    """Bollwerk: "bis zur Revolution" in III.12 does not make the winter answer of III.12.a a past figure."""
+    head = "Nahe bey 300 Kinder bis zur Revolution. denn seit der Revolution hat die Anzahl der Schulkinder beträchtlich abgenommen."
+    ctx = [("III.12", "Schulkinder.", head)] + CTX
+    text = head + "\n" + TEXT
+    f, _ = dataq.verify_figure(_fig("Knaben? – 100 und mehr", 100, more=True, current=False), "number", text, ctx)
+    assert f["current"] is True
+    f, _ = dataq.verify_figure(_fig("Nahe bey 300 Kinder", 300, current=True), "number", text, ctx)
+    assert f["current"] is False
+
+
+def test_a_quote_with_unit_and_number_swapped_is_found_in_the_sheets_order():
+    text = "An Geld. kr. 200. und für einen Gehülfen kr. 50."
+    f, _ = dataq.verify_figure(_fig("200 kr.", 200, unit="kr"), "money", text, [("IV.16.A", "Einkommen", text)])
+    assert f and f["quote"] == "kr. 200." and f["asked"] is True
+
+
+def test_the_engine_steps_aside_when_no_record_has_a_value(idx, monkeypatch):
+    monkeypatch.setattr(llm, "chat_json", lambda prompt, **kw: (
+        {"dataset": "stapfer", "unit": "schools", "filters": {"places": ["Bern"]}, "operation": "sum",
+         "measure": {"field": "read", "sections": ["III.12"], "what": "pupils", "value": "number"}} if "plan how to answer" in prompt
+        else {"sheets": []}, {"errors": []}))
+    r = {"places": ["bern"], "intents": ["pupils"]}
+    assert dataq.answer(idx, "How many pupils were in the schools of Bern?", r) is None
+    assert r["data_engine"]["reason"] == "no record has a usable value"
+
+
+def test_in_a_quote_naming_both_sexes_the_word_before_the_number_decides():
+    text = "Knaben 17. Mägdlein 60. denn Knaben werden so bald sie gut Lesen können in die obern Schulen gethan."
+    ctx = [("III.12.a", "Im Winter. (Knaben/Mädchen)", text)]
+    f, _ = dataq.verify_figure(_fig("Knaben 17. Mägdlein 60.", 17, sex="girls"), "number", text, ctx)
+    g, _ = dataq.verify_figure(_fig("Knaben 17. Mägdlein 60.", 60, sex="boys"), "number", text, ctx)
+    assert (f["sex"], g["sex"]) == ("boys", "girls")
+
+
+def test_a_number_after_the_last_sexed_figure_is_the_sheets_total():
+    text = "im Winter besuchen die Schule heür Kaben 90 Mägdchen 85 175. Zur unterweisung Zum Heil: abendmahl knaben 29."
+    ctx = [("III.12.a", "Im Winter. (Knaben/Mädchen)", text)]
+    q = "Kaben 90 Mägdchen 85 175."
+    t, _ = dataq.verify_figure(_fig(q, 175, sex="girls"), "number", text, ctx)
+    f, _ = dataq.verify_figure(_fig(q, 85, sex="all"), "number", text, ctx)
+    assert (t["sex"], f["sex"]) == ("all", "girls")

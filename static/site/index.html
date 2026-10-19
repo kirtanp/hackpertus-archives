@@ -1,0 +1,1906 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;background:#12100c;color:#eee4cc;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+a{color:#e2553a;text-decoration:none}a:hover{color:#eee4cc}
+button{font:inherit}
+::selection{background:#e2553a;color:#12100c}
+</style>
+</helmet>
+<div onMouseMove="{{ onMove }}" style="min-height:100vh;background:#12100c;color:#eee4cc;font-family:'IBM Plex Sans',sans-serif;font-size:16px;line-height:1.5;position:relative;overflow-x:hidden">
+<div style="position:fixed;left:0;top:0;width:1100px;height:1100px;pointer-events:none;z-index:5;border-radius:50%;background:radial-gradient(circle,rgba(226,85,58,0.075),rgba(226,85,58,0) 60%);will-change:transform;transform:{{ spotT }}"></div>
+<div style="position:fixed;inset:0;pointer-events:none;z-index:70;overflow:hidden">
+  <sc-for list="{{ confetti }}" as="cf" hint-placeholder-count="0">
+    <div style="position:absolute;left:0;top:0;width:{{ cf.w }};height:{{ cf.h }};background:{{ cf.c }};opacity:{{ cf.o }};transform:translate3d({{ cf.x }},{{ cf.y }},0) rotate({{ cf.r }})"></div>
+  </sc-for>
+  <sc-for list="{{ floats }}" as="fl" hint-placeholder-count="0">
+    <div style="position:absolute;left:0;top:0;opacity:{{ fl.o }};transform:translate3d({{ fl.x }},{{ fl.y }},0) translate(-50%,-50%) scale({{ fl.s }});font-family:'IBM Plex Mono',monospace;font-weight:500;font-size:20px;color:#c9a45c;text-shadow:0 0 18px rgba(201,164,92,0.7);white-space:nowrap">{{ fl.text }}</div>
+  </sc-for>
+</div>
+<div style="position:fixed;right:24px;bottom:24px;z-index:65;display:flex;flex-direction:column;gap:10px;align-items:flex-end;pointer-events:none">
+  <sc-for list="{{ toasts }}" as="to" hint-placeholder-count="0">
+    <div style="display:flex;align-items:center;gap:14px;background:#1b1813;border:1px solid #c9a45c;padding:12px 18px 12px 12px;box-shadow:0 20px 50px rgba(0,0,0,0.5),0 0 30px rgba(201,164,92,0.15);transform:translateX({{ to.x }});opacity:{{ to.o }}">
+      <div style="width:40px;height:40px;border-radius:50%;background:#c9a45c;color:#12100c;display:grid;place-items:center;font-size:18px;transform:rotate({{ to.r }})">✚</div>
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:#c9a45c">Seal unlocked</div>
+        <div style="font-family:'Instrument Serif',serif;font-size:22px;line-height:1.1;color:#eee4cc">{{ to.title }}</div>
+        <div style="font-size:12px;color:#a89d86">{{ to.sub }}</div>
+      </div>
+    </div>
+  </sc-for>
+</div>
+<div style="position:fixed;inset:0;pointer-events:none;z-index:60;background:#e2553a;display:flex;align-items:center;justify-content:center;will-change:transform;transform:translate3d({{ cur1 }},0,0)">
+  <div style="font-family:'Instrument Serif',serif;font-size:clamp(56px,9vw,140px);color:#12100c;line-height:1;display:flex;gap:28px;align-items:baseline"><span style="font-family:'IBM Plex Mono',monospace;font-size:24px">{{ curNum }}</span><em>{{ curLabel }}</em></div>
+</div>
+<div style="position:fixed;inset:0;pointer-events:none;z-index:59;background:#eee4cc;will-change:transform;transform:translate3d({{ cur2 }},0,0)"></div>
+
+<div style="position:sticky;top:0;z-index:30;background:rgba(18,16,12,0.97);border-bottom:1px solid #2e2a22">
+  <div style="max-width:1280px;margin:0 auto;padding:14px 32px;display:flex;align-items:center;gap:24px;flex-wrap:wrap">
+    <div style="display:flex;align-items:center;gap:12px;cursor:pointer" onClick="{{ goHome }}">
+      <div style="width:26px;height:26px;background:#e2553a;position:relative;flex:none">
+        <div style="position:absolute;left:11px;top:5px;width:4px;height:16px;background:#eee4cc"></div>
+        <div style="position:absolute;left:5px;top:11px;width:16px;height:4px;background:#eee4cc"></div>
+      </div>
+      <div style="font-family:'Instrument Serif',serif;font-size:24px;line-height:1">ArchAI</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;color:#a89d86;text-transform:uppercase">Hackpertus · Archives</div>
+    </div>
+    <div style="display:flex;gap:2px;margin-left:auto;flex-wrap:wrap">
+      <sc-for list="{{ tabs }}" as="tb" hint-placeholder-count="5">
+        <button onClick="{{ tb.go }}" style="display:flex;align-items:baseline;gap:8px;border:none;cursor:pointer;padding:8px 14px;border-radius:2px;font-size:14px;transition:background .2s,color .2s;color:{{ tb.col }};background:{{ tb.bg }}" style-hover="color:#eee4cc">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:{{ tb.numCol }}">{{ tb.num }}</span><span>{{ tb.label }}</span>
+        </button>
+      </sc-for>
+    </div>
+    <div onClick="{{ goPlay }}" style="display:flex;align-items:center;gap:10px;padding:5px 14px 5px 5px;border:1px solid #4a4336;border-radius:999px;cursor:pointer;transition:border-color .2s;transform:scale({{ xpScale }})" style-hover="border-color:#c9a45c">
+      <div style="width:30px;height:30px;border-radius:50%;background:#c9a45c;color:#12100c;display:grid;place-items:center;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:500">{{ lvlNum }}</div>
+      <div style="display:flex;flex-direction:column;gap:4px;min-width:124px">
+        <div style="display:flex;justify-content:space-between;gap:8px;font-size:11px;font-family:'IBM Plex Mono',monospace"><span style="color:#eee4cc">{{ lvlName }}</span><span style="color:#a89d86">{{ xpShown }} XP</span></div>
+        <div style="height:3px;background:#2e2a22"><div style="height:3px;background:#c9a45c;width:100%;transform-origin:left;transform:scaleX({{ lvlProg }})"></div></div>
+      </div>
+    </div>
+  </div>
+  <div style="height:2px;background:#e2553a;transition:transform .5s cubic-bezier(.2,.7,.2,1);width:100%;transform-origin:left;transform:scaleX({{ tabProgress }})"></div>
+</div>
+
+<div style="opacity:{{ enterOp }};transform:translateY({{ enterY }})">
+
+<sc-if value="{{ isT0 }}" hint-placeholder-val="{{ true }}">
+<div data-screen-label="01 Overview">
+ <div style="position:relative;overflow:hidden">
+  <div style="position:absolute;inset:0;pointer-events:none">
+    <sc-for list="{{ particles }}" as="pa" hint-placeholder-count="0">
+      <span style="position:absolute;white-space:nowrap;left:0;top:0;opacity:{{ pa.op }};font-size:{{ pa.fs }};font-family:{{ pa.ff }};color:{{ pa.col }};transform:translate3d({{ pa.x }},{{ pa.y }},0) rotate({{ pa.rot }})">{{ pa.t }}</span>
+    </sc-for>
+  </div>
+  <div style="position:absolute;left:0;top:0;width:620px;height:620px;will-change:transform;transform:{{ orbT }};border-radius:50%;background:radial-gradient(circle,rgba(226,85,58,0.16),rgba(226,85,58,0) 65%);pointer-events:none"></div>
+  <div style="position:relative;z-index:1;max-width:1280px;margin:0 auto;padding:88px 32px 72px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,480px),1fr));gap:64px;align-items:center">
+    <div style="display:flex;flex-direction:column;gap:28px">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#6fa58f;display:flex;gap:10px;align-items:center">
+        <div style="width:8px;height:8px;border-radius:50%;background:#6fa58f;opacity:{{ pulse }}"></div>Swiss open data · Apertus 70B · 1799 → 1991
+      </div>
+      <h1 style="margin:0;font-family:'Instrument Serif',serif;font-weight:400;font-size:clamp(48px,6.4vw,92px);line-height:0.98;letter-spacing:-0.01em;display:flex;flex-wrap:wrap;column-gap:0.24em">
+        <sc-for list="{{ heroWords }}" as="hw" hint-placeholder-count="7">
+          <span style="display:inline-block;overflow:hidden;padding-bottom:0.08em"><span style="display:inline-block;opacity:{{ hw.op }};transform:translateY({{ hw.y }}) rotate({{ hw.r }});filter:{{ hw.f }};color:{{ hw.col }};font-style:{{ hw.fst }}">{{ hw.w }}</span></span>
+        </sc-for>
+      </h1>
+      <p style="margin:0;max-width:540px;font-size:19px;line-height:1.55;color:#c9bfa8;text-wrap:pretty">ArchAI turns three open Swiss archive datasets into one AI-ready dataset that keeps the provenance of every record, and answers questions with citations. Deterministic code does the reliable work. Apertus plans, enriches and answers. A validator has the final word.</p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <button onClick="{{ goT1 }}" style="border:none;cursor:pointer;background:#e2553a;color:#12100c;padding:14px 22px;font-weight:600;border-radius:2px" style-hover="background:#eee4cc">See how it works →</button>
+        <button onClick="{{ goT3 }}" style="cursor:pointer;background:transparent;color:#eee4cc;border:1px solid #4a4336;padding:14px 22px;border-radius:2px" style-hover="border-color:#eee4cc">Open the simulator</button>
+      </div>
+    </div>
+
+    <div style="background:#e9dfc6;color:#2a241a;border-radius:3px;padding:28px 30px 26px;position:relative;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,0.45);transform:{{ heroTilt }}">
+      <div style="position:absolute;inset:0;pointer-events:none;transform:translate3d(0,{{ scanTop }},0)"><div style="height:46px;background:linear-gradient(180deg,rgba(226,85,58,0),rgba(226,85,58,0.18));border-bottom:2px solid #e2553a"></div></div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid #b9ab8c;padding-bottom:12px;margin-bottom:18px;gap:12px;flex-wrap:wrap">
+        <div style="font-family:'Instrument Serif',serif;font-size:24px">Stapfer-Enquête, 1799</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#6b5f48">answer III.12 · clean_markup()</div>
+      </div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:15px;line-height:2.1;display:flex;flex-wrap:wrap;align-items:baseline;align-content:flex-start;column-gap:9px;min-height:140px">
+        <sc-for list="{{ morphTokens }}" as="tk" hint-placeholder-count="10">
+          <span style="transition:color .3s,background .3s;padding:0 2px;color:{{ tk.col }};background:{{ tk.bg }};text-decoration:{{ tk.deco }}">{{ tk.text }}</span>
+        </sc-for>
+      </div>
+      <div style="margin-top:18px;padding-top:14px;border-top:1px dashed #b9ab8c;display:flex;flex-wrap:wrap;gap:8px;min-height:40px">
+        <sc-for list="{{ morphAnn }}" as="an" hint-placeholder-count="0">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;padding:4px 8px;background:#2a241a;color:#e9dfc6;border-radius:2px">{{ an }}</span>
+        </sc-for>
+      </div>
+      <div style="margin-top:12px;font-size:12px;color:#6b5f48">The raw transcription is kept as <span style="font-family:'IBM Plex Mono',monospace">text_raw</span>. Markup becomes annotations and is never "repaired".</div>
+    </div>
+  </div>
+ </div>
+  <div style="border-top:1px solid #2e2a22;border-bottom:1px solid #2e2a22;overflow:hidden;background:#e2553a;margin-bottom:72px;transform:rotate(-1.2deg) scale(1.02)">
+    <div style="display:flex;width:max-content;will-change:transform;transform:translate3d({{ marqX }},0,0)">
+      <sc-for list="{{ marquee }}" as="mq" hint-placeholder-count="10">
+        <div style="display:flex;align-items:center;gap:28px;padding:16px 28px 16px 0;font-family:'Instrument Serif',serif;font-size:30px;color:#12100c;white-space:nowrap"><span>{{ mq }}</span><span style="font-family:'IBM Plex Mono',monospace;font-size:20px">✚</span></div>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="max-width:1280px;margin:0 auto;padding:0 32px 88px">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#a89d86;margin-bottom:20px">Three datasets → one schema</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:1px;background:#2e2a22;border:1px solid #2e2a22">
+      <sc-for list="{{ datasets }}" as="ds" hint-placeholder-count="3">
+        <div data-reveal="1" style="background:#16130f;padding:32px 28px;display:flex;flex-direction:column;gap:14px">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#e2553a">{{ ds.years }}</div>
+          <div style="font-family:'Instrument Serif',serif;font-size:32px;line-height:1.05">{{ ds.name }}</div>
+          <div style="font-family:'Instrument Serif',serif;font-size:64px;line-height:1;color:#eee4cc;font-variant-numeric:tabular-nums">{{ ds.count }}</div>
+          <div style="font-size:14px;color:#a89d86">{{ ds.unit }}</div>
+          <div style="font-size:15px;color:#c9bfa8;text-wrap:pretty;border-top:1px solid #2e2a22;padding-top:14px">{{ ds.what }}</div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="border-top:1px solid #2e2a22;border-bottom:1px solid #2e2a22;background:#16130f">
+    <div style="max-width:1280px;margin:0 auto;padding:80px 32px">
+      <h2 data-scramble="1" style="margin:0 0 12px;font-family:'Instrument Serif',serif;font-weight:400;font-size:clamp(36px,4.4vw,60px);line-height:1.02;max-width:820px;text-wrap:balance">Each part does the work it can be trusted with.</h2>
+      <p style="margin:0 0 48px;color:#a89d86;max-width:620px">The model is never asked to calculate, and it never has the final word. Every claim it makes is checked against the source.</p>
+      <div style="position:relative">
+        <div style="position:absolute;top:27px;left:6%;right:6%;height:1px;background:#4a4336"></div>
+        <div style="position:absolute;top:22px;left:0;right:0;height:11px;pointer-events:none;transform:translate3d({{ roleDot }},0,0)"><div style="width:11px;height:11px;border-radius:50%;background:#e2553a;box-shadow:0 0 18px #e2553a"></div></div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:32px;position:relative">
+          <sc-for list="{{ roles }}" as="rl" hint-placeholder-count="3">
+            <div data-reveal="1" style="display:flex;flex-direction:column;gap:14px">
+              <div style="width:56px;height:56px;border-radius:50%;display:grid;place-items:center;font-family:'IBM Plex Mono',monospace;font-size:13px;transition:all .3s;background:{{ rl.bg }};color:{{ rl.fg }};border:1px solid {{ rl.bd }}">{{ rl.n }}</div>
+              <div style="font-family:'Instrument Serif',serif;font-size:30px">{{ rl.name }}</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:{{ rl.tagCol }}">{{ rl.tag }}</div>
+              <div style="color:#c9bfa8;font-size:15px;text-wrap:pretty">{{ rl.body }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="max-width:1280px;margin:0 auto;padding:80px 32px 96px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:16px">
+    <sc-for list="{{ explore }}" as="ex" hint-placeholder-count="4">
+      <div data-reveal="1" onClick="{{ ex.go }}" style="cursor:pointer;border:1px solid #2e2a22;padding:24px;display:flex;flex-direction:column;gap:10px;min-height:170px;transition:border-color .2s,background .2s" style-hover="border-color:#e2553a;background:#1b1813">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#e2553a">{{ ex.num }}</div>
+        <div style="font-family:'Instrument Serif',serif;font-size:28px;line-height:1.1">{{ ex.title }}</div>
+        <div style="color:#a89d86;font-size:14px;margin-top:auto">{{ ex.body }}</div>
+      </div>
+    </sc-for>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isT1 }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="02 How it works" style="max-width:1280px;margin:0 auto;padding:72px 32px 96px">
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:32px;flex-wrap:wrap;margin-bottom:40px">
+    <div style="display:flex;flex-direction:column;gap:16px;max-width:720px">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#6fa58f">02 · The pipeline</div>
+      <h2 data-scramble="1" style="margin:0;font-family:'Instrument Serif',serif;font-weight:400;font-size:clamp(40px,5vw,72px);line-height:1">Nine stages. <em style="color:#e2553a">One command.</em></h2>
+      <p style="margin:0;color:#c9bfa8;font-size:17px">Every stage can be re-run safely and resumed. If an optional Apertus stage fails, the deterministic dataset is still built. A run manifest records the status, runtime and output hash of every stage.</p>
+    </div>
+    <button onClick="{{ runPipe }}" style="border:none;cursor:pointer;background:#e2553a;color:#12100c;padding:14px 22px;font-weight:600;border-radius:2px;font-family:'IBM Plex Mono',monospace;font-size:13px" style-hover="background:#eee4cc">{{ pipeBtn }}</button>
+  </div>
+
+  <div style="background:#0d0b08;border:1px solid #2e2a22;padding:14px 18px;font-family:'IBM Plex Mono',monospace;font-size:13px;color:#a89d86;margin-bottom:28px;overflow-x:auto;white-space:nowrap"><span style="color:#6fa58f">$</span> PYTHONPATH=src python -m archai.pipeline <span style="color:#c9a45c">--llm-sample 60 --agent-sample 30</span></div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:28px;align-items:start">
+    <div style="display:flex;flex-direction:column;border:1px solid #2e2a22;position:relative">
+      <div style="position:absolute;left:28px;top:0;bottom:0;width:1px;background:#2e2a22;pointer-events:none"></div>
+      <div style="position:absolute;left:28px;top:0;width:1px;background:linear-gradient(180deg,rgba(226,85,58,0),#e2553a);height:100%;transform-origin:top;transform:scaleY({{ railHs }});pointer-events:none;z-index:2"></div>
+      <div style="position:absolute;left:23px;top:0;bottom:0;width:11px;pointer-events:none;z-index:3;opacity:{{ railOp }};transform:translate3d(0,{{ railH }},0)"><div style="width:11px;height:11px;margin-top:-5px;border-radius:50%;background:#e2553a;box-shadow:0 0 16px #e2553a,0 0 40px rgba(226,85,58,0.6)"></div></div>
+      <sc-for list="{{ stages }}" as="st" hint-placeholder-count="9">
+        <div data-reveal="1" onClick="{{ st.select }}" style="cursor:pointer;display:grid;grid-template-columns:32px 1fr auto;gap:14px;align-items:center;padding:14px 18px;border-bottom:1px solid #2e2a22;position:relative;transition:background .2s;background:{{ st.rowBg }}" style-hover="background:#1b1813">
+          <div style="position:absolute;left:0;bottom:0;height:2px;background:{{ st.barCol }};width:100%;transform-origin:left;transform:scaleX({{ st.bar }})"></div>
+          <div style="width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-family:'IBM Plex Mono',monospace;transition:all .25s;border:1px solid {{ st.dotBd }};background:{{ st.dotBg }};color:{{ st.dotFg }}">{{ st.mark }}</div>
+          <div style="display:flex;flex-direction:column;gap:2px;min-width:0">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:14px;color:{{ st.nameCol }}">{{ st.id }}</div>
+            <div style="font-size:12px;color:#7d735f">{{ st.mod }}</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;padding:3px 7px;border-radius:2px;color:{{ st.whoCol }};border:1px solid {{ st.whoCol }}">{{ st.who }}</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#a89d86;min-width:56px;text-align:right">{{ st.time }}</span>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:20px">
+      <div style="border:1px solid #2e2a22;background:#16130f;padding:28px;display:flex;flex-direction:column;gap:14px;min-height:250px">
+        <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#e2553a">stage {{ sel.idx }} / 9</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:{{ sel.whoCol }}">decided by {{ sel.who }}</div>
+        </div>
+        <div style="font-family:'Instrument Serif',serif;font-size:38px;line-height:1.05">{{ sel.label }}</div>
+        <div style="color:#c9bfa8;font-size:16px;text-wrap:pretty">{{ sel.desc }}</div>
+        <div style="margin-top:auto;display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-family:'IBM Plex Mono',monospace;font-size:12px;border-top:1px solid #2e2a22;padding-top:14px">
+          <span style="color:#7d735f">output</span><span style="color:#eee4cc;word-break:break-all">{{ sel.out }}</span>
+          <span style="color:#7d735f">sha256</span><span style="color:#c9a45c">{{ sel.hash }}</span>
+          <span style="color:#7d735f">runtime</span><span style="color:#eee4cc">{{ sel.sec }}</span>
+        </div>
+      </div>
+      <div style="background:#0d0b08;border:1px solid #2e2a22;padding:18px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;line-height:1.75;min-height:240px">
+        <div style="color:#7d735f;margin-bottom:6px">run_manifest.json · live</div>
+        <sc-for list="{{ logLines }}" as="ln" hint-placeholder-count="0">
+          <div style="white-space:pre;overflow:hidden;text-overflow:ellipsis;color:{{ ln.col }}">{{ ln.text }}</div>
+        </sc-for>
+        <div style="color:#e2553a;opacity:{{ pulse }}">▌</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:64px;display:flex;flex-direction:column;gap:20px">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#a89d86">Built to survive</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:1px;background:#2e2a22;border:1px solid #2e2a22">
+      <sc-for list="{{ robust }}" as="rb" hint-placeholder-count="6">
+        <div data-reveal="1" style="background:#12100c;padding:22px;display:flex;flex-direction:column;gap:8px">
+          <div style="font-family:'Instrument Serif',serif;font-size:22px">{{ rb.t }}</div>
+          <div style="font-size:14px;color:#a89d86;text-wrap:pretty">{{ rb.b }}</div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isT2 }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="03 Agent loop" style="max-width:1440px;margin:0 auto;padding:22px 32px 28px;display:flex;flex-direction:column;gap:14px">
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap">
+    <div style="display:flex;flex-direction:column;gap:6px;min-width:0;max-width:640px">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#6fa58f">03 · agent-v4 · no framework · one record, live</div>
+      <h2 data-scramble="1" style="margin:0;font-family:'Instrument Serif',serif;font-weight:400;font-size:clamp(32px,3.4vw,50px);line-height:1">Apertus orchestrates. <em style="color:#e2553a">Code executes.</em></h2>
+    </div>
+    <div style="display:flex;gap:8px;align-items:stretch;flex-wrap:wrap">
+      <sc-for list="{{ agentStats }}" as="sx" hint-placeholder-count="4">
+        <div style="border:1px solid #2e2a22;padding:6px 12px;display:flex;flex-direction:column;min-width:84px;background:{{ sx.bg }}">
+          <div style="display:flex;align-items:baseline;gap:4px"><span style="font-family:'Instrument Serif',serif;font-size:26px;line-height:1;color:{{ sx.c }}">{{ sx.v }}</span><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#7d735f">{{ sx.m }}</span></div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:#7d735f">{{ sx.l }}</div>
+        </div>
+      </sc-for>
+      <div style="display:flex;gap:6px;align-items:center">
+        <button onClick="{{ agentPrev }}" style="cursor:pointer;background:transparent;color:#eee4cc;border:1px solid #4a4336;padding:12px 14px;border-radius:2px;font-family:'IBM Plex Mono',monospace;font-size:13px" style-hover="border-color:#eee4cc">←</button>
+        <button onClick="{{ agentToggle }}" style="border:none;cursor:pointer;background:#e2553a;color:#12100c;padding:12px 18px;font-weight:600;border-radius:2px;font-family:'IBM Plex Mono',monospace;font-size:13px;min-width:112px" style-hover="background:#eee4cc">{{ agentBtn }}</button>
+        <button onClick="{{ agentNext }}" style="cursor:pointer;background:transparent;color:#eee4cc;border:1px solid #4a4336;padding:12px 14px;border-radius:2px;font-family:'IBM Plex Mono',monospace;font-size:13px" style-hover="border-color:#eee4cc">→</button>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px">
+    <sc-for list="{{ agentPills }}" as="ap" hint-placeholder-count="7">
+      <div onClick="{{ ap.jump }}" style="cursor:pointer;display:flex;flex-direction:column;gap:5px;padding-top:4px">
+        <div style="height:3px;background:#2e2a22"><div style="height:3px;background:{{ ap.c }};width:100%;transform-origin:left;transform:scaleX({{ ap.w }})"></div></div>
+        <div style="display:flex;gap:6px;font-family:'IBM Plex Mono',monospace;font-size:11px;white-space:nowrap;overflow:hidden;color:{{ ap.fg }}"><span style="color:#e2553a">{{ ap.n }}</span><span>{{ ap.l }}</span></div>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:stretch">
+    <div style="flex:1.9 1 600px;min-width:0;display:flex;flex-direction:column;gap:12px">
+      <div ref="{{ flowRef }}" style="position:relative;width:100%;aspect-ratio:1000/600;contain:layout paint;background-color:#0f0d0a;background-image:radial-gradient(#2a251d 1px,transparent 1px);background-size:22px 22px;border:1px solid #2e2a22;overflow:hidden">
+        <div style="position:absolute;inset:0;pointer-events:none;transform:translate3d(0,{{ flowScan }},0)"><div style="height:1px;background:linear-gradient(90deg,rgba(226,85,58,0),rgba(226,85,58,0.5),rgba(226,85,58,0))"></div></div>
+        <div style="position:absolute;inset:0;background:#e2553a;pointer-events:none;opacity:{{ flowFlash }}"></div>
+        <sc-for list="{{ fEdges }}" as="fe" hint-placeholder-count="0">
+          <svg viewBox="0 0 1000 600" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none"><path d="{{ fe.d }}" fill="none" stroke="{{ fe.stroke }}" stroke-width="{{ fe.sw }}" stroke-dasharray="{{ fe.dash }}" stroke-dashoffset="{{ fe.off }}" vector-effect="non-scaling-stroke"></path></svg>
+        </sc-for>
+        <sc-for list="{{ fLabels }}" as="fl2" hint-placeholder-count="0">
+          <div style="position:absolute;transform:translate(-50%,-50%);font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.06em;white-space:nowrap;pointer-events:none;left:{{ fl2.x }};top:{{ fl2.y }};color:{{ fl2.c }}">{{ fl2.t }}</div>
+        </sc-for>
+        <sc-for list="{{ fNodes }}" as="fn" hint-placeholder-count="0">
+          <div onClick="{{ fn.jump }}" style="position:absolute;z-index:2;cursor:pointer;left:{{ fn.x }};top:{{ fn.y }};width:{{ fn.w }};transform:translate(-50%,-50%) translateX({{ fn.dx }}) scale({{ fn.sc }})">
+            <div style="position:absolute;inset:-5px;pointer-events:none;border:1px solid {{ fn.col }};opacity:{{ fn.ringO }};transform:scale({{ fn.ringS }})"></div>
+            <div style="display:flex;flex-direction:column;gap:3px;padding:{{ fn.pad }};transition:border-color .2s,background .2s;border:1px solid {{ fn.bd }};background:{{ fn.bg }};box-shadow:{{ fn.glow }};opacity:{{ fn.op }}">
+              <div style="justify-content:space-between;align-items:center;gap:6px;display:{{ fn.whoD }}"><span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:{{ fn.col }}">{{ fn.who }}</span><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:{{ fn.col }}">{{ fn.mark }}</span></div>
+              <div style="line-height:1.1;color:#eee4cc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:{{ fn.lf }};font-size:{{ fn.lfs }}">{{ fn.label }}</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#a89d86;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:{{ fn.subD }}">{{ fn.sub }}</div>
+              <div style="height:2px;background:#2e2a22;display:{{ fn.barD }}"><div style="height:2px;background:{{ fn.col }};width:100%;transform-origin:left;transform:scaleX({{ fn.bar }})"></div></div>
+            </div>
+          </div>
+        </sc-for>
+        <sc-for list="{{ fPk }}" as="pk" hint-placeholder-count="0">
+          <div style="position:absolute;z-index:3;border-radius:50%;pointer-events:none;left:0;top:0;transform:translate3d({{ pk.x }},{{ pk.y }},0) translate(-50%,-50%);width:{{ pk.s }};height:{{ pk.s }};background:{{ pk.c }};opacity:{{ pk.o }};box-shadow:{{ pk.g }}"></div>
+        </sc-for>
+        <sc-for list="{{ fTags }}" as="ft" hint-placeholder-count="0">
+          <div style="position:absolute;z-index:4;transform:translate3d({{ ft.x }},{{ ft.y }},0) translate(-50%,-100%);font-family:'IBM Plex Mono',monospace;font-size:11px;padding:2px 6px;background:#12100c;white-space:nowrap;pointer-events:none;left:0;top:0;color:{{ ft.c }};border:1px solid {{ ft.c }}">{{ ft.t }}</div>
+        </sc-for>
+      </div>
+      <div style="background:#e9dfc6;color:#2a241a;padding:12px 16px;border-radius:2px;display:flex;gap:16px;align-items:baseline;flex-wrap:wrap">
+        <div style="font-family:'Instrument Serif',serif;font-size:19px;white-space:nowrap">Record · stapfer</div>
+        <div style="flex:1;min-width:260px;font-family:'IBM Plex Mono',monospace;font-size:0;line-height:1.7">
+          <sc-for list="{{ recSegs }}" as="sg" hint-placeholder-count="12">
+            <span style="font-size:12.5px;line-height:1.7;transition:background .3s,color .3s;background:{{ sg.bg }};color:{{ sg.col }}">{{ sg.t }}</span>
+          </sc-for>
+        </div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#6b5f48">{{ recTag }}</div>
+      </div>
+    </div>
+
+    <div style="flex:1 1 320px;min-width:0;border:1px solid #2e2a22;background:#16130f;padding:20px 22px;display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;padding:3px 8px;border-radius:2px;color:#12100c;background:{{ insp.whoCol }}">{{ insp.who }}</span>
+        <span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#7d735f">{{ insp.n }}</span>
+      </div>
+      <div style="font-family:'Instrument Serif',serif;font-size:32px;line-height:1.05">{{ insp.title }}</div>
+      <div style="color:#a89d86;font-size:14px;text-wrap:pretty">{{ insp.note }}</div>
+      <sc-if value="{{ insp.hasCode }}" hint-placeholder-val="{{ false }}">
+        <div style="background:#0d0b08;padding:12px 14px;font-family:'IBM Plex Mono',monospace;font-size:12px;line-height:1.7;color:#c9bfa8;white-space:pre-wrap;word-break:break-word;min-height:60px;max-height:250px;overflow:auto">{{ insp.code }}</div>
+      </sc-if>
+      <sc-if value="{{ insp.hasTools }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:9px">
+          <sc-for list="{{ insp.tools }}" as="tl" hint-placeholder-count="5">
+            <div style="display:flex;flex-direction:column;gap:4px">
+              <div style="display:flex;justify-content:space-between;gap:10px;font-family:'IBM Plex Mono',monospace;font-size:11.5px;flex-wrap:wrap">
+                <span style="color:#eee4cc">{{ tl.call }}</span><span style="color:#6fa58f;opacity:{{ tl.resOp }}">{{ tl.res }}</span>
+              </div>
+              <div style="height:3px;background:#2e2a22"><div style="height:3px;background:#6fa58f;width:100%;transform-origin:left;transform:scaleX({{ tl.w }})"></div></div>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+      <sc-if value="{{ insp.hasEnts }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <sc-for list="{{ insp.ents }}" as="en" hint-placeholder-count="4">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;padding:6px 10px;border-radius:2px;transition:all .3s;opacity:{{ en.op }};color:{{ en.col }};border:1px solid {{ en.col }};text-decoration:{{ en.deco }}">{{ en.mark }} {{ en.name }}</span>
+          </sc-for>
+        </div>
+      </sc-if>
+      <div style="margin-top:auto;padding-top:12px;border-top:1px dashed #2e2a22;display:flex;gap:14px;flex-wrap:wrap;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#7d735f"><span>max 6 steps</span><span>max 14 calls</span><span>1 feedback round</span><span style="color:#a89d86">click any node to jump</span></div>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isT3 }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="04 Simulator" style="max-width:1280px;margin:0 auto;padding:72px 32px 96px">
+  <div style="display:flex;flex-direction:column;gap:16px;max-width:780px;margin-bottom:40px">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#6fa58f">04 · Q&amp;A simulator · DE / FR / EN</div>
+    <h2 data-scramble="1" style="margin:0;font-family:'Instrument Serif',serif;font-weight:400;font-size:clamp(40px,5vw,72px);line-height:1">Ask the archive. <em style="color:#e2553a">Watch it check itself.</em></h2>
+    <p style="margin:0;color:#c9bfa8;font-size:17px">Type any question or pick one. The simulator runs the answer path: Apertus rewrites the question, code validates the route, a hybrid search finds passages, Apertus answers with [n] citations, and every number is checked against the source it cites.</p>
+  </div>
+
+  <div style="display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start">
+    <div style="display:flex;flex-direction:column;gap:8px;flex:1 1 300px;max-width:400px">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#7d735f;margin-bottom:4px">Questions</div>
+      <sc-for list="{{ simQs }}" as="sq" hint-placeholder-count="5">
+        <div data-reveal="1" onClick="{{ sq.pick }}" style="cursor:pointer;padding:16px 18px;display:flex;flex-direction:column;gap:6px;transition:all .2s;border:1px solid {{ sq.bd }};background:{{ sq.bg }}" style-hover="border-color:#e2553a">
+          <div style="display:flex;gap:8px;align-items:center">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;padding:2px 6px;border:1px solid #4a4336;color:#a89d86;border-radius:2px">{{ sq.lang }}</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:{{ sq.kindCol }}">{{ sq.kind }}</span>
+          </div>
+          <div style="font-size:15px;color:#eee4cc">{{ sq.q }}</div>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="flex:3 1 560px;min-width:0;border:1px solid #2e2a22;background:#16130f;position:relative;overflow:hidden">
+      <div style="position:absolute;right:28px;top:96px;z-index:4;pointer-events:none;border:4px double {{ stampCol }};color:{{ stampCol }};padding:10px 18px;font-family:'IBM Plex Mono',monospace;font-weight:500;font-size:22px;letter-spacing:0.18em;text-transform:uppercase;opacity:{{ stampOp }};transform:rotate(-12deg) scale({{ stampSc }})">{{ stampTxt }}</div>
+      <div style="position:absolute;inset:0;pointer-events:none;z-index:3;transform:translate3d(0,{{ sweepY }},0)"><div style="height:120px;background:linear-gradient(180deg,rgba(111,165,143,0),rgba(111,165,143,0.07),rgba(111,165,143,0))"></div></div>
+      <div style="padding:16px 20px;border-bottom:1px solid #2e2a22;display:flex;flex-direction:column;gap:10px;background:#12100c">
+        <div style="display:flex;gap:10px;align-items:flex-end;padding:10px 10px 10px 14px;background:#0d0b08;transition:border-color .2s,box-shadow .2s;border:1px solid {{ chatBd }};box-shadow:{{ chatGlow }}">
+          <textarea value="{{ chatText }}" onChange="{{ chatChange }}" onKeyDown="{{ chatKey }}" rows="2" placeholder="Ask Apertus about the archives, in German, French or English…" style="flex:1;min-width:0;resize:none;background:transparent;border:none;outline:none;color:#eee4cc;font-family:'IBM Plex Sans',sans-serif;font-size:15px;line-height:1.5"></textarea>
+          <button onClick="{{ chatSend }}" style="border:none;cursor:pointer;padding:10px 16px;border-radius:2px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;white-space:nowrap;transition:background .2s;background:{{ chatBtnBg }};color:#12100c" style-hover="background:#eee4cc">{{ chatBtn }}</button>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#6fa58f;letter-spacing:0.06em;margin-right:4px">POST /api/ask</span>
+          <sc-for list="{{ chatChips }}" as="cc" hint-placeholder-count="4">
+            <button onClick="{{ cc.go }}" style="cursor:pointer;padding:4px 10px;border-radius:999px;border:1px solid #4a4336;background:transparent;color:#a89d86;font-size:12px;transition:all .2s" style-hover="border-color:#e2553a;color:#eee4cc">{{ cc.t }}</button>
+          </sc-for>
+          <span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:10px;color:{{ chatStatusCol }}">{{ chatStatus }}</span>
+        </div>
+      </div>
+      <div style="padding:22px 24px;border-bottom:1px solid #2e2a22;display:flex;flex-direction:column;gap:16px">
+        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+          <div style="flex:1;min-width:220px;font-family:'Instrument Serif',serif;font-size:28px;line-height:1.15">“{{ cur.q }}”</div>
+          <button onClick="{{ simRun }}" style="border:none;cursor:pointer;background:#e2553a;color:#12100c;padding:12px 18px;font-weight:600;border-radius:2px;font-family:'IBM Plex Mono',monospace;font-size:13px" style-hover="background:#eee4cc">↻ Re-run</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px">
+          <sc-for list="{{ simStages }}" as="ss" hint-placeholder-count="5">
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div style="height:3px;background:#2e2a22"><div style="height:3px;background:{{ ss.col }};width:100%;transform-origin:left;transform:scaleX({{ ss.w }})"></div></div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:{{ ss.txt }}">{{ ss.label }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="padding:22px 24px;display:flex;flex-direction:column;gap:22px">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:18px">
+          <div style="display:flex;flex-direction:column;gap:8px;opacity:{{ simOp.rw }};transition:opacity .3s">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#c9a45c;letter-spacing:0.08em;text-transform:uppercase">① Apertus · rewrite</div>
+            <div style="background:#0d0b08;padding:12px 14px;font-family:'IBM Plex Mono',monospace;font-size:12px;line-height:1.6;color:#c9bfa8;white-space:pre-wrap;word-break:break-word;min-height:84px">{{ rwShown }}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;opacity:{{ simOp.rt }};transition:opacity .3s">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#6fa58f;letter-spacing:0.08em;text-transform:uppercase">② Code · validate route</div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <sc-for list="{{ routeRows }}" as="rr" hint-placeholder-count="3">
+                <div style="display:grid;grid-template-columns:72px 1fr 18px;gap:10px;font-family:'IBM Plex Mono',monospace;font-size:12px;padding:7px 10px;border:1px solid #2e2a22;transition:opacity .3s;opacity:{{ rr.op }}">
+                  <span style="color:#7d735f">{{ rr.k }}</span><span style="color:#eee4cc">{{ rr.v }}</span><span style="color:{{ rr.col }}">{{ rr.m }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:8px;opacity:{{ simOp.rv }};transition:opacity .3s">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#6fa58f;letter-spacing:0.08em;text-transform:uppercase">③ Code · hybrid TF-IDF search · {{ cur.poolNote }}</div>
+          <sc-for list="{{ passages }}" as="pg" hint-placeholder-count="3">
+            <div style="display:grid;grid-template-columns:28px minmax(0,1fr) 120px;gap:12px;align-items:center;padding:10px 12px;border:1px solid #2e2a22;background:#12100c">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#e2553a">[{{ pg.n }}]</span>
+              <div style="display:flex;flex-direction:column;gap:3px;min-width:0">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#a89d86">{{ pg.sig }}</span>
+                <span style="font-size:14px;color:#eee4cc">{{ pg.txt }}</span>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#a89d86">{{ pg.score }}</span>
+                <div style="width:100%;height:3px;background:#2e2a22"><div style="height:3px;background:#6fa58f;width:100%;transform-origin:left;transform:scaleX({{ pg.w }})"></div></div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:10px;opacity:{{ simOp.an }};transition:opacity .3s">
+          <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#c9a45c;letter-spacing:0.08em;text-transform:uppercase">④ Apertus · answer · {{ cur.source }}</div>
+          </div>
+          <div style="font-family:'Instrument Serif',serif;font-size:26px;line-height:1.35;color:#eee4cc;min-height:72px;text-wrap:pretty">{{ ansShown }}<span style="color:#e2553a;opacity:{{ caret }}">▌</span></div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:18px;border-top:1px solid #2e2a22;padding-top:18px;opacity:{{ simOp.ck }};transition:opacity .3s">
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#6fa58f;letter-spacing:0.08em;text-transform:uppercase">⑤ Code · number &amp; citation check</div>
+            <sc-for list="{{ checks }}" as="ck" hint-placeholder-count="2">
+              <div style="display:flex;gap:10px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:#c9bfa8"><span style="color:{{ ck.col }}">{{ ck.m }}</span><span>{{ ck.t }}</span></div>
+            </sc-for>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#7d735f;letter-spacing:0.08em;text-transform:uppercase">Verdict</div>
+            <div style="font-family:'Instrument Serif',serif;font-size:28px;color:{{ verdictCol }}">{{ cur.verdict }}</div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <div style="flex:1;height:6px;background:#2e2a22"><div style="height:6px;background:{{ verdictCol }};transition:transform .8s cubic-bezier(.2,.7,.2,1);width:100%;transform-origin:left;transform:scaleX({{ confW }})"></div></div>
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#a89d86">{{ cur.confLabel }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div style="margin-top:16px;font-size:13px;color:#7d735f">Live: what you type, a chip or an example goes to <span style="font-family:'IBM Plex Mono',monospace">POST /api/ask</span> on the full index (Apertus 70B; code checks every number and citation). Only if the server cannot be reached does a generated stand-in answer, marked “demo stand-in”. The first example on screen is illustrative until you run one.</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isT4 }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="05 Evidence" style="max-width:1280px;margin:0 auto;padding:72px 32px 96px">
+  <div style="display:flex;flex-direction:column;gap:16px;max-width:780px;margin-bottom:48px">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#6fa58f">05 · Measured, with scope</div>
+    <h2 data-scramble="1" style="margin:0;font-family:'Instrument Serif',serif;font-weight:400;font-size:clamp(40px,5vw,72px);line-height:1">Every number states <em style="color:#e2553a">what it measured.</em></h2>
+    <p style="margin:0;color:#c9bfa8;font-size:17px">These come from metrics.json. Model figures are measurements on the stated sample, not an overall accuracy.</p>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:1px;background:#2e2a22;border:1px solid #2e2a22;margin-bottom:28px">
+    <sc-for list="{{ bigStats }}" as="bs" hint-placeholder-count="5">
+      <div data-reveal="1" style="background:#16130f;padding:26px 24px;display:flex;flex-direction:column;gap:8px">
+        <div style="font-family:'Instrument Serif',serif;font-size:56px;line-height:1;font-variant-numeric:tabular-nums;color:{{ bs.col }}">{{ bs.v }}</div>
+        <div style="font-size:15px;color:#eee4cc">{{ bs.l }}</div>
+        <div style="font-size:12px;color:#7d735f;font-family:'IBM Plex Mono',monospace">{{ bs.s }}</div>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,400px),1fr));gap:28px">
+    <sc-for list="{{ charts }}" as="ch" hint-placeholder-count="4">
+      <div data-reveal="1" style="border:1px solid #2e2a22;padding:26px;display:flex;flex-direction:column;gap:18px">
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div style="font-family:'Instrument Serif',serif;font-size:28px;line-height:1.1">{{ ch.title }}</div>
+          <div style="font-size:13px;color:#7d735f">{{ ch.scope }}</div>
+        </div>
+        <sc-for list="{{ ch.rows }}" as="r" hint-placeholder-count="3">
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div style="display:flex;justify-content:space-between;gap:10px;font-size:14px">
+              <span style="color:#c9bfa8">{{ r.l }}</span><span style="font-family:'IBM Plex Mono',monospace;color:{{ r.col }}">{{ r.v }}</span>
+            </div>
+            <div style="height:8px;background:#221e18;position:relative">
+              <div style="position:absolute;left:0;top:0;bottom:0;background:#4a4336;width:100%;transform-origin:left;transform:scaleX({{ r.wBefore }})"></div>
+              <div style="position:absolute;left:0;top:0;bottom:0;background:{{ r.col }};width:100%;transform-origin:left;transform:scaleX({{ r.w }})"></div>
+            </div>
+          </div>
+        </sc-for>
+        <div style="font-size:13px;color:#a89d86;border-top:1px solid #2e2a22;padding-top:12px;text-wrap:pretty">{{ ch.note }}</div>
+      </div>
+    </sc-for>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isT5 }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="06 Play" style="max-width:1280px;margin:0 auto;padding:72px 32px 96px">
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:32px;flex-wrap:wrap;margin-bottom:36px">
+    <div style="display:flex;flex-direction:column;gap:16px;max-width:720px">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#c9a45c">06 · Play the archive</div>
+      <h2 data-scramble="1" style="margin:0;font-family:'Instrument Serif',serif;font-weight:400;font-size:clamp(40px,5vw,72px);line-height:1">Think like the <em style="color:#e2553a">validator.</em></h2>
+      <p style="margin:0;color:#c9bfa8;font-size:17px">Two tracks. Casual games anyone can play in a minute, and researcher games that recreate the real checks: query routing, grounding and confidence calibration. Earn XP and unlock seals across the whole site.</p>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:12px;margin:-12px 0 14px">
+    <sc-for list="{{ tracks }}" as="tr" hint-placeholder-count="2">
+      <div onClick="{{ tr.go }}" style="cursor:pointer;padding:18px 20px;display:flex;gap:16px;align-items:center;transition:all .25s;border:1px solid {{ tr.bd }};background:{{ tr.bg }}" style-hover="border-color:#c9a45c">
+        <div style="width:46px;height:46px;border-radius:50%;display:grid;place-items:center;font-family:'IBM Plex Mono',monospace;font-size:13px;flex:none;border:1px dashed #4a4336;transition:all .25s;background:{{ tr.ic }};color:{{ tr.icf }};transform:rotate({{ tr.rot }})">{{ tr.n }}</div>
+        <div style="display:flex;flex-direction:column;gap:2px;min-width:0">
+          <div style="font-family:'Instrument Serif',serif;font-size:28px;line-height:1.05">{{ tr.t }}</div>
+          <div style="font-size:13px;color:#a89d86">{{ tr.d }}</div>
+        </div>
+        <div style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:11px;white-space:nowrap;color:{{ tr.tagc }}">{{ tr.tag }}</div>
+      </div>
+    </sc-for>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:26px">
+    <sc-for list="{{ modes }}" as="md" hint-placeholder-count="3">
+      <button onClick="{{ md.go }}" style="cursor:pointer;padding:10px 16px;font-family:'IBM Plex Mono',monospace;font-size:13px;transition:all .2s;display:flex;gap:10px;align-items:baseline;border-radius:2px;border:1px solid {{ md.bd }};background:{{ md.bg }};color:{{ md.fg }}"><span>{{ md.label }}</span><span style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:{{ md.sc }}">{{ md.sub }}</span></button>
+    </sc-for>
+  </div>
+
+  <sc-if value="{{ isRush }}" hint-placeholder-val="{{ true }}">
+  <div style="display:flex;flex-wrap:wrap;gap:20px;align-items:stretch">
+    <div ref="{{ rushRef }}" style="flex:2.4 1 560px;min-width:0;position:relative;height:560px;overflow:hidden;contain:layout paint;border:1px solid #2e2a22;background-color:#0f0d0a;background-image:radial-gradient(#221e18 1px,transparent 1px);background-size:20px 20px;user-select:none;transform:{{ rush.shake }}">
+      <div style="position:absolute;inset:0;pointer-events:none;z-index:4;box-shadow:inset 0 0 80px rgba(226,85,58,0.55);opacity:{{ rush.dangerO }}"></div>
+      <div style="position:absolute;left:0;right:0;top:0;height:100px;background:#e9dfc6;color:#2a241a;padding:12px 18px;display:flex;flex-direction:column;gap:5px;z-index:3;box-shadow:0 10px 30px rgba(0,0,0,0.55)">
+        <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline"><span style="font-family:'Instrument Serif',serif;font-size:19px">Source · {{ rush.recName }}</span><span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#6b5f48">only what is written here is grounded</span></div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:12.5px;line-height:1.5">{{ rush.src }}</div>
+      </div>
+      <div style="position:absolute;inset:0;pointer-events:none;background:rgba(111,165,143,0.1);opacity:{{ rush.powO }}"></div>
+      <div style="position:absolute;left:0;right:0;top:100px;height:3px;pointer-events:none;background:#6fa58f;opacity:{{ rush.powO }};transform-origin:left;transform:scaleX({{ rush.powW }})"></div>
+      <div style="position:absolute;left:0;right:0;top:506px;border-top:2px dashed #e2553a;opacity:0.75;pointer-events:none"></div>
+      <div style="position:absolute;left:16px;top:516px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#e2553a;pointer-events:none;letter-spacing:0.06em">▼ records.jsonl · whatever crosses this line gets exported</div>
+      <sc-for list="{{ rush.tokens }}" as="tk" hint-placeholder-count="0">
+        <button onMouseDown="{{ tk.hit }}" style="position:absolute;z-index:2;padding:6px 12px;border-radius:2px;cursor:crosshair;display:flex;flex-direction:column;align-items:flex-start;gap:1px;white-space:nowrap;left:0;top:0;transform:{{ tk.tf }};opacity:{{ tk.o }};border:1px solid {{ tk.bd }};background:{{ tk.bg }};color:{{ tk.fg }};box-shadow:{{ tk.glow }}">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:{{ tk.kc }}">{{ tk.kind }}</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:14px;text-decoration:{{ tk.deco }}">{{ tk.txt }}</span>
+        </button>
+      </sc-for>
+      <sc-for list="{{ rush.pops }}" as="rp" hint-placeholder-count="0">
+        <div style="position:absolute;z-index:4;left:0;top:0;transform:translate3d({{ rp.x }},{{ rp.y }},0) translate(-50%,-50%);font-family:'IBM Plex Mono',monospace;font-weight:500;font-size:14px;white-space:nowrap;pointer-events:none;text-shadow:0 0 14px rgba(0,0,0,0.9);color:{{ rp.c }};opacity:{{ rp.o }}">{{ rp.t }}</div>
+      </sc-for>
+      <div style="position:absolute;left:50%;top:46%;z-index:5;pointer-events:none;font-family:'Instrument Serif',serif;font-size:clamp(26px,3vw,40px);color:#c9a45c;white-space:nowrap;text-shadow:0 0 30px rgba(201,164,92,0.5);opacity:{{ rush.banO }};transform:translate(-50%,-50%) scale({{ rush.banS }})">{{ rush.banT }}</div>
+
+      <sc-if value="{{ rush.isIdle }}" hint-placeholder-val="{{ true }}">
+        <div style="position:absolute;inset:0;z-index:6;background:rgba(15,13,10,0.86);display:flex;align-items:center;justify-content:center;padding:24px">
+          <div style="max-width:520px;display:flex;flex-direction:column;gap:18px;align-items:flex-start">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#c9a45c">Arcade · 3 seals · endless</div>
+            <div style="font-family:'Instrument Serif',serif;font-size:clamp(48px,6vw,76px);line-height:0.95">Validator <em style="color:#e2553a">Rush</em></div>
+            <div style="display:flex;flex-direction:column;gap:10px;font-size:15px;color:#c9bfa8">
+              <div style="display:flex;gap:12px"><span style="font-family:'IBM Plex Mono',monospace;color:#e2553a">01</span><span>Claims extracted by Apertus fall toward the export line.</span></div>
+              <div style="display:flex;gap:12px"><span style="font-family:'IBM Plex Mono',monospace;color:#e2553a">02</span><span>Click every claim that is <b style="color:#eee4cc">not</b> in the source. Let the grounded ones through.</span></div>
+              <div style="display:flex;gap:12px"><span style="font-family:'IBM Plex Mono',monospace;color:#e2553a">03</span><span>A leaked hallucination or a wrong rejection costs a seal. Combos multiply your score, up to ×5.</span></div>
+              <div style="display:flex;gap:12px"><span style="font-family:'IBM Plex Mono',monospace;color:#e2553a">04</span><span><b style="color:#6fa58f">Space</b> runs verify_in_source(): slow motion, and the fakes show up red.</span></div>
+            </div>
+            <button onClick="{{ rushStart }}" style="border:none;cursor:pointer;background:#e2553a;color:#12100c;padding:16px 28px;font-weight:600;border-radius:2px;font-family:'IBM Plex Mono',monospace;font-size:14px" style-hover="background:#eee4cc">▶ Start shift</button>
+          </div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ rush.isOver }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;inset:0;z-index:6;background:rgba(15,13,10,0.9);display:flex;align-items:center;justify-content:center;padding:24px;opacity:{{ rush.overO }}">
+          <div style="display:flex;flex-direction:column;gap:14px;align-items:center;text-align:center">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#e2553a">Archive sealed</div>
+            <div style="font-family:'Instrument Serif',serif;font-size:clamp(64px,8vw,104px);line-height:0.9;color:#eee4cc;font-variant-numeric:tabular-nums">{{ rush.overScore }}</div>
+            <div style="font-family:'Instrument Serif',serif;font-size:30px;color:#c9a45c">Rank: {{ rush.rank }}</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#a89d86">{{ rush.overLine }}</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#6fa58f">{{ rush.bestLine }}</div>
+            <button onClick="{{ rushStart }}" style="margin-top:8px;border:none;cursor:pointer;background:#e2553a;color:#12100c;padding:14px 24px;font-weight:600;border-radius:2px;font-family:'IBM Plex Mono',monospace;font-size:14px" style-hover="background:#eee4cc">↻ Another shift</button>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+
+    <div style="flex:1 1 260px;display:flex;flex-direction:column;gap:10px">
+      <div style="border:1px solid #2e2a22;background:#16130f;padding:16px 18px;display:flex;flex-direction:column;gap:2px">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:#7d735f">Score</div>
+        <div style="font-family:'Instrument Serif',serif;font-size:60px;line-height:1;font-variant-numeric:tabular-nums;transform-origin:left;transform:scale({{ rush.scoreSc }})">{{ rush.score }}</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#a89d86">best {{ rush.best }}</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div style="border:1px solid #2e2a22;padding:14px 16px;display:flex;flex-direction:column;gap:6px">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:#7d735f">Combo</div>
+          <div style="font-family:'Instrument Serif',serif;font-size:44px;line-height:1;color:#c9a45c;transform-origin:left;transform:scale({{ rush.multSc }})">×{{ rush.mult }}</div>
+          <div style="height:3px;background:#2e2a22"><div style="height:3px;background:#c9a45c;width:100%;transform-origin:left;transform:scaleX({{ rush.comboW }})"></div></div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#7d735f">streak {{ rush.combo }}</div>
+        </div>
+        <div style="border:1px solid #2e2a22;padding:14px 16px;display:flex;flex-direction:column;gap:8px">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:#7d735f">Seals</div>
+          <div style="display:flex;gap:6px">
+            <sc-for list="{{ rush.seals }}" as="sl" hint-placeholder-count="3">
+              <div style="width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:13px;transition:all .3s;background:{{ sl.c }};color:{{ sl.f }};transform:scale({{ sl.s }})">✚</div>
+            </sc-for>
+          </div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#7d735f">lose 3 and the shift ends</div>
+        </div>
+      </div>
+      <div style="border:1px solid #2e2a22;padding:14px 16px;display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;justify-content:space-between;gap:8px;font-family:'IBM Plex Mono',monospace;font-size:11px"><span style="color:#eee4cc">Record {{ rush.lvl }} · speed ×{{ rush.speed }}</span><span style="color:#7d735f">6 fakes to clear</span></div>
+        <div style="display:flex;gap:4px">
+          <sc-for list="{{ rush.pips }}" as="rpp" hint-placeholder-count="6">
+            <div style="flex:1;height:6px;transition:background .25s;background:{{ rpp.c }}"></div>
+          </sc-for>
+        </div>
+      </div>
+      <button onClick="{{ rushPower }}" style="cursor:pointer;text-align:left;padding:14px 16px;border-radius:2px;display:flex;flex-direction:column;gap:4px;transition:all .2s;background:{{ rush.pBg }};border:1px solid {{ rush.pBd }};color:#eee4cc">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:13px">verify_in_source()</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#a89d86">{{ rush.pLabel }}</span>
+      </button>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:#2e2a22;border:1px solid #2e2a22">
+        <sc-for list="{{ rush.stats }}" as="rs" hint-placeholder-count="4">
+          <div style="background:#12100c;padding:10px 12px;display:flex;flex-direction:column">
+            <span style="font-family:'Instrument Serif',serif;font-size:26px;line-height:1.1;color:{{ rs.c }}">{{ rs.v }}</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#7d735f;text-transform:uppercase;letter-spacing:0.08em">{{ rs.l }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ isGeo }}" hint-placeholder-val="{{ false }}">
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:28px;align-items:start">
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div style="display:flex;gap:6px">
+        <sc-for list="{{ geoPips }}" as="gp" hint-placeholder-count="5">
+          <div style="flex:1;height:6px;transition:background .3s;background:{{ gp.c }}"></div>
+        </sc-for>
+      </div>
+      <div style="background:#e9dfc6;color:#2a241a;padding:26px 28px;border-radius:3px;box-shadow:0 24px 60px rgba(0,0,0,0.4);transform:rotate({{ geo.tilt }})">
+        <div style="display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid #b9ab8c;padding-bottom:10px;margin-bottom:16px;flex-wrap:wrap">
+          <div style="font-family:'Instrument Serif',serif;font-size:24px">Round {{ geo.round }} / 5</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#6b5f48;align-self:center">{{ geo.lang }} · place names masked</div>
+        </div>
+        <div style="font-family:'Instrument Serif',serif;font-size:24px;line-height:1.4;min-height:136px">{{ geo.text }}</div>
+        <sc-if value="{{ geo.showHint }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top:14px;padding:10px 12px;background:#2a241a;color:#e9dfc6;font-size:14px">Hint: {{ geo.hint }}</div>
+        </sc-if>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <button onClick="{{ geoHint }}" style="cursor:pointer;background:transparent;color:#eee4cc;border:1px solid #4a4336;padding:12px 16px;border-radius:2px;font-family:'IBM Plex Mono',monospace;font-size:13px" style-hover="border-color:#c9a45c">Hint (−150)</button>
+        <button onClick="{{ geoNext }}" style="border:none;cursor:pointer;padding:12px 18px;border-radius:2px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;background:{{ geo.nextBg }};color:#12100c;opacity:{{ geo.nextOp }}">{{ geo.nextLabel }}</button>
+        <div style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:13px;color:#a89d86">score <span style="color:#c9a45c;font-size:20px">{{ geo.total }}</span> / 5000</div>
+      </div>
+      <div style="font-size:15px;min-height:24px;color:{{ geo.resCol }};font-family:'Instrument Serif',serif;font-size:26px">{{ geo.result }}</div>
+    </div>
+
+    <div style="border:1px solid #2e2a22;background:#16130f;padding:16px">
+      <div style="position:relative;width:100%;padding-top:66.7%;background:radial-gradient(ellipse at 50% 60%,#1f1b15,#14110d)">
+        <sc-for list="{{ grid }}" as="gd" hint-placeholder-count="0">
+          <div style="position:absolute;background:#2a251d;left:{{ gd.l }};top:{{ gd.t }};width:{{ gd.w }};height:{{ gd.h }}"></div>
+        </sc-for>
+        <sc-if value="{{ geo.hasLine }}" hint-placeholder-val="{{ false }}">
+          <svg viewBox="0 0 100 100" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible">
+            <line x1="{{ geo.x1 }}" y1="{{ geo.y1 }}" x2="{{ geo.x2 }}" y2="{{ geo.y2 }}" stroke="#e2553a" stroke-width="2" stroke-dasharray="6 5" vector-effect="non-scaling-stroke"></line>
+          </svg>
+          <div style="position:absolute;width:24px;height:24px;margin:-12px 0 0 -12px;border-radius:50%;border:2px solid #6fa58f;pointer-events:none;left:{{ geo.ax }};top:{{ geo.ay }};transform:scale({{ geo.ring }});opacity:{{ geo.ringOp }}"></div>
+        </sc-if>
+        <sc-for list="{{ cities }}" as="ct" hint-placeholder-count="20">
+          <div onClick="{{ ct.pick }}" style="position:absolute;transform:translate(-50%,-50%);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px;left:{{ ct.x }};top:{{ ct.y }}">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;white-space:nowrap;transition:color .2s;color:{{ ct.lc }}">{{ ct.n }}</div>
+            <div style="border-radius:50%;transition:all .25s;width:{{ ct.sz }};height:{{ ct.sz }};background:{{ ct.c }};box-shadow:{{ ct.glow }}" style-hover="transform:scale(1.6)"></div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:10px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#7d735f;gap:10px;flex-wrap:wrap"><span>Helvetic Republic · 1799</span><span>click the village the sheet came from</span></div>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ isDec }}" hint-placeholder-val="{{ false }}">
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));gap:28px;align-items:start">
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div style="display:flex;gap:4px"><sc-for list="{{ dec.pips }}" as="dp" hint-placeholder-count="10"><div style="flex:1;height:6px;transition:background .3s;background:{{ dp.c }}"></div></sc-for></div>
+      <div style="background:#e9dfc6;color:#2a241a;padding:26px 28px 22px;border-radius:3px;box-shadow:0 24px 60px rgba(0,0,0,0.4);display:flex;flex-direction:column;gap:16px;min-height:310px;transform:{{ dec.tf }}">
+        <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;border-bottom:1px solid #b9ab8c;padding-bottom:10px"><span style="font-family:'Instrument Serif',serif;font-size:22px">Word {{ dec.round }} / 10</span><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#6b5f48;align-self:center">{{ dec.lang }} · from a 1799 answer</span></div>
+        <div style="display:flex;flex-wrap:wrap;font-family:'Instrument Serif',serif;font-size:clamp(60px,7vw,96px);line-height:1;min-height:100px;align-items:flex-end">
+          <sc-for list="{{ dec.letters }}" as="dl" hint-placeholder-count="7"><span style="display:inline-block;white-space:pre;opacity:{{ dl.o }};transform:translateY({{ dl.y }})">{{ dl.ch }}</span></sc-for>
+        </div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:#5d5240">in context: “{{ dec.ctx }}”</div>
+        <div style="margin-top:auto;display:flex;flex-direction:column;gap:6px">
+          <div style="height:6px;background:#cdbf9f"><div style="height:6px;background:{{ dec.tc }};width:100%;transform-origin:left;transform:scaleX({{ dec.tw }})"></div></div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#6b5f48">8 seconds · faster answers score more</div>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#c9a45c;letter-spacing:0.1em;text-transform:uppercase">What does it mean?</div>
+      <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px">
+        <sc-for list="{{ dec.opts }}" as="dop" hint-placeholder-count="4">
+          <button onClick="{{ dop.pick }}" style="cursor:pointer;text-align:left;padding:16px 18px;min-height:84px;font-size:17px;border-radius:2px;transition:all .25s;display:flex;flex-direction:column;gap:6px;border:1px solid {{ dop.bd }};background:{{ dop.bg }};color:{{ dop.fg }};transform:scale({{ dop.sc }})" style-hover="border-color:#c9a45c">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#7d735f">{{ dop.k }}</span><span>{{ dop.t }}</span>
+          </button>
+        </sc-for>
+      </div>
+      <div style="font-family:'Instrument Serif',serif;font-size:26px;min-height:34px;color:{{ dec.resCol }}">{{ dec.result }}</div>
+      <div style="font-size:14px;color:#a89d86;min-height:42px;text-wrap:pretty">{{ dec.note }}</div>
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+        <button onClick="{{ decNext }}" style="border:none;cursor:pointer;background:#e2553a;color:#12100c;padding:12px 20px;font-weight:600;border-radius:2px;font-family:'IBM Plex Mono',monospace;font-size:13px;opacity:{{ dec.nextOp }}" style-hover="background:#eee4cc">{{ dec.nextLabel }}</button>
+        <div style="margin-left:auto;display:flex;gap:18px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:#a89d86"><span>streak <span style="color:#c9a45c;font-size:20px">{{ dec.streak }}</span></span><span>score <span style="color:#c9a45c;font-size:20px">{{ dec.score }}</span></span></div>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ isRoute }}" hint-placeholder-val="{{ false }}">
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));gap:28px;align-items:start">
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div style="display:flex;gap:4px"><sc-for list="{{ route.pips }}" as="rpi" hint-placeholder-count="5"><div style="flex:1;height:6px;transition:background .3s;background:{{ rpi.c }}"></div></sc-for></div>
+      <div style="border:1px solid #2e2a22;background:#16130f;padding:22px 24px;display:flex;flex-direction:column;gap:10px">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#7d735f;letter-spacing:0.1em;text-transform:uppercase">Incoming question · {{ route.lang }} · {{ route.round }} / 5</div>
+        <div style="font-family:'Instrument Serif',serif;font-size:30px;line-height:1.15;text-wrap:pretty">“{{ route.q }}”</div>
+      </div>
+      <sc-for list="{{ route.fields }}" as="rf" hint-placeholder-count="3">
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#c9a45c;letter-spacing:0.1em;text-transform:uppercase">{{ rf.label }}</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px">
+            <sc-for list="{{ rf.opts }}" as="ro" hint-placeholder-count="3">
+              <button onClick="{{ ro.pick }}" style="cursor:pointer;padding:9px 14px;font-family:'IBM Plex Mono',monospace;font-size:13px;border-radius:2px;transition:all .2s;border:1px solid {{ ro.bd }};background:{{ ro.bg }};color:{{ ro.fg }}">{{ ro.t }}</button>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+        <button onClick="{{ route.act }}" style="border:none;cursor:pointer;background:#e2553a;color:#12100c;padding:12px 20px;font-weight:600;border-radius:2px;font-family:'IBM Plex Mono',monospace;font-size:13px" style-hover="background:#eee4cc">{{ route.actLabel }}</button>
+        <div style="font-family:'Instrument Serif',serif;font-size:22px;color:{{ route.resCol }}">{{ route.result }}</div>
+        <div style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:12px;color:#a89d86">fields <span style="color:#c9a45c;font-size:20px">{{ route.score }}</span> / 15</div>
+      </div>
+    </div>
+    <div style="border:1px solid #2e2a22;background:#0d0b08;padding:22px;display:flex;flex-direction:column;gap:12px;min-height:440px">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#6fa58f;letter-spacing:0.1em;text-transform:uppercase">Validator report</div>
+      <div style="display:grid;grid-template-columns:110px minmax(0,1fr) minmax(0,1fr) 20px;gap:10px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#7d735f;text-transform:uppercase;letter-spacing:0.08em;padding:0 10px"><span>field</span><span>you</span><span>gold</span><span></span></div>
+      <sc-for list="{{ route.rows }}" as="rw" hint-placeholder-count="3">
+        <div style="display:grid;grid-template-columns:110px minmax(0,1fr) minmax(0,1fr) 20px;gap:10px;font-family:'IBM Plex Mono',monospace;font-size:12px;padding:9px 10px;border:1px solid #2e2a22;transition:background .3s;background:{{ rw.bg }}">
+          <span style="color:#7d735f">{{ rw.f }}</span><span style="color:#eee4cc">{{ rw.you }}</span><span style="color:#6fa58f;transform:translateX({{ rw.x }})">{{ rw.gold }}</span><span style="color:{{ rw.mc }}">{{ rw.m }}</span>
+        </div>
+      </sc-for>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#c9a45c;letter-spacing:0.1em;text-transform:uppercase;margin-top:6px">What Apertus wrote</div>
+      <div style="background:#16130f;padding:12px 14px;font-family:'IBM Plex Mono',monospace;font-size:12px;line-height:1.65;color:#c9bfa8;white-space:pre-wrap;min-height:96px">{{ route.json }}</div>
+      <div style="font-size:14px;color:#a89d86;text-wrap:pretty">{{ route.note }}</div>
+      <div style="margin-top:auto;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#7d735f;border-top:1px dashed #2e2a22;padding-top:10px">Benchmark: dynamic rewriting lifts hit@1 from 64.2% to 92.4% on 380 questions.</div>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ isCal }}" hint-placeholder-val="{{ false }}">
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));gap:28px;align-items:start">
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div style="display:flex;gap:4px"><sc-for list="{{ cal.pips }}" as="cpi" hint-placeholder-count="6"><div style="flex:1;height:6px;transition:background .3s;background:{{ cpi.c }}"></div></sc-for></div>
+      <div style="border:1px solid #2e2a22;background:#16130f;padding:20px 22px;display:flex;flex-direction:column;gap:10px">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#7d735f;letter-spacing:0.1em;text-transform:uppercase">Question · {{ cal.round }} / 6</div>
+        <div style="font-family:'Instrument Serif',serif;font-size:26px;line-height:1.15">{{ cal.q }}</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#c9a45c;letter-spacing:0.1em;text-transform:uppercase;margin-top:6px">Apertus answered</div>
+        <div style="font-family:'Instrument Serif',serif;font-size:26px;line-height:1.2;color:#c9a45c">{{ cal.a }}</div>
+      </div>
+      <div style="background:#e9dfc6;color:#2a241a;padding:14px 18px;border-radius:2px;display:flex;flex-direction:column;gap:4px">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#6b5f48;text-transform:uppercase;letter-spacing:0.1em">Cited passage [1]</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:14px;line-height:1.6">{{ cal.p }}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px"><span style="font-size:14px;color:#a89d86">How sure are you that the answer is right?</span><span style="font-family:'Instrument Serif',serif;font-size:46px;line-height:1;color:{{ cal.vCol }}">{{ cal.v }}%</span></div>
+        <input type="range" min="0" max="100" step="5" value="{{ cal.v }}" onChange="{{ calSet }}" style="width:100%;accent-color:#e2553a;cursor:pointer">
+        <div style="display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#7d735f"><span>surely wrong</span><span>coin flip</span><span>surely right</span></div>
+      </div>
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+        <button onClick="{{ cal.act }}" style="border:none;cursor:pointer;background:#e2553a;color:#12100c;padding:12px 20px;font-weight:600;border-radius:2px;font-family:'IBM Plex Mono',monospace;font-size:13px" style-hover="background:#eee4cc">{{ cal.actLabel }}</button>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#a89d86">this bet's Brier: {{ cal.bet }}</span>
+      </div>
+      <div style="font-family:'Instrument Serif',serif;font-size:22px;line-height:1.3;min-height:30px;text-wrap:pretty;color:{{ cal.resCol }}">{{ cal.result }}</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div style="border:1px solid #2e2a22;background:#16130f;padding:20px">
+        <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#6fa58f;letter-spacing:0.1em;text-transform:uppercase">Your bets</span><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#7d735f">well-calibrated bets land in the shaded corners</span></div>
+        <div style="position:relative;width:100%;aspect-ratio:4/3;margin-top:14px;border-left:1px solid #4a4336;border-bottom:1px solid #4a4336">
+          <div style="position:absolute;left:50%;right:0;top:0;height:45%;background:rgba(111,165,143,0.08)"></div>
+          <div style="position:absolute;left:0;width:50%;bottom:0;height:45%;background:rgba(111,165,143,0.08)"></div>
+          <div style="position:absolute;left:0;right:0;top:50%;border-top:1px dashed #2e2a22"></div>
+          <div style="position:absolute;left:8px;top:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#6fa58f">answer was correct</div>
+          <div style="position:absolute;left:8px;bottom:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#e2553a">answer was wrong</div>
+          <sc-for list="{{ cal.dots }}" as="cd" hint-placeholder-count="0">
+            <div style="position:absolute;width:16px;height:16px;border-radius:50%;transform:translate(-50%,-50%) scale({{ cd.s }});left:{{ cd.x }};top:{{ cd.y }};background:{{ cd.c }};box-shadow:0 0 14px {{ cd.c }}"></div>
+          </sc-for>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#7d735f;margin-top:6px"><span>0% sure</span><span>your confidence →</span><span>100%</span></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:#2e2a22;border:1px solid #2e2a22">
+        <div style="background:#12100c;padding:14px 16px;display:flex;flex-direction:column;gap:2px"><span style="font-family:'Instrument Serif',serif;font-size:36px;line-height:1;color:{{ cal.brierCol }}">{{ cal.brier }}</span><span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#7d735f;text-transform:uppercase;letter-spacing:0.08em">your Brier · lower is better</span></div>
+        <div style="background:#12100c;padding:14px 16px;display:flex;flex-direction:column;gap:2px"><span style="font-family:'Instrument Serif',serif;font-size:36px;line-height:1;color:#7d735f">0.250</span><span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#7d735f;text-transform:uppercase;letter-spacing:0.08em">always guessing 50%</span></div>
+      </div>
+      <div style="font-size:13px;color:#a89d86;text-wrap:pretty">ArchAI gives every answer a confidence score: AUC 0.936, calibration error 2.4%. Can you beat the coin flip?</div>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ isHal }}" hint-placeholder-val="{{ false }}">
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:28px;align-items:start">
+    <div style="background:#e9dfc6;color:#2a241a;padding:26px 28px;border-radius:3px;box-shadow:0 24px 60px rgba(0,0,0,0.4)">
+      <div style="display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid #b9ab8c;padding-bottom:10px;margin-bottom:16px;flex-wrap:wrap">
+        <div style="font-family:'Instrument Serif',serif;font-size:24px">Source · round {{ hal.round }} / 3</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#6b5f48;align-self:center">{{ hal.kind }}</div>
+      </div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:14px;line-height:1.95">{{ hal.src }}</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:18px">
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#c9a45c;letter-spacing:0.08em;text-transform:uppercase">Apertus extracted these names</div>
+        <div style="color:#a89d86;font-size:15px">Flag every name that does not literally appear in the source. The validator will check you.</div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:10px">
+        <sc-for list="{{ hal.ents }}" as="he" hint-placeholder-count="5">
+          <button onClick="{{ he.toggle }}" style="cursor:pointer;padding:12px 16px;border-radius:2px;font-family:'IBM Plex Mono',monospace;font-size:14px;transition:all .25s;border:1px solid {{ he.bd }};background:{{ he.bg }};color:{{ he.fg }};transform:scale({{ he.sc }}) rotate({{ he.rot }})">{{ he.mark }} {{ he.name }}</button>
+        </sc-for>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <button onClick="{{ hal.act }}" style="border:none;cursor:pointer;background:#e2553a;color:#12100c;padding:12px 20px;font-weight:600;border-radius:2px;font-family:'IBM Plex Mono',monospace;font-size:13px" style-hover="background:#eee4cc">{{ hal.actLabel }}</button>
+        <div style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:13px;color:#a89d86">caught <span style="color:#c9a45c;font-size:20px">{{ hal.total }}</span></div>
+      </div>
+      <div style="font-family:'Instrument Serif',serif;font-size:26px;min-height:36px;color:{{ hal.resCol }}">{{ hal.result }}</div>
+    </div>
+  </div>
+  </sc-if>
+
+  <div style="margin-top:56px;display:flex;flex-direction:column;gap:18px">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap">
+      <div style="font-family:'Instrument Serif',serif;font-size:34px">Seals of the archive</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:#a89d86">{{ badgeCount }} / {{ badgeTotal }} unlocked · {{ lvlName }}</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:12px">
+      <sc-for list="{{ badgeShelf }}" as="bg" hint-placeholder-count="8">
+        <div style="display:flex;align-items:center;gap:14px;padding:16px;transition:all .3s;border:1px solid {{ bg.bd }};background:{{ bg.bgc }};transform:scale({{ bg.sc }})">
+          <div style="width:46px;height:46px;flex:none;border-radius:50%;display:grid;place-items:center;font-size:18px;transition:all .3s;background:{{ bg.mc }};color:{{ bg.mf }};border:1px dashed {{ bg.md }};transform:rotate({{ bg.rot }})">{{ bg.icon }}</div>
+          <div style="display:flex;flex-direction:column;gap:2px">
+            <div style="font-family:'Instrument Serif',serif;font-size:21px;line-height:1.1;color:{{ bg.tc }}">{{ bg.n }}</div>
+            <div style="font-size:12px;color:#7d735f">{{ bg.d }}</div>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+  <div style="margin-top:16px;font-size:13px;color:#7d735f">Live: every game round comes from <span style="font-family:'IBM Plex Mono',monospace">GET /api/site</span>: real Stapfer answers with place names masked, real Apertus agent traces and their grounding checks, the rules router's real output, and the number check run on real passages. Only if the server cannot be reached does the page fall back to its built-in illustrative examples.</div>
+</div>
+</sc-if>
+
+</div>
+
+<div style="border-top:1px solid #2e2a22">
+  <div style="max-width:1280px;margin:0 auto;padding:22px 32px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-family:'IBM Plex Mono',monospace;font-size:12px;color:#7d735f">
+    <span>ArchAI · Stapfer-Enquête · Federal Consultations · Archive Database (OLR)</span>
+    <div style="display:flex;gap:16px;align-items:center">
+      <span>← → navigate</span>
+      <button onClick="{{ nextTab }}" style="border:1px solid #4a4336;background:transparent;color:#eee4cc;cursor:pointer;padding:6px 12px;border-radius:2px;font-family:'IBM Plex Mono',monospace;font-size:12px" style-hover="border-color:#e2553a">{{ nextLabel }}</button>
+    </div>
+  </div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const TABS = [['01','Overview'],['02','How it works'],['03','Agent loop'],['04','Simulator'],['05','Evidence'],['06','Play']];
+const LEVELS = ['Novice Clerk','Copyist','Registrar','Archivist','Keeper of Seals','Federal Archivist'];
+const BADGES = [['pipe','Pipeline Runner','Run all 9 stages'],['agent','Loop Closer','Finish the agent replay'],['polyglot','Polyglot','Ask in DE, FR and EN'],['gate','Gatekeeper','See a question declined'],['count','Bean Counter','Let code do the sum'],['explorer','Explorer','Open every chapter'],['geo','Cartographer','Finish 5 map rounds'],['sharp','Sharp Eye','Combo ×12 in Rush or a perfect round'],['decoder','Decoder','8 of 10 old words'],['router','Router','12 of 15 routing fields'],['calib','Calibrated','Brier score under 0.12']];
+const MODES = { casual: [['rush','Validator Rush','arcade'],['geo','Guess the school','map'],['dec','Decode 1799','quiz']], research: [['route','Route the query','Q&A rewrite'],['hal','Catch the hallucination','grounding'],['cal','Calibrate','confidence']] };
+const DEC = [
+  { w:'Hornung', lang:'DE', ctx:'Den 18ten Hornung 1799', c:'February', o:['harvest time','a horn-blower','March'], n:'An old German month name. normalize_dates() turns "18ten Hornung 1799" into 1799-02-18.' },
+  { w:'Mägdchen', lang:'DE', ctx:'64 Knaben und 58 Mägdchen', c:'girls', o:['maids','magpies','small markets'], n:'An old spelling of Mädchen. extract_quantities() counts girls and boys separately.' },
+  { w:'Mütt', lang:'DE', ctx:'nebst 2 Mütt Kernen', c:'a grain measure', o:['a coin','a mitten','a field'], n:'A dry measure for grain. Teachers were often paid partly in kind.' },
+  { w:'fl.', lang:'DE', ctx:'fl. 40 jährlich', c:'florins (Gulden)', o:['flour','floors','fluent'], n:'The abbreviation for florin, the Gulden. It turns up in salary answers.' },
+  { w:'Batzen', lang:'DE', ctx:'wöchentlich 1 Batzen Schulgeld', c:'a small coin', o:['a bakery','a batch of grain','a thunderstorm'], n:'A small coin. Weekly school fees were often paid in Batzen.' },
+  { w:'régent', lang:'FR', ctx:'Le régent enseigne le catéchisme', c:'the schoolmaster', o:['the ruler of the canton','the parish priest','a register book'], n:'In Vaud and Fribourg, the village teacher was called the régent.' },
+  { w:'Knaben', lang:'DE', ctx:'Im Winter 64 Knaben', c:'boys', o:['bones','knives','farmhands'], n:'Boys. Pupil counts are the most-asked number in the survey.' },
+  { w:'livres', lang:'FR', ctx:'Gages : 60 livres', c:'a currency (pounds)', o:['books','deliveries','litres'], n:'Here livres means money, not books. The bilingual extractor has to know the difference.' },
+  { w:'Schulstube', lang:'DE', ctx:'die Schulstube ist im Pfarrhaus', c:'the schoolroom', o:['school fees','the school stove','the school board'], n:'The room where class was held, often in the teacher\u2019s own house.' },
+  { w:'Kernen', lang:'DE', ctx:'2 Mütt Kernen', c:'spelt grain', o:['apple cores','candles','nuclear'], n:'Dehusked spelt, a staple grain. Not "nuclear", which is what a modern reader might guess.' }
+];
+const decOpts = r => { const a = [DEC[r].c, ...DEC[r].o], k = (r * 3 + 1) % 4; return a.slice(k).concat(a.slice(0, k)); };
+const RF = [['ds','Dataset',['stapfer','consultations','decline']],['sec','Questionnaire section',['III · pupils','III · books','IV · income','— none']],['task','Task',['lookup','aggregate','decline']]];
+const ROUTE = [
+  { q:'Was verdiente der Schulmeister in Fischenthal?', lang:'DE', g:{ ds:'stapfer', sec:'IV · income', task:'lookup' }, json:'{"dataset": "stapfer",\n "sections": ["IV.16"],\n "places": ["Fischenthal"]}', n:'Income is section IV of the questionnaire. The place is checked against the gazetteer.' },
+  { q:'Quels livres lisait-on à l\u2019école de Moudon ?', lang:'FR', g:{ ds:'stapfer', sec:'III · books', task:'lookup' }, json:'{"dataset": "stapfer",\n "sections": ["III.10"],\n "places": ["Moudon"]}', n:'The question is in French but the route is the same. Rewriting does not depend on the language.' },
+  { q:'How many children went to school in Bümpliz in winter?', lang:'EN', g:{ ds:'stapfer', sec:'III · pupils', task:'aggregate' }, json:'{"task": "aggregate",\n "measure": "pupils",\n "places": ["Bümpliz"],\n "season": "winter"}', n:'"How many" is an aggregate. Code does the sum; Apertus only explains the result.' },
+  { q:'Welche Vernehmlassungen betrafen die Kernenergie in den 1970ern?', lang:'DE', g:{ ds:'consultations', sec:'— none', task:'lookup' }, json:'{"dataset": "consultations",\n "years": [1970, 1979],\n "topic": "Atomgesetz"}', n:'The 1970s means the consultations dataset. Code checks the year range before searching.' },
+  { q:'Who won the 1998 football World Cup?', lang:'EN', g:{ ds:'decline', sec:'— none', task:'decline' }, json:'{"out_of_scope": true}', n:'Out of scope. ArchAI declines instead of guessing: 23 of 24 unanswerable questions were declined.' }
+];
+const CAL = [
+  { q:'Was verdiente der Schulmeister in Fischenthal?', a:'40 Gulden a year [1]', p:'… der Schulmeister bezieht fl. 40 jährlich, nebst 2 Mütt Kernen …', ok:1, why:'fl. 40 is in the passage, so the number check passes.' },
+  { q:'Wann begann die Vernehmlassung zum Atomgesetz?', a:'In 1985 [1]', p:'Revision des Atomgesetzes. Frist: 1977 – 1978.', ok:0, why:'1985 is not in [1]. The number check would block this answer.' },
+  { q:'Combien d\u2019élèves à Moudon en hiver ?', a:'75 pupils: 40 boys and 35 girls [1]', p:'En hiver 40 garçons et 35 filles.', ok:1, why:'Both numbers are cited, and code did the sum.' },
+  { q:'Wer war Schulmeister in Bümpliz?', a:'Ueli Gfeller [1]', p:'Schulmeister Niklaus Gfeller, 38 Jahre.', ok:0, why:'The surname matches but the first name is made up. The grounding check catches it.' },
+  { q:'Woher kommt das Holz für die Schule in Fischenthal?', a:'From the forest, "aus dem Wald" [1]', p:'Holz aus dem Wald.', ok:1, why:'A direct quote. High confidence was justified.' },
+  { q:'What did the Moudon teacher earn?', a:'80 livres and lodging [1]', p:'Gages : 60 livres et le logement.', ok:0, why:'Close, but the passage says 60, not 80. This is the kind of slip the number check exists for.' }
+];
+const CITIES = [['Genève',46.20,6.14],['Lausanne',46.52,6.63],['Moudon',46.67,6.80],['Neuchâtel',46.99,6.93],['Fribourg',46.80,7.15],['Bern',46.95,7.45],['Sion',46.23,7.36],['Solothurn',47.21,7.54],['Basel',47.56,7.59],['Aarau',47.39,8.04],['Luzern',47.05,8.31],['Zürich',47.37,8.54],['Schaffhausen',47.70,8.63],['Winterthur',47.50,8.72],['Fischenthal',47.33,8.92],['St. Gallen',47.42,9.37],['Altdorf',46.88,8.64],['Bellinzona',46.19,9.02],['Chur',46.85,9.53],['Lugano',46.00,8.95]];
+const PX = lon => (lon - 5.9) / 4.6 * 100, PY = lat => (47.9 - lat) / 2.1 * 100;
+const KM = (a, b) => Math.hypot((a[2] - b[2]) * 111 * Math.cos(46.8 * Math.PI / 180), (a[1] - b[1]) * 111);
+const GP = G => ['', G.lat, G.lon];
+const geoNear = G => CITIES.reduce((b, c, i) => KM(c, GP(G)) < KM(CITIES[b], GP(G)) ? i : b, 0);
+const GEO = [
+  { c:'Fischenthal', lang:'DE', text:'Name des Orts: ▇▇▇▇▇▇▇, Distrikt Uster. Im Winter 64 Knaben und 58 Mägdchen. Das Holz kommt aus dem Wald, die Schulstube ist im Pfarrhaus.', hint:'Distrikt Uster is in the Zürich Oberland, near the Töss valley.' },
+  { c:'Moudon', lang:'FR', text:'Le régent de ▇▇▇▇▇▇ enseigne le catéchisme et les Psaumes. L\u2019école est au bord de la Broye ; en été, elle est fermée.', hint:'The Broye river, in the Vaud countryside.' },
+  { c:'Bern', lang:'DE', text:'Die Schule zu Bümpliz liegt eine Stunde von der Hauptstadt ▇▇▇▇. Die Kinder kommen aus den Höfen um Oberbottigen.', hint:'The old capital on the Aare.' },
+  { c:'Schaffhausen', lang:'DE', text:'Stadtschule zu ▇▇▇▇▇▇▇▇▇▇▇▇. Die Knaben lernen Lesen, Schreiben und Rechnen. Man hört den nahen Rheinfall.', hint:'North of the Rhine.' },
+  { c:'Lausanne', lang:'FR', text:'Collège de ▇▇▇▇▇▇▇▇. Les écoliers descendent vers le lac Léman ; on y enseigne le latin et le catéchisme.', hint:'On Lake Geneva, above Ouchy.' }
+];
+GEO.forEach(g => { const c = CITIES.find(x => x[0] === g.c); g.lat = c[1]; g.lon = c[2]; });
+const HAL = [
+  { kind:'stapfer · de', src:'Fischenthal, Distrikt Uster. Schulmeister: Jakob Boßhard, 46 Jahre. Im Winter 64 Knaben und 58 Mägdchen. Holz aus dem Wald. Den 18ten Hornung 1799.',
+    ents:[['Jakob Boßhard',1],['Zürich',0],['Uster',1],['Pfarrer Hess',0],['Fischenthal',1],['Wald',1]] },
+  { kind:'stapfer · fr', src:'Moudon, sur la Broye. Le régent Jean-Pierre Cornaz, âgé de 52 ans, enseigne le catéchisme et les Psaumes. En hiver 40 garçons et 35 filles. Gages : 60 livres et le logement.',
+    ents:[['Jean-Pierre Cornaz',1],['Lausanne',0],['Broye',1],['Pasteur Dubois',0],['Moudon',1]] },
+  { kind:'consultation', src:'Revision des Atomgesetzes. Departement: EVED. Frist: 1977 - 1978. Archiv: E6100C#1998/106#1039*. Stellungnahmen der Kantone und Verbände.',
+    ents:[['EVED',1],['Dr. H. Keller',0],['Kanton Aargau',0],['Atomgesetz',1]] }
+];
+const CONF_COL = ['#e2553a','#c9a45c','#6fa58f','#eee4cc'];
+const CONF = Array.from({ length: 46 }, (_, i) => { const r = k => (Math.sin(i * 47.3 + k * 7.1) + 1) / 2; const a = r(1) * Math.PI * 2; const v = 6 + r(2) * 12; return { vx: Math.cos(a) * v, vy: Math.sin(a) * v - 8, w: 5 + r(3) * 7, h: 3 + r(4) * 9, spin: (r(5) - .5) * 40, c: CONF_COL[i % 4] }; });
+const cl = x => Math.max(0, Math.min(1, x));
+const ease = x => 1 - Math.pow(1 - cl(x), 3);
+const pct = x => cl(x).toFixed(4);
+const fmt = n => Math.round(n).toLocaleString('en-US');
+const C = { red:'#e2553a', green:'#6fa58f', gold:'#c9a45c', ink:'#eee4cc', mute:'#a89d86', dim:'#7d735f', line:'#2e2a22' };
+
+const MORPH = [
+  { raw:'Im Winter' }, { raw:'#64##', clean:'64', ann:'uncertain_reading §15' }, { raw:'Knaben und 58' }, { raw:'Mägdchen' },
+  { raw:'°-°°', clean:'–', ann:'dash_mark' }, { raw:'||[Seite 3]', clean:'', ann:'page_break → p.3' }, { raw:'der Schulmeister bezieht' },
+  { raw:'$fl.$$', clean:'fl.', ann:'latin_script' }, { raw:'40 jährlich,' }, { raw:'*nebst 2 Mütt Kernen**', clean:'nebst 2 Mütt Kernen', ann:'note' }
+];
+
+const STAGES = [
+  { id:'ingest_stapfer', label:'Ingest Stapfer', mod:'archai.ingest:stapfer', sec:'2.4 s', who:'code', dur:8, out:'data/interim/stapfer/t_transkription.parquet', hash:'4f98542e2a31f083', desc:'A streaming SQL parser reads the open-data dump: 2,250 transcribed sheets with 92,524 answers, plus teachers, schools and places.' },
+  { id:'ingest_consultations', label:'Ingest consultations', mod:'archai.ingest:consultations', sec:'0.0 s', who:'code', dur:5, out:'data/interim/consultations.parquet', hash:'4a7be2d549f8b086', desc:'569 Federal Consultations from 1960 to 1991, with 858 archive references.' },
+  { id:'ingest_olr', label:'Ingest Archive DB', mod:'archai.ingest:olr', sec:'171.9 s', who:'code', dur:34, out:'data/interim/olr/tbs_vrzng_enht.0000.parquet', hash:'a5bb9795d7684f9c', desc:'Streams 4.5 M archive units and their hierarchy out of the 3.6 GB dump of the Swiss Federal Archives.' },
+  { id:'clean_stapfer', label:'Clean transcriptions', mod:'archai.stapfer_clean:run', sec:'19.9 s', who:'code', dur:16, out:'data/out/stapfer_documents.jsonl', hash:'23bfeba561979bd3', desc:'Edition markup becomes clean text plus annotations: uncertain readings, dashes, page breaks, notes. text_raw is never overwritten, and unbalanced source markup is flagged, not repaired.' },
+  { id:'link_consultations', label:'Link to Archive DB', mod:'archai.link:run', sec:'7.5 s', who:'code', dur:12, out:'data/out/consultations.jsonl', hash:'9895829caf22e303', desc:'Consultation archive signatures are matched to OLR units, together with their archive path. 857 of 858 are linked by exact match.' },
+  { id:'apertus_enrich', label:'Apertus enrichment', mod:'archai.enrich:main', sec:'3.8 s/sheet', who:'apertus', dur:14, out:'apertus_enrichment.apertus-v1-5-70b.jsonl', hash:'optional stage', desc:'Apertus 70B writes a title, an English summary, persons, places and topics. Any name not literally in the source is rejected. Teacher surname recall: 97.4%.' },
+  { id:'apertus_agent', label:'Apertus tool agent', mod:'archai.agent:main', sec:'15.1 s/rec', who:'apertus', dur:18, out:'data/out/agent_traces.jsonl', hash:'optional stage', desc:'The tool loop: Apertus plans calls to deterministic tools, sees the results, then composes the metadata. Every plan, call and validation is traced.' },
+  { id:'export', label:'Export records', mod:'archai.export:run', sec:'5.0 s', who:'code', dur:8, out:'data/out/records.jsonl', hash:'226c3180aba22709', desc:'One schema for both datasets: 2,819 records, each with its provenance (signature, facsimile, viewer URL). 0 schema errors; any invalid record is quarantined.' },
+  { id:'evaluate', label:'Evaluate', mod:'archai.evaluate:main', sec:'12.7 s', who:'validator', dur:10, out:'data/out/metrics.json', hash:'60018e28c6bbc22a', desc:'Writes metrics.json. Every block states its scope, and model figures are sample measurements, not an overall accuracy.' }
+];
+const STARTS = STAGES.reduce((a, s, i) => (a.push(i ? a[i-1] + STAGES[i-1].dur : 4), a), []);
+const PIPE_END = STARTS[8] + STAGES[8].dur + 4;
+const WHO_COL = { code: C.green, apertus: C.gold, validator: C.red };
+
+const REC = [
+  ['Fischenthal','place'], [', Distrikt Uster. Schulmeister: ',''], ['Jakob Boßhard','person'], [', 46 Jahre. III.12 Im Winter ',''],
+  ['64 Knaben und 58 Mägdchen','qty'], [', im Sommer 20. IV.16 Einkommen: ',''], ['fl. 40 jährlich','qty'], [', nebst ',''],
+  ['2 Mütt Kernen','qty'], ['; Holz aus dem ',''], ['Wald','place'], ['. Den ',''], ['18ten Hornung 1799','date'], ['. ',''],
+  ['BAR B0 1000/1483, Nr. 1421','sig']
+];
+const AG = [0, 24, 36, 84, 100, 116, 156];
+const AGENT_END = 196;
+let PLAN_JSON = '{"calls": [\n  {"tool": "normalize_dates"},\n  {"tool": "extract_quantities"},\n  {"tool": "lookup_place", "args": {"name": "Fischenthal"}},\n  {"tool": "lookup_place", "args": {"place": "Wald"}},\n  {"tool": "parse_signature", "args": {"sig": "BAR B0 1000/1483, Nr. 1421"}}\n]}';
+let COMPOSE_JSON = '{"title": "Schule Fischenthal, Antworten 1799",\n "summary_en": "Teacher reports 64 boys and 58 girls in winter; salary 40 fl. plus grain.",\n "persons": ["Jakob Boßhard"],\n "places": ["Fischenthal", "Wald", "Zürich"],\n "topics": ["school", "salary", "pupils"],\n "legibility": "good"}';
+const TOOLS = [
+  { call:'normalize_dates()', res:'18ten Hornung 1799 → 1799-02-18', d:0, len:14 },
+  { call:'extract_quantities()', res:'pupils 64 m · 58 f · 40 fl', d:3, len:20 },
+  { call:'lookup_place(name="Fischenthal")', res:'47.33 N · 8.92 E', d:1, len:24 },
+  { call:'lookup_place(name="Wald")', res:'47.28 N · 8.91 E', d:5, len:22 },
+  { call:'parse_signature(sig=…)', res:'B0 · 1000/1483 · Nr. 1421', d:2, len:12 }
+];
+const ENTS = [['Jakob Boßhard',true],['Fischenthal',true],['Wald',true],['Zürich',false]];
+let AGENT_META = { n: 5, repair: 'lookup_place {"place": "Wald"}\n  repair: place → name   (difflib match, cutoff 0.5)\n  → lookup_place {"name": "Wald"}',
+  critic: 'required: normalize_dates ✓  extract_quantities ✓\n          lookup_place ✓     parse_signature ✓\n→ no feedback round needed', live: false };
+
+const SIM = [
+  { lang:'DE', kind:'cited answer', q:'Was verdiente der Schulmeister in Fischenthal?',
+    rw:'{"dataset": "stapfer",\n "sections": ["IV.16 Einkommen"],\n "places": ["Fischenthal"],\n "years": []}',
+    route:[['dataset','stapfer',true],['section','IV · Einkommen des Lehrers',true],['place','Fischenthal → gazetteer',true]],
+    pool:'top 6 of 41 passages', pass:[['BAR B0 1000/1483, Nr. 1421 · p.4 · IV.16','… bezieht fl. 40 jährlich, nebst 2 Mütt Kernen …',.91],['BAR B0 1000/1483, Nr. 1421 · p.4 · IV.17','Das Holz für die Schulstube liefert die Gemeinde …',.63],['BAR B0 1000/1483, Nr. 1422 · p.3 · IV.16','Der Schulmeister zu Gibswil erhält …',.41]],
+    ans:'Der Schulmeister in Fischenthal bezog 1799 jährlich 40 Gulden [1], dazu 2 Mütt Kernen als Naturalabgabe [1]. Das Holz für die Schulstube stellte die Gemeinde [2].',
+    checks:[['✓','40 → found in [1]',1],['✓','2 → found in [1]',1],['✓','1799 → in question scope',1],['✓','every sentence cites a source',1]],
+    source:'answer_source: apertus', verdict:'Shown as written', conf:.94, vk:'ok' },
+  { lang:'DE', kind:'aggregate · code sums', q:'Wie viele Schüler gab es 1799 in Bern?',
+    rw:'{"task": "aggregate",\n "measure": "pupils",\n "places": ["Bern"],\n "season": "winter"}',
+    route:[['task','aggregate → dataq engine',true],['place','Bern (today\u2019s municipality)',true],['policy','winter · without catechism',true]],
+    pool:'9 school sheets in the pool', pass:[['Bern · Brunngasse · III.12','sonst … darunter waren Knaben und Mädchen …',.88],['Bümpliz · III.12','Im Winter Knaben … Mädchen …',.84],['Oberbottigen · III.12','Kinder im Winter …',.79]],
+    ans:'In 1799, 9 schools in today\u2019s Bern reported between 782 and 836 pupils, “and more”, in winter, not counting catechism classes [1–9]. Every contributing school and every exclusion is listed.',
+    checks:[['∑','total computed by code: extract_quantities',1],['✓','boys and girls kept apart',1],['✓','Bümpliz + Oberbottigen: today\u2019s Bern only',1],['✓','782 · 836 → admitted via aggregate',1]],
+    source:'answer_source: aggregate', verdict:'Computed by code', conf:.88, vk:'ok' },
+  { lang:'FR', kind:'cited answer', q:'Quels livres utilisait-on à l\u2019école de Moudon ?',
+    rw:'{"dataset": "stapfer",\n "sections": ["III.10 Schulbücher"],\n "places": ["Moudon"],\n "years": []}',
+    route:[['dataset','stapfer',true],['section','III · livres d\u2019école',true],['place','Moudon → gazetteer',true]],
+    pool:'top 6 of 28 passages', pass:[['Moudon · III.10','On lit le catéchisme, les Psaumes et le Nouveau Testament …',.86],['Moudon · III.11','L\u2019écriture s\u2019apprend sur des exemples du régent …',.58],['Lucens · III.10','Le catéchisme d\u2019Ostervald …',.37]],
+    ans:'À Moudon, les élèves lisaient le catéchisme, les Psaumes et le Nouveau Testament [1] ; l\u2019écriture s\u2019apprenait sur des modèles du régent [2].',
+    checks:[['✓','no digits to check',1],['✓','every sentence cites a source',1]],
+    source:'answer_source: apertus', verdict:'Shown as written', conf:.81, vk:'ok' },
+  { lang:'EN', kind:'consultations', q:'Which federal consultations dealt with nuclear energy in the 1970s?',
+    rw:'{"dataset": "consultations",\n "years": [1970, 1979],\n "topic": "Kernenergie / Atomgesetz"}',
+    route:[['dataset','consultations',true],['years','1970–1979',true],['link','OLR archive units',true]],
+    pool:'top 6 of 569 consultations', pass:[['E6100C#1998/106#1039* · consultation','Revision des Atomgesetzes · Vernehmlassung 1977',.82],['OLR unit · linked dossier','Bundesbeschluss zum Atomgesetz …',.61],['consultation · 1975','Energiekonzept · Stellungnahmen der Kantone',.44]],
+    ans:'The closest match is the consultation on revising the Atomic Energy Act, opened in 1977 [1]. Its dossier is linked to the Swiss Federal Archives [2].',
+    checks:[['✓','1977 → found in [1]',1],['✓','signature linked in OLR',1]],
+    source:'answer_source: apertus', verdict:'Shown as written', conf:.73, vk:'ok' },
+  { lang:'EN', kind:'unanswerable', q:'Who won the 1998 football World Cup?',
+    rw:'{"out_of_scope": true,\n "reason": "not about Swiss schools 1799\n            or consultations 1960–1991"}',
+    route:[['dataset','none',false],['scope','outside the archives',false],['action','decline',true]],
+    pool:'skipped', pass:[],
+    ans:'This is not in these archives. They cover Swiss schools in 1799 and federal consultations from 1960 to 1991.',
+    checks:[['✓','nothing generated without a source',1],['✓','declined, not answered anyway',1]],
+    source:'declined', verdict:'Declined', conf:0, vk:'no' }
+];
+const SIM_END = 156;
+const CHIPS = ['Wie viele Mädchen gingen 1799 in Bern zur Schule?','How old was the teacher in Hörndli?','Quelles consultations sur la protection des données ?','What is the capital of Australia?'];
+const SYS_PROMPT = 'You simulate the ArchAI question-answering endpoint (/api/ask), backed by the Swiss open model Apertus 70B. The corpus has two datasets. (1) The Stapfer-Enquête of 1799, a school survey of the Helvetic Republic: teachers answered in German or French, and the questionnaire sections are I place, II school, III pupils and school books, IV teacher income. (2) The Federal Consultations from 1960 to 1991, linked to dossiers in the Swiss Federal Archives (signatures like E6100C#1998/106#1039*). Known passages you may quote: Fischenthal, Distrikt Uster: Schulmeister Jakob Boßhard, 46 Jahre; im Winter 64 Knaben und 58 Mägdchen; bezieht fl. 40 jährlich nebst 2 Mütt Kernen; Holz aus dem Wald; den 18ten Hornung 1799 (BAR B0 1000/1483, Nr. 1421). Moudon, sur la Broye: régent Jean-Pierre Cornaz, 52 ans; en hiver 40 garçons et 35 filles; gages 60 livres et le logement; on lit le catéchisme, les Psaumes et le Nouveau Testament. Bümpliz, Gemeinde Bern: Schulmeister Niklaus Gfeller, 38 Jahre; im Winter 41 Kinder, im Sommer 12; Lohn 30 Kronen und Holz. 9 schools in today\u2019s Bern reported 782 to 836 pupils in winter. Consultation: Revision des Atomgesetzes, Departement EVED, Frist 1977–1978, E6100C#1998/106#1039*. Rules: answer in the language of the question. Cite passages as [1], [2]. Never use a number that is not in a cited passage. For how-many or total questions, set kind to "aggregate · code sums" and source to "answer_source: aggregate", and say that code computed the total. If the question is not about Swiss schools in 1799 or the federal consultations, decline: vk "no", pass [], and a short polite answer saying it is not in these archives. If the archives cannot answer it, say so honestly and lower conf. Return ONLY one JSON object, no prose, with exactly these fields: {"lang":"DE|FR|EN","kind":"cited answer|aggregate · code sums|consultations|unanswerable","rw":{the rewritten route as an object, e.g. {"dataset":"stapfer","sections":["IV.16"],"places":["Fischenthal"]}},"route":[["dataset","stapfer",true],["section","IV · Einkommen",true],["place","Fischenthal → gazetteer",true]],"pool":"top 6 of N passages","pass":[["signature · page · section","short quoted excerpt",0.91],["…","…",0.6]],"ans":"answer with [n] citations","checks":[["✓","40 → found in [1]"],["✓","every sentence cites a source"]],"source":"answer_source: apertus","verdict":"Shown as written|Computed by code|Declined","conf":0.0-1.0,"vk":"ok|no"}. Use 3 route rows, 1 to 3 passages and 2 to 4 checks.';
+const parseSim = (raw, text) => {
+  const a = raw.indexOf('{'), b = raw.lastIndexOf('}'); if (a < 0 || b <= a) return null;
+  const o = JSON.parse(raw.slice(a, b + 1)); const vk = o.vk === 'no' ? 'no' : 'ok';
+  const route = (Array.isArray(o.route) ? o.route : []).slice(0, 3).map(r => [String(r[0] ?? ''), String(r[1] ?? ''), !!r[2]]);
+  return { custom: true, q: text, vk, lang: String(o.lang || 'EN').toUpperCase().slice(0, 2), kind: String(o.kind || (vk === 'no' ? 'unanswerable' : 'cited answer')),
+    rw: typeof o.rw === 'string' ? o.rw : JSON.stringify(o.rw || {}, null, 1),
+    route: route.length ? route : [['dataset', vk === 'no' ? 'none' : 'stapfer', vk !== 'no']],
+    pool: String(o.pool || (vk === 'no' ? 'skipped' : 'top 6 passages')),
+    pass: vk === 'no' ? [] : (Array.isArray(o.pass) ? o.pass : []).slice(0, 3).map(p => [String(p[0] ?? ''), String(p[1] ?? ''), Math.max(0.05, Math.min(1, +p[2] || 0.5))]),
+    ans: String(o.ans || ''), checks: (Array.isArray(o.checks) ? o.checks : []).slice(0, 4).map(c => [String(c[0] || '✓').slice(0, 1), String(c[1] || ''), 1]),
+    source: String(o.source || (vk === 'no' ? 'declined' : 'answer_source: apertus')), verdict: String(o.verdict || (vk === 'no' ? 'Declined' : 'Shown as written')),
+    conf: Math.max(0, Math.min(1, +o.conf || 0.7)) };
+};
+const detectLang = text => /[àâçéèêëîïôûùœ]|\b(le|la|les|quel|quels|quelle|quelles|combien|école|des|est|qui|sur)\b/i.test(text) ? 'FR' : /[äöüß]|\b(wie|was|wer|welche|welcher|der|die|das|und|gab|viele|wann|wo)\b/i.test(text) ? 'DE' : 'EN';
+const LANG_NAME = { DE: 'German', FR: 'French', EN: 'English' };
+// live: the real POST /api/ask reply, shown stage by stage (rewrite/plan, route, sources, answer, checks)
+const LIVE_KIND = { apertus: 'cited answer', aggregate: 'aggregate · code computes', extractive: 'passages shown', not_found: 'unanswerable', no_direct_answer: 'unanswerable', invalid_input: 'unanswerable' };
+const LIVE_VERDICT = { apertus: 'Shown as written', aggregate: 'Computed by code', extractive: 'Passages shown', not_found: 'Declined', no_direct_answer: 'No direct answer', invalid_input: 'Declined' };
+const liveSim = (o, text) => {
+  const src = o.answer_source || 'apertus', r = o.route || {}, plan = o.data_plan, nc = o.number_check || {};
+  const no = ['not_found', 'no_direct_answer', 'invalid_input'].includes(src);
+  const list = v => [].concat(v == null ? [] : v).join(', ');
+  const rw = plan ? { engine: 'data question', dataset: plan.dataset, unit: plan.unit, filters: plan.filters,
+      measure: plan.measure ? (plan.measure.what || plan.measure.field) : null, operation: plan.operation, condition: plan.condition || null, group_by: plan.group_by || null }
+    : { dataset: r.dataset || null, intents: r.intents || [], sections: r.sections || [], places: r.places || [], years: r.years || null, routed_by: r.routed_by || 'rules' };
+  const route = plan
+    ? [['engine', 'data · ' + plan.operation, true],
+       ['filters', Object.entries(plan.filters || {}).map(([k, v]) => k + ': ' + list(v)).join(' · ') || 'all records', true],
+       ['measure', plan.measure ? (plan.measure.what || plan.measure.field) : 'count of records', true]]
+    : [[r.dataset ? 'dataset' : 'intent', r.dataset || list(r.intents) || '—', !!(r.dataset || (r.intents || []).length)],
+       ['place', list(r.places) || '—', (r.places || []).length > 0],
+       ['section', list(r.sections) || list(r.intents) || '—', !!((r.sections || []).length || (r.intents || []).length)]];
+  const srcs = o.sources || [];
+  const top = Math.max(1e-9, ...srcs.map(x => +x.score || 0));
+  const pass = srcs.slice(0, 3).map(x => [String(x.cite || x.doc_id || ''), String(x.text || '').replace(/\s+/g, ' ').slice(0, 180),
+    x.score != null ? Math.max(0.05, Math.min(1, (+x.score) / top)) : 0.8]);
+  let ans = String(o.answer || '');
+  if (src === 'aggregate') {  // the phrased summary and the code-written result line; the full audit is in the API reply
+    const first = ans.split('\n\n')[0], res = (ans.match(/^(?:Result|Ergebnis|Résultat)[^\n]*/m) || [''])[0];
+    ans = (/^(Computed|Berechnet|Calculé)/.test(first) ? '' : first + ' ') + res;
+  }
+  ans = ans.replace(/\s*\n+\s*/g, ' ').trim();
+  if (ans.length > 600) ans = ans.slice(0, 597) + '…';
+  const checks = [];
+  if (src === 'aggregate') checks.push(['∑', 'computed by code from ' + srcs.length + ' cited records', 1]);
+  if (!no) checks.push([nc.ok === false ? '✗' : '✓', nc.ok === false ? 'not in a cited source: ' + (nc.failures || []).slice(0, 3).join(', ') : 'every number found in its cited source', 1]);
+  if (!no) checks.push(['✓', (o.cited || []).length + ' citations resolve to sources', 1]);
+  if (no) checks.push(['✓', 'declined instead of guessing', 1]);
+  const conf = o.confidence && o.confidence.percent != null ? o.confidence.percent / 100 : null;
+  return { custom: true, live: true, q: text, lang: detectLang(text), vk: no ? 'no' : 'ok', kind: LIVE_KIND[src] || src,
+    rw: JSON.stringify(rw, null, 1), route,
+    pool: src === 'aggregate' ? srcs.length + ' records cited' : r.filtered_pool ? 'top ' + srcs.length + ' of ' + r.filtered_pool + ' passages' : 'top ' + srcs.length + ' passages',
+    pass, ans, checks: checks.slice(0, 4), source: 'answer_source: ' + src, verdict: LIVE_VERDICT[src] || src, conf };
+};
+const localSim = text => {
+  const t = text.toLowerCase();
+  const pick = /fischenthal|verdien|lohn|earn|salary|gages|wage/.test(t) ? 0 : /wie viele|how many|combien|total|bern/.test(t) ? 1 : /moudon|livre|book|buch/.test(t) ? 2 : /nucl|atom|kern|consult|vernehml/.test(t) ? 3 : 4;
+  return { ...SIM[pick], q: text, custom: true };
+};
+const WC = { apertus: C.gold, code: C.green, critic: '#c98a6a', validator: C.red, data: C.ink };
+const RA = 220, RB = 450, TY = i => 70 + i * 75;
+const TOOLN = ['normalize_dates','extract_quantities','place: Fischenthal','place: Wald','parse_signature'];
+const TOOLR = ['→ 1799-02-18','64 m · 58 f · 40 fl','47.33 N · 8.92 E','47.28 N · 8.91 E','B0 · Nr. 1421'];
+const FN = [
+  { id:'rec', who:'data', label:'Record', sub:'1 sheet', x:80, y:RA, w:14, win:[0,10], step:0 },
+  { id:'plan', who:'apertus', label:'Planner', sub:'JSON calls', x:250, y:RA, w:15, win:[8,30], step:0 },
+  { id:'repair', who:'code', label:'Arg repair', sub:'difflib', x:420, y:RA, w:15, win:[28,40], step:1 },
+  ...TOOLS.map((tl, i) => ({ id:'t' + i, ti: i, who:'code', tool:true, label: TOOLN[i], sub: TOOLR[i], x:600, y:TY(i), w:18, win:[36 + tl.d, 38 + tl.d + tl.len], step:2 })),
+  { id:'obs', who:'apertus', label:'Observe', sub:'5 results', x:800, y:RA, w:15, win:[62,106], step:3 },
+  { id:'critic', who:'critic', label:'Critic', sub:'required tools', x:870, y:RB, w:15, win:[104,122], step:4 },
+  { id:'compose', who:'apertus', label:'Composer', sub:'metadata', x:650, y:RB, w:15, win:[120,162], step:5 },
+  { id:'valid', who:'validator', label:'Validator', sub:'grounding', x:420, y:RB, w:15, win:[160,196], step:6 },
+  { id:'export', who:'data', label:'Export', sub:'records.jsonl', x:170, y:RB, w:15, win:[168,9999], step:6 },
+  { id:'bin', who:'validator', label:'Rejected', sub:'quarantine', x:420, y:555, w:16, mini:true, win:[190,9999], step:6 }
+];
+const bz = (...p) => ({ p, d: `M${p[0]} ${p[1]} C${p[2]} ${p[3]} ${p[4]} ${p[5]} ${p[6]} ${p[7]}` });
+const hz = (x0, y0, x3, y3) => { const m = (x3 - x0) * 0.5; return bz(x0, y0, x0 + m, y0, x3 - m, y3, x3, y3); };
+const FE = { rp: hz(150,RA,175,RA), pr: hz(325,RA,345,RA) };
+TOOLS.forEach((_, i) => { FE['rt' + i] = hz(495, RA, 510, TY(i)); FE['to' + i] = hz(690, TY(i), 725, RA); });
+Object.assign(FE, { loop: bz(800,RA-40,800,-30,250,-30,250,RA-40), oc: bz(800,RA+40,800,340,870,320,870,RB-40),
+  cc: hz(795,RB,725,RB), cv: hz(575,RB,495,RB), ve: hz(345,RB,245,RB), vb: bz(420,RB+42,420,505,420,515,420,535) });
+const bp = (P, u) => { const v = 1 - u, a = v*v*v, b = 3*v*v*u, c = 3*v*u*u, d = u*u*u; return [a*P[0]+b*P[2]+c*P[4]+d*P[6], a*P[1]+b*P[3]+c*P[5]+d*P[7]]; };
+const PK = [['rp',2,10,C.ink],['pr',24,30,C.gold],
+  ...TOOLS.map((tl, i) => ['rt' + i, 36 + tl.d, 41 + tl.d, C.green]),
+  ...TOOLS.map((tl, i) => ['to' + i, 36 + tl.d + tl.len, 41 + tl.d + tl.len, C.green]),
+  ['loop',86,98,C.gold,'finish',true],['oc',100,106,C.gold],['cc',116,122,'#c98a6a'],['cv',156,162,C.gold],
+  ...ENTS.map(([n, ok], i) => [ok ? 've' : 'vb', 162 + i * 7, 169 + i * 7, ok ? C.green : C.red, n])];
+const PILLS = ['Plan','Repair','Tools ∥','Observe','Critic','Compose','Ground'];
+
+const RUSH = [
+  { name:'Fischenthal · de', src:'Fischenthal, Distrikt Uster. Schulmeister: Jakob Boßhard, 46 Jahre. Im Winter 64 Knaben und 58 Mägdchen. Lohn: fl. 40 und 2 Mütt Kernen. Den 18ten Hornung 1799.',
+    good:[['Fischenthal','place'],['Uster','place'],['Jakob Boßhard','person'],['46 Jahre','number'],['64 Knaben','number'],['58 Mägdchen','number'],['fl. 40','number'],['1799','date']],
+    fake:[['Zürich','place'],['Pfarrer Hess','person'],['90 Knaben','number'],['fl. 120','number'],['1802','date'],['Winterthur','place'],['H. Pestalozzi','person']] },
+  { name:'Moudon · fr', src:'Moudon, sur la Broye. Le régent Jean-Pierre Cornaz, âgé de 52 ans. En hiver 40 garçons et 35 filles. Gages : 60 livres et le logement.',
+    good:[['Moudon','place'],['Broye','place'],['Jean-Pierre Cornaz','person'],['52 ans','number'],['40 garçons','number'],['35 filles','number'],['60 livres','number']],
+    fake:[['Lausanne','place'],['Pasteur Dubois','person'],['80 livres','number'],['Genève','place'],['20 filles','number'],['Yverdon','place']] },
+  { name:'Bümpliz · de', src:'Schule zu Bümpliz, Gemeinde Bern. Schulmeister Niklaus Gfeller, 38 Jahre. Im Winter 41 Kinder, im Sommer 12. Lohn: 30 Kronen und Holz.',
+    good:[['Bümpliz','place'],['Bern','place'],['Niklaus Gfeller','person'],['38 Jahre','number'],['41 Kinder','number'],['30 Kronen','number']],
+    fake:[['Thun','place'],['Ueli Gfeller','person'],['60 Kronen','number'],['14 Kinder','number'],['Biel','place'],['1805','date']] },
+  { name:'Consultation · 1977', src:'Revision des Atomgesetzes. Departement: EVED. Frist: 1977 – 1978. Archiv: E6100C#1998/106#1039*. Stellungnahmen der Kantone und Verbände.',
+    good:[['Atomgesetz','topic'],['EVED','org'],['1977','date'],['1978','date'],['E6100C#1998/106','signature']],
+    fake:[['Kanton Aargau','place'],['Dr. H. Keller','person'],['1985','date'],['Kaiseraugst','place'],['BAG','org'],['EDI','org']] }
+];
+const put = (a, v) => { if (Array.isArray(v) && v.length) a.splice(0, a.length, ...v); };
+const mix = (good, bad) => { const o = good.map(n => [n, 1]); bad.forEach((n, i) => o.splice(Math.min(o.length, 1 + i * 2), 0, [n, 0])); return o; };
+const applySim = sim => {
+  const ok = (sim || []).filter(o => o && !o.error && o.answer != null);
+  if (ok.length) put(SIM, ok.map(o => ({ ...liveSim(o, o.question), custom: false })));
+  return ok.length > 0;
+};
+const applySite = d => {
+  ((d.pipeline && d.pipeline.stages) || []).forEach(m => {
+    const st = STAGES.find(x => x.id === m.stage), o = Object.entries(m.outputs || {})[0];
+    if (!st || !o) return;  // an optional stage this run skipped keeps its description
+    st.out = o[0]; st.hash = o[1]; if (m.seconds != null) st.sec = m.seconds + ' s';
+  });
+  if (d.morph) put(MORPH, d.morph.tokens);
+  const a = d.agent;
+  if (a) {
+    put(REC, a.rec); PLAN_JSON = a.plan_json; COMPOSE_JSON = a.compose_json;
+    TOOLS.forEach((t, i) => { if (a.tools[i]) { t.call = a.tools[i].call; t.res = a.tools[i].res; TOOLN[i] = a.tooln[i]; TOOLR[i] = a.toolr[i]; } });
+    FN.forEach(n => { if (n.tool) { n.label = TOOLN[n.ti]; n.sub = TOOLR[n.ti]; } });
+    if (a.ents.length === ENTS.length) {
+      put(ENTS, a.ents);
+      ENTS.forEach(([n, ok], i) => { PK[PK.length - ENTS.length + i] = [ok ? 've' : 'vb', 162 + i * 7, 169 + i * 7, ok ? C.green : C.red, n]; });
+    }
+    AGENT_META = { model: a.model, seconds: a.seconds, n: a.n_calls, repair: a.repair_text, observe: a.observe_text, critic: a.critic_text, live: true };
+  }
+  put(DEC, d.dec); put(ROUTE, d.route); put(CAL, d.cal);
+  if ((d.geo || []).length >= 5) put(GEO, d.geo.slice(0, 5));
+  put(HAL, (d.hal || []).map(h => ({ kind: h.kind, src: h.src, ents: mix(h.good.map(g => g[0]), h.fake.slice(0, 2).map(f => f[0])) })));
+  put(RUSH, (d.rush || []).map(r => ({ name: r.name, src: r.src, good: r.good, fake: r.fake })));
+  applySim(d.sim);
+};
+const KIND_COL = { person: C.gold, place: C.green, number: '#c98a6a', date: C.mute, org: C.ink, topic: C.ink, signature: C.mute };
+const FH = 560, TOP = 104, LINE = 506;
+const rushInit = () => ({ st:'idle', tk:[], pops:[], spawn:0, score:0, scT:-99, combo:0, comboT:-99, maxCombo:0, lives:3, lifeT:-99, lvl:1, rec:0, recCaught:0, caught:0, wrong:0, leaks:0, passed:0, power:1, powerT:-99, shakeT:-99, banner:null, id:0, overT:0, burstT:0 });
+const GLYPHS = ['1799','Hornung','fl. 40','§15','#…##','BAR B0 1000/1483','Mägdchen','°-°°','||[Seite 3]','Knaben','livres','Batzen','Schulmeister','régent','E6100C#1998/106','Moudon','Fischenthal','kr.','sous','III.12','IV.16','Merz','92,524','Uster','Bümpliz','catéchisme','2,250','Mütt Kernen'];
+const PART = GLYPHS.map((g, i) => { const r = k => (Math.sin(i * 91.7 + k * 13.3) + 1) / 2; return { t: g, x: r(1) * 100, sp: 0.04 + r(2) * 0.09, ph: r(3) * 120, d: 0.3 + r(4), serif: i % 3 !== 0 }; });
+const MARQ = ['2,250 sheets','92,524 answers','Hornung → February','857 / 858 linked','Apertus 70B','0 schema errors','DE · FR · EN','4.5 M archive units','every claim cited','raw text never overwritten'];
+const HERO = ['Two','centuries','of','Swiss','paperwork,','made','answerable.'];
+
+class Component extends DCLogic {
+  state = { xp: 0, xpShown: 0, xpT: -99, badges: {}, toasts: [], floats: [], burst: null, visited: { 0: 1 }, simLangs: {},
+    track: 'casual', dR: 0, dPick: null, dRevT: 0, dTime: 0, dShowT: 0, dScore: 0, dStreak: 0, dRight: 0, dHist: [], dDone: false, dLast: 0,
+    rR: 0, rSel: {}, rRev: false, rRevT: 0, rScore: 0, rHist: [], rDone: false, rWarnT: 0,
+    cR: 0, cV: 50, cRev: false, cRevT: 0, cHist: [], cDone: false,
+    rush: rushInit(), rushBest: 0, mode: 'rush', custom: [], chatText: '', simBusy: false, pending: null, gR: 0, gGuess: null, gHint: false, gScores: [], gStart: 0, gT0: 0, gDone: false,
+    hR: 0, hSel: {}, hRev: false, hRevT: 0, hTotal: 0, hRes: null,
+    mx: 0.5, my: 0.3, tab: 0, tick: 0, enterT: 0, pipeT: -1, sel: 3, agentT: 0, agentPlay: false, simQ: 0, simT: -1 };
+  componentDidMount() {
+    fetch('/api/metrics').then(r => r.ok ? r.json() : null).then(j => j && j.metrics && this.setState({ metrics: j.metrics })).catch(() => {});
+    let tries = 0, base = false;  // /api/site: real examples for every tab; the simulator's answers arrive once they have run
+    const site = () => fetch('/api/site').then(r => r.ok ? r.json() : null).then(d => {
+      if (d && !base) { applySite(d); base = true; this.setState({ site: true }); }
+      else if (d && applySim(d.sim)) this.setState({ simLive: true });
+      if ((!d || !d.sim) && ++tries < 30) this.siteT = setTimeout(site, 10000);
+    }).catch(() => { if (++tries < 30) this.siteT = setTimeout(site, 10000); });
+    site();
+    this.tabWall = performance.now() - 1000;
+    this.mouse = { x: 0.5, y: 0.3, px: window.innerWidth / 2, py: window.innerHeight * 0.3 };
+    this.last = performance.now();
+    this.lastRaf = 0;
+    const adv = now => { const dt = Math.min(3, Math.max(0, (now - this.last) / 50)); this.last = now; if (dt > 0) this.step(dt); };
+    const loop = now => { this.lastRaf = performance.now(); adv(this.lastRaf); this.fxFrame(); this.raf = requestAnimationFrame(loop); };
+    this.fxInit();
+    this.raf = requestAnimationFrame(loop);
+    this.fb = setInterval(() => { const now = performance.now(); if (now - this.lastRaf > 100) adv(now); }, 50);
+    try { this.setState({ rushBest: +(localStorage.getItem('archai_rush_best') || 0) }); } catch (e) {}
+    this.kd = e => {
+      if (/INPUT|TEXTAREA/.test(e.target.tagName)) return;
+      if ((e.key === ' ' || e.code === 'Space') && this.state.tab === 5 && this.state.mode === 'rush') {
+        e.preventDefault();
+        if (this.state.rush.st === 'play') this.rushPower(); else this.rushStart();
+        return;
+      }
+      if (this.state.tab === 5 && this.state.mode === 'dec' && /^[1-4]$/.test(e.key)) { this.decPick(+e.key - 1); return; }
+      if (e.key === 'ArrowRight') this.go(Math.min(5, this.state.tab + 1));
+      if (e.key === 'ArrowLeft') this.go(Math.max(0, this.state.tab - 1));
+    };
+    window.addEventListener('keydown', this.kd);
+  }
+  step(dt) {
+    this.setState(s => {
+      const n = { tick: s.tick + dt };
+      if (s.pipeT >= 0 && s.pipeT < PIPE_END) n.pipeT = Math.min(PIPE_END, s.pipeT + dt);
+      if (s.agentPlay) { if (s.agentT < AGENT_END) n.agentT = Math.min(AGENT_END, s.agentT + dt); else n.agentPlay = false; }
+      if (s.simT >= 0 && s.simT < SIM_END) n.simT = Math.min(SIM_END, s.simT + dt);
+      if (s.xpShown !== s.xp) n.xpShown = Math.abs(s.xp - s.xpShown) < 2 ? s.xp : s.xpShown + (s.xp - s.xpShown) * Math.min(1, 0.18 * dt);
+      if (s.toasts.length && s.tick - s.toasts[0].t0 > 110) n.toasts = s.toasts.slice(1);
+      if (s.floats.length && s.tick - s.floats[0].t0 > 40) n.floats = s.floats.slice(1);
+      if (s.rush.st === 'play' && s.tab === 5 && s.mode === 'rush') n.rush = this.rushStep(s.rush, dt, s.tick);
+      if (s.tab === 5 && s.mode === 'dec' && s.dPick == null && !s.dDone) { n.dTime = s.dTime + dt; if (n.dTime >= 160) { n.dTime = 160; n.dPick = -1; n.dStreak = 0; n.dRevT = s.tick; n.dHist = [...s.dHist, false]; } }
+      return n;
+    });
+  }
+  componentWillUnmount() { clearTimeout(this.siteT); cancelAnimationFrame(this.raf); clearInterval(this.fb); this.fxKill(); window.removeEventListener('keydown', this.kd); }
+  componentDidUpdate() {
+    const s = this.state, r = s.rush, p = this.prevS || { pipeT: s.pipeT, agentT: s.agentT, simT: s.simT, rushSt: r.st, burstT: r.burstT };
+    this.prevS = { pipeT: s.pipeT, agentT: s.agentT, simT: s.simT, rushSt: r.st, burstT: r.burstT, tab: s.tab, mode: s.mode };
+    if (p.tab !== undefined && p.tab !== s.tab) { setTimeout(() => this.scanReveal(), 30); setTimeout(() => this.scrambleAll(), 420); }
+    if (p.mode !== undefined && p.mode !== s.mode) setTimeout(() => this.scanReveal(), 30);
+    if (p.rushSt === 'play' && r.st === 'over') {
+      this.addXp(Math.round(r.score / 10));
+      if (r.score > s.rushBest) { this.setState({ rushBest: r.score }); try { localStorage.setItem('archai_rush_best', String(r.score)); } catch (e) {} }
+    }
+    if (r.burstT && r.burstT !== p.burstT) this.boom(window.innerWidth * 0.38, window.innerHeight * 0.55);
+    if (r.maxCombo >= 12 && !s.badges.sharp) this.award('sharp', 300, 'Sharp Eye', 'Combo ×12 in Validator Rush');
+    if (p.pipeT < PIPE_END && s.pipeT >= PIPE_END) this.award('pipe', 200, 'Pipeline Runner', 'All 9 stages ran');
+    if (p.agentT < AGENT_END && s.agentT >= AGENT_END) this.award('agent', 200, 'Loop Closer', 'The agent grounded its output');
+    if (p.simT < 140 && s.simT >= 140) {
+      const q = [...SIM, ...s.custom][s.simQ] || SIM[0], L = { ...s.simLangs, [q.lang]: 1 };
+      this.setState({ simLangs: L });
+      this.addXp(30);
+      if (L.DE && L.FR && L.EN) this.award('polyglot', 250, 'Polyglot', 'Asked in DE, FR and EN');
+      if (q.vk === 'no') this.award('gate', 150, 'Gatekeeper', 'Off-topic questions are declined');
+      if (q.kind.startsWith('aggregate')) this.award('count', 150, 'Bean Counter', 'Code did the sum, not the model');
+    }
+  }
+  award(key, xp, title, sub) {
+    this.setState(s => s.badges[key] ? null : { badges: { ...s.badges, [key]: s.tick }, xp: s.xp + xp, xpT: s.tick,
+      toasts: [...s.toasts.slice(-2), { id: key, title, sub: sub + ' · +' + xp + ' XP', t0: s.tick }] });
+  }
+  addXp(n, x, y) {
+    this.setState(s => ({ xp: s.xp + n, xpT: s.tick, floats: x == null ? s.floats : [...s.floats.slice(-5), { x, y, text: '+' + n + ' XP', t0: s.tick }] }));
+  }
+  boom(x, y) { this.setState(s => ({ burst: { x, y, t0: s.tick } })); }
+  geoGuess(i, e) {
+    const s = this.state; if (s.gGuess != null || s.gDone) return;
+    const ans = geoNear(GEO[s.gR]);
+    const d = KM(CITIES[i], GP(GEO[s.gR]));
+    const pts = Math.max(0, Math.round((i === ans ? 1000 : 900 - d * 5) - (s.gHint ? 150 : 0)));
+    this.setState({ gGuess: i, gT0: s.tick, gScores: [...s.gScores, pts] });
+    if (pts > 0) this.addXp(Math.round(pts / 5), e.clientX, e.clientY - 20);
+    if (i === ans) this.boom(e.clientX, e.clientY);
+  }
+  geoNext() {
+    const s = this.state;
+    if (s.gDone) return this.setState({ gR: 0, gGuess: null, gHint: false, gScores: [], gStart: s.tick, gDone: false });
+    if (s.gGuess == null) return;
+    if (s.gR < 4) return this.setState({ gR: s.gR + 1, gGuess: null, gHint: false, gStart: s.tick });
+    this.setState({ gDone: true });
+    this.award('geo', 300, 'Cartographer', 'Five sheets placed on the map');
+    this.boom(window.innerWidth / 2, window.innerHeight / 2);
+  }
+  halAct(e) {
+    const s = this.state, R = HAL[s.hR];
+    if (s.hRev) return this.setState({ hR: (s.hR + 1) % HAL.length, hSel: {}, hRev: false, hRes: null });
+    const right = R.ents.filter((en, i) => !!s.hSel[i] === !en[1]).length;
+    const perfect = right === R.ents.length;
+    this.setState({ hRev: true, hRevT: s.tick, hTotal: s.hTotal + R.ents.filter((en, i) => !en[1] && s.hSel[i]).length, hRes: { right, n: R.ents.length, perfect } });
+    this.addXp(right * 40, e.clientX, e.clientY - 20);
+    if (perfect) { this.boom(e.clientX, e.clientY); this.award('sharp', 300, 'Sharp Eye', 'You caught every ungrounded name'); }
+  }
+  go(i) {
+    const v = { ...this.state.visited, [i]: 1 };
+    if (!this.state.visited[i]) this.addXp(40);
+    if (Object.keys(v).length === 6) setTimeout(() => this.award('explorer', 300, 'Explorer', 'Every chapter opened'), 900);
+    this.tabWall = performance.now();
+    const s = { tab: i, enterT: this.state.tick, visited: v };
+    if (i === 1 && this.state.pipeT < 0) s.pipeT = 0;
+    if (i === 2 && this.state.agentT === 0) s.agentPlay = true;
+    if (i === 3 && this.state.simT < 0) s.simT = 0;
+    this.setState(s);
+    window.scrollTo({ top: 0 });
+  }
+  flowRef = el => { if (el && el !== this.flowEl) { this.flowEl = el; this.flowW = el.clientWidth; this.watchSize(el); } };
+  rushRef = el => { if (el && el !== this.rushEl) { this.rushEl = el; this.rushW = el.clientWidth; this.watchSize(el); } };
+  watchSize(el) {
+    if (!window.ResizeObserver) return;
+    if (!this.ro) this.ro = new ResizeObserver(es => es.forEach(e => { if (e.target === this.flowEl) this.flowW = e.contentRect.width; if (e.target === this.rushEl) this.rushW = e.contentRect.width; }));
+    this.ro.observe(el);
+  }
+  fxInit() {
+    const fine = window.matchMedia && matchMedia('(pointer:fine)').matches;
+    const bar = document.createElement('div');
+    Object.assign(bar.style, { position:'fixed', right:'0', top:'0', width:'3px', height:'100vh', background:'#e2553a', transformOrigin:'top', transform:'scaleY(0)', zIndex:'40', pointerEvents:'none' });
+    document.body.appendChild(bar); this.fxBar = bar;
+    if (fine) this.trail = Array.from({ length: 10 }, (_, i) => { const d = document.createElement('div'), sz = Math.max(3, 10 - i * 0.8);
+      Object.assign(d.style, { position:'fixed', left:'0', top:'0', width: sz + 'px', height: sz + 'px', borderRadius:'50%', background: i === 0 ? '#e2553a' : '#eee4cc', opacity: String(i === 0 ? 0.9 : Math.max(0.05, 0.32 - i * 0.03)), pointerEvents:'none', zIndex:'80', willChange:'transform', transform:'translate3d(-40px,-40px,0)' });
+      document.body.appendChild(d); return { d, x: -40, y: -40, sz }; });
+    this.pd = e => this.splash(e.clientX, e.clientY);
+    window.addEventListener('pointerdown', this.pd);
+    this.io = 'IntersectionObserver' in window ? new IntersectionObserver(es => es.forEach(en => { if (en.isIntersecting) { this.reveal(en.target); this.io.unobserve(en.target); } }), { threshold: 0.12 }) : null;
+    setTimeout(() => this.scanReveal(), 60);
+    setTimeout(() => this.scrambleAll(), 700);
+  }
+  fxKill() {
+    window.removeEventListener('pointerdown', this.pd);
+    if (this.io) this.io.disconnect();
+    if (this.ro) this.ro.disconnect();
+    if (this.fxBar) this.fxBar.remove();
+    (this.trail || []).forEach(p => p.d.remove());
+  }
+  fxFrame() {
+    const m = this.mouse;
+    if (this.trail && m) { let px = m.px, py = m.py; this.trail.forEach((p, i) => { const k = i === 0 ? 0.55 : 0.38; p.x += (px - p.x) * k; p.y += (py - p.y) * k; p.d.style.transform = 'translate3d(' + (p.x - p.sz / 2).toFixed(1) + 'px,' + (p.y - p.sz / 2).toFixed(1) + 'px,0)'; px = p.x; py = p.y; }); }
+    if (this.fxBar) { const max = document.documentElement.scrollHeight - window.innerHeight; this.fxBar.style.transform = 'scaleY(' + (max > 0 ? Math.min(1, window.scrollY / max) : 0).toFixed(4) + ')'; }
+  }
+  splash(x, y) {
+    const mk = (st) => { const d = document.createElement('div'); Object.assign(d.style, { position:'fixed', pointerEvents:'none', zIndex:'81', borderRadius:'50%' }, st); document.body.appendChild(d); return d; };
+    const ring = mk({ left: (x - 20) + 'px', top: (y - 20) + 'px', width:'40px', height:'40px', border:'1.5px solid #e2553a' });
+    if (ring.animate) ring.animate([{ transform:'scale(0.2)', opacity: 0.9 }, { transform:'scale(1.7)', opacity: 0 }], { duration: 560, easing:'cubic-bezier(.2,.7,.2,1)', fill:'forwards' });
+    setTimeout(() => ring.remove(), 600);
+    for (let i = 0; i < 7; i++) { const a = i / 7 * Math.PI * 2 + Math.random() * 0.5, rr = 16 + Math.random() * 24;
+      const d = mk({ left: (x - 2) + 'px', top: (y - 2) + 'px', width:'4px', height:'4px', background: i % 2 ? '#e2553a' : '#c9a45c' });
+      if (d.animate) d.animate([{ transform:'translate(0,0) scale(1)', opacity: 1 }, { transform:'translate(' + (Math.cos(a) * rr).toFixed(1) + 'px,' + (Math.sin(a) * rr + 12).toFixed(1) + 'px) scale(0.3)', opacity: 0 }], { duration: 620, easing:'cubic-bezier(.2,.7,.2,1)', fill:'forwards' });
+      setTimeout(() => d.remove(), 660); }
+  }
+  scanReveal() {
+    document.querySelectorAll('[data-reveal]:not([data-rv])').forEach(el => {
+      el.setAttribute('data-rv', '1'); el._rvT = el.style.transition;
+      el.style.transition = 'none'; el.style.opacity = '0'; el.style.transform = 'translateY(26px)';
+      void el.offsetHeight;
+      el.style.transition = 'opacity .8s cubic-bezier(.2,.7,.2,1), transform .8s cubic-bezier(.2,.7,.2,1)';
+      if (this.io) this.io.observe(el); else this.reveal(el);
+      setTimeout(() => { if (el.style.opacity === '0') this.reveal(el); }, 3000);
+    });
+  }
+  reveal(el) {
+    if (el._rvd) return; el._rvd = 1;
+    const sibs = el.parentElement ? [...el.parentElement.children].filter(c => c.hasAttribute('data-reveal')) : [];
+    const idx = Math.max(0, sibs.indexOf(el)) % 8;
+    el.style.transitionDelay = idx * 70 + 'ms'; el.style.opacity = '1'; el.style.transform = 'none';
+    setTimeout(() => { el.style.transition = el._rvT || ''; el.style.transitionDelay = ''; el.style.transform = ''; el.style.opacity = ''; }, 1000 + idx * 70);
+  }
+  scrambleAll() { document.querySelectorAll('[data-scramble]').forEach(el => this.scramble(el)); }
+  scramble(el) {
+    if (el._scr) return; el._scr = 1;
+    const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT), nodes = [];
+    while (w.nextNode()) nodes.push(w.currentNode);
+    const orig = nodes.map(n => n.nodeValue), total = Math.max(1, orig.join('').length);
+    const G = 'ABCDEFGHJKLMNPRSTUVWXYZſß§¶†#*', t0 = performance.now(), dur = 760;
+    const step = () => { const p = Math.min(1, (performance.now() - t0) / dur); let c = 0;
+      nodes.forEach((n, k) => { const o = orig[k]; let out = ''; for (let i = 0; i < o.length; i++, c++) { const ch = o[i]; out += (ch === ' ' || c / total < p) ? ch : G[Math.floor(Math.random() * G.length)]; } n.nodeValue = out; });
+      if (p < 1) setTimeout(step, 35); };
+    step();
+    setTimeout(() => { nodes.forEach((n, k) => { n.nodeValue = orig[k]; }); el._scr = 0; }, dur + 200);
+  }
+  setTrack(k) { this.setState(s => ({ track: k, mode: MODES[k][0][0], gStart: s.tick, dTime: 0, dShowT: s.tick })); }
+  setMode(k) { this.setState(s => ({ mode: k, gStart: s.tick, dTime: 0, dShowT: s.tick })); }
+  decPick(i, e) {
+    const s = this.state; if (s.dPick != null || s.dDone) return;
+    const D = DEC[s.dR], ok = decOpts(s.dR)[i] === D.c;
+    const pts = ok ? 100 + Math.round((1 - s.dTime / 160) * 100) + s.dStreak * 25 : 0;
+    this.setState({ dPick: i, dRevT: s.tick, dScore: s.dScore + pts, dLast: pts, dStreak: ok ? s.dStreak + 1 : 0, dRight: s.dRight + (ok ? 1 : 0), dHist: [...s.dHist, ok] });
+    if (ok) { const x = e && e.clientX != null ? e.clientX : window.innerWidth / 2, y = e && e.clientY != null ? e.clientY : window.innerHeight / 2;
+      this.addXp(Math.round(pts / 6), x, y - 20); if (s.dStreak + 1 >= 4) this.boom(x, y); }
+  }
+  decNext() {
+    const s = this.state;
+    if (s.dDone) return this.setState({ dR: 0, dPick: null, dTime: 0, dShowT: s.tick, dScore: 0, dStreak: 0, dRight: 0, dHist: [], dDone: false });
+    if (s.dPick == null) return;
+    if (s.dR < 9) return this.setState({ dR: s.dR + 1, dPick: null, dTime: 0, dShowT: s.tick });
+    this.setState({ dDone: true });
+    if (s.dRight >= 8) this.award('decoder', 250, 'Decoder', 'You read 1799 like a local');
+  }
+  routeAct() {
+    const s = this.state;
+    if (s.rDone) return this.setState({ rR: 0, rSel: {}, rRev: false, rScore: 0, rHist: [], rDone: false });
+    if (s.rRev) { if (s.rR < 4) return this.setState({ rR: s.rR + 1, rSel: {}, rRev: false });
+      this.setState({ rDone: true }); if (s.rScore >= 12) this.award('router', 250, 'Router', 'You routed questions like Apertus'); return; }
+    if (RF.some(([f]) => !s.rSel[f])) return this.setState({ rWarnT: s.tick });
+    const n = RF.filter(([f]) => s.rSel[f] === ROUTE[s.rR].g[f]).length;
+    this.setState({ rRev: true, rRevT: s.tick, rScore: s.rScore + n, rHist: [...s.rHist, n] });
+    this.addXp(n * 30);
+    if (n === 3) this.boom(window.innerWidth * 0.3, window.innerHeight * 0.6);
+  }
+  calAct() {
+    const s = this.state;
+    if (s.cDone) return this.setState({ cR: 0, cV: 50, cRev: false, cHist: [], cDone: false });
+    if (s.cRev) { if (s.cR < 5) return this.setState({ cR: s.cR + 1, cV: 50, cRev: false });
+      const b = s.cHist.reduce((a, x) => a + (x.p - x.y) ** 2, 0) / s.cHist.length;
+      this.setState({ cDone: true }); if (b < 0.12) this.award('calib', 300, 'Calibrated', 'Brier score ' + b.toFixed(3)); return; }
+    const p = s.cV / 100, y = CAL[s.cR].ok;
+    this.setState({ cRev: true, cRevT: s.tick, cHist: [...s.cHist, { p, y, t0: s.tick }] });
+    this.addXp(Math.round((1 - (p - y) ** 2) * 50));
+    if ((p - y) ** 2 < 0.05) this.boom(window.innerWidth * 0.7, window.innerHeight * 0.45);
+  }
+  async chatSend(qText) {
+    const text = String(qText ?? this.state.chatText).trim();
+    if (!text || this.state.simBusy) return;
+    this.setState({ simBusy: true, chatText: '', pending: text, simT: -1 });
+    let item = null;
+    const lang = detectLang(text);
+    try {
+      const res = await fetch('/api/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question: text }) });
+      if (res.ok) item = liveSim(await res.json(), text);
+    } catch (e) { item = null; }
+    if (!item) try {
+      if (window.claude && window.claude.complete) {
+        const raw = await window.claude.complete({ system: SYS_PROMPT, max_tokens: 1000, messages: [{ role: 'user', content: 'Question language: ' + lang + '. Write "ans", the checks and the route values ONLY in ' + LANG_NAME[lang] + ' (quoted passages may stay in their original language). Set "lang" to "' + lang + '". Question: ' + text }] });
+        item = parseSim(String(raw), text);
+        if (item) item.lang = lang;
+      }
+    } catch (e) { item = null; }
+    if (!item || !item.ans) item = localSim(text);
+    if (!item.live) item = { ...item, kind: 'demo stand-in · ' + item.kind };
+    this.setState(s => ({ custom: [...s.custom, item], simQ: SIM.length + s.custom.length, simT: 0, simBusy: false, pending: null }));
+  }
+  rushStart() {
+    this.setState(s => ({ rush: { ...rushInit(), st: 'play', spawn: 10, banner: { text: 'Record 1 · ' + RUSH[0].name, t0: s.tick } } }));
+  }
+  rushPower() {
+    this.setState(s => { const r = s.rush; if (r.st !== 'play' || r.power <= 0 || s.tick - r.powerT < 60) return null;
+      return { rush: { ...r, power: r.power - 1, powerT: s.tick, pops: [...r.pops, { x: 50, y: 300, t: 'verify_in_source() · slow motion', c: C.green, t0: s.tick }] } }; });
+  }
+  rushStep(r0, dt, T) {
+    const r = { ...r0, t: (r0.t || 0) + dt };
+    const slow = T - r.powerT < 60 ? 0.35 : 1;
+    let tk = r.tk.map(k => k.st === 'fall' ? { ...k, y: k.y + k.v * dt * slow } : k).filter(k => k.st === 'fall' || T - k.t0 < 14);
+    const pops = r.pops.filter(p => T - p.t0 < 26);
+    r.spawn -= dt * slow;
+    if (r.spawn <= 0) {
+      const R = RUSH[r.rec], fake = Math.random() < 0.45, pool = fake ? R.fake : R.good;
+      const live = tk.filter(k => k.st === 'fall');
+      const opts = pool.filter(c => !live.some(k => k.text === c[0]));
+      if (opts.length) {
+        const c = opts[Math.floor(Math.random() * opts.length)];
+        let x = 12 + Math.random() * 76;
+        for (let i = 0; i < 6 && live.some(k => k.y < TOP + 70 && Math.abs(k.x - x) < 18); i++) x = 12 + Math.random() * 76;
+        tk.push({ id: r.id, text: c[0], kind: c[1], fake, x, y: TOP - 8, v: 2.1 + r.lvl * 0.55 + Math.random() * 0.9, st: 'fall', t0: T, wob: Math.random() * 6 });
+        r.id++;
+      }
+      r.spawn = Math.max(7, 20 - r.lvl * 2.4);
+    }
+    tk = tk.map(k => {
+      if (k.st !== 'fall' || k.y < LINE - 22) return k;
+      if (k.fake) { r.lives--; r.lifeT = T; r.combo = 0; r.leaks++; r.shakeT = T; pops.push({ x: k.x, y: LINE - 40, t: 'leaked: ' + k.text + ' · −1 seal', c: C.red, t0: T }); return { ...k, st: 'leak', t0: T }; }
+      r.passed++; r.score += 20; r.scT = T; pops.push({ x: k.x, y: LINE - 40, t: '+20 exported', c: C.green, t0: T }); return { ...k, st: 'ok', t0: T };
+    });
+    if (r.lives <= 0) { r.lives = 0; r.st = 'over'; r.overT = T; }
+    r.tk = tk; r.pops = pops;
+    return r;
+  }
+  rushHit(id) {
+    this.setState(s => {
+      const r = { ...s.rush }, T = s.tick; if (r.st !== 'play') return null;
+      const k = r.tk.find(x => x.id === id); if (!k || k.st !== 'fall') return null;
+      const pops = [...r.pops]; let tk;
+      if (k.fake) {
+        r.combo++; r.comboT = T; r.maxCombo = Math.max(r.maxCombo, r.combo);
+        const mult = Math.min(5, 1 + Math.floor(r.combo / 3)), pts = 100 * mult;
+        r.score += pts; r.scT = T; r.caught++; r.recCaught++;
+        pops.push({ x: k.x, y: k.y, t: '✗ rejected +' + pts + (mult > 1 ? ' ×' + mult : ''), c: C.gold, t0: T });
+        tk = r.tk.map(x => x.id === id ? { ...x, st: 'hit', t0: T } : x);
+        if (r.recCaught >= 6) {
+          r.rec = (r.rec + 1) % RUSH.length; r.lvl++; r.recCaught = 0; r.score += 500; r.power = Math.min(2, r.power + 1); r.burstT = T;
+          r.banner = { text: 'Record cleared +500 · next: ' + RUSH[r.rec].name, t0: T };
+          tk = tk.map(x => x.st === 'fall' ? { ...x, st: 'clear', t0: T } : x);
+        }
+      } else {
+        r.lives--; r.lifeT = T; r.combo = 0; r.wrong++; r.shakeT = T;
+        pops.push({ x: k.x, y: k.y, t: 'grounded! −1 seal', c: C.red, t0: T });
+        tk = r.tk.map(x => x.id === id ? { ...x, st: 'wrong', t0: T } : x);
+        if (r.lives <= 0) { r.lives = 0; r.st = 'over'; r.overT = T; }
+      }
+      r.tk = tk; r.pops = pops;
+      return { rush: r };
+    });
+  }
+  agentJump(t) { this.setState({ agentT: t, agentPlay: true }); }
+
+  renderVals() {
+    const M = this.mouse || { x: 0.5, y: 0.3, px: 0, py: 0 };
+    const s = this.state, t = s.tick, since = t - s.enterT;
+    const enter = Math.max(ease(since / 9), this.tabWall && performance.now() - this.tabWall > 400 ? 1 : 0);
+    const pulse = 0.35 + 0.65 * Math.abs(Math.sin(t / 8));
+    const tabs = TABS.map(([num, label], i) => ({ num, label, go: () => this.go(i),
+      col: i === s.tab ? C.ink : C.mute, bg: i === s.tab ? '#221e18' : 'transparent', numCol: i === s.tab ? C.red : C.dim }));
+
+    // overview
+    const cyc = t % 150, mi = Math.min(MORPH.length, Math.floor(cyc / 9));
+    const morphTokens = MORPH.map((m, i) => {
+      const done = i < mi, special = 'clean' in m;
+      const text = done && special ? m.clean : m.raw;
+      return { text: text || '¶', col: special ? (done ? '#7a5a1c' : '#b8341c') : '#2a241a',
+        bg: special && done ? 'rgba(201,164,92,0.28)' : 'transparent', deco: special && done ? 'underline dotted' : 'none' };
+    });
+    const morphAnn = MORPH.filter((m, i) => m.ann && i < mi).map(m => m.ann);
+    const scanTop = (cyc < 95 ? (cyc / 95) * 82 : 82) + '%';
+    const b = ease(since / 26);
+    const datasets = [
+      { years:'1799', name:'Stapfer-Enquête', count: fmt(2250 * b), unit:'transcribed sheets · ' + fmt(92524 * b) + ' answers', what:'A survey of schools sent out by the Helvetic Republic. Teachers answered in their own words, in German and French.' },
+      { years:'1960 – 1991', name:'Federal Consultations', count: fmt(569 * b), unit:'consultations · 858 archive references', what:'Consultations on federal laws, each linked to its dossier in the Federal Archives.' },
+      { years:'Federal Archives', name:'Archive Database (OLR)', count: (4.5 * b).toFixed(1) + ' M', unit:'archive units + hierarchy · 3.6 GB dump', what:'Read straight from the SQL dump. Resolves every signature to an archive unit and its path.' }
+    ];
+    const ri = Math.floor(t / 40) % 3;
+    const roleDot = (6 + ((t % 120) / 120) * 88).toFixed(1) + '%';
+    const roles = [
+      { n:'01', name:'Deterministic code', tag:'ingest · clean · link · tools · arithmetic', body:'Parses the dumps, cleans the markup, resolves places and signatures, extracts quantities and does every sum. It runs the same way every time.' },
+      { n:'02', name:'Apertus', tag:'plans · enriches · rewrites · answers', body:'The Swiss open model reads 1799 German and French, chooses which tools to call, rewrites questions into routes and writes cited answers.' },
+      { n:'03', name:'Validator', tag:'grounding · schema · number check', body:'Rejects names that are not in the source, numbers that the cited passage does not contain, and records that break the schema.' }
+    ].map((r, i) => ({ ...r, bg: i === ri ? (i === 1 ? C.gold : i === 2 ? C.red : C.green) : 'transparent',
+      fg: i === ri ? '#12100c' : C.ink, bd: i === ri ? 'transparent' : '#4a4336', tagCol: [C.green, C.gold, C.red][i] }));
+    const explore = [
+      { num:'02', title:'How the pipeline runs', body:'Nine stages and a live run manifest.', go: () => this.go(1) },
+      { num:'03', title:'The agentic tool loop', body:'One record, step by step.', go: () => this.go(2) },
+      { num:'04', title:'Ask the archive', body:'A Q&A replay with checks.', go: () => this.go(3) },
+      { num:'05', title:'What was measured', body:'Each number with its scope.', go: () => this.go(4) },
+      { num:'06', title:'Play the archive', body:'Validator Rush, map guessing, hallucination hunting.', go: () => this.go(5) }
+    ];
+
+    // pipeline
+    const pt = s.pipeT;
+    const stages = STAGES.map((st, i) => {
+      const p = pt < 0 ? 0 : cl((pt - STARTS[i]) / st.dur);
+      const state = p >= 1 ? 'done' : p > 0 ? 'run' : 'wait';
+      const wc = WHO_COL[st.who];
+      return { id: st.id, mod: st.mod, who: st.who, whoCol: wc, select: () => this.setState({ sel: i }),
+        time: state === 'done' ? st.sec : state === 'run' ? '…' : '—',
+        bar: state === 'run' ? pct(p) : '0', barCol: wc,
+        rowBg: i === s.sel ? '#1b1813' : 'transparent',
+        mark: state === 'done' ? '✓' : String(i + 1),
+        dotBd: state === 'wait' ? '#4a4336' : wc, dotBg: state === 'done' ? wc : 'transparent',
+        dotFg: state === 'done' ? '#12100c' : state === 'run' ? wc : C.dim,
+        nameCol: state === 'wait' ? C.mute : C.ink };
+    });
+    const sd = STAGES[s.sel];
+    const sel = { ...sd, idx: s.sel + 1, whoCol: WHO_COL[sd.who] };
+    const logLines = [];
+    STAGES.forEach((st, i) => {
+      if (pt >= STARTS[i]) logLines.push({ text: `  → ${st.id}`, col: C.dim });
+      if (pt >= STARTS[i] + st.dur) logLines[logLines.length - 1] = { text: `[${'ok'.padStart(4)}] ${st.id.padEnd(22)} ${st.sec}`, col: st.who === 'apertus' ? C.gold : C.green };
+    });
+    if (pt >= PIPE_END) logLines.push({ text: '2,819 records · 0 schema errors · 3 min 40 s', col: C.red });
+    const pipeBtn = pt < 0 ? '▶ Run pipeline' : pt < PIPE_END ? 'Running…' : '↻ Run again';
+    const robust = [
+      { t:'Re-runnable', b:'A stage whose outputs already exist is skipped. LLM stages append and skip records already done.' },
+      { t:'Run manifest', b:'Records status, runtime and an output hash for every stage.' },
+      { t:'Retries + JSON repair', b:'Malformed model JSON is repaired and checked against the schema.' },
+      { t:'Circuit breaker', b:'If Apertus is unreachable, the output is built by the deterministic stages only.' },
+      { t:'Quarantine', b:'Records that fail the schema are set aside and never exported.' },
+      { t:'Raw kept', b:'text_raw sits next to text_clean, so every cleaning decision can be audited.' }
+    ];
+
+    // agent
+    const at = s.agentT;
+    let cur = 0; AG.forEach((v, i) => { if (at >= v) cur = i; });
+    const typed = (str, t0, cps) => str.slice(0, Math.max(0, Math.floor((at - t0) * cps)));
+    const toolRows = TOOLS.map(tl => { const p = cl((at - AG[2] - tl.d) / tl.len);
+      return { call: tl.call, res: tl.res, w: pct(p), resOp: p >= 1 ? 1 : 0 }; });
+    const ents = ENTS.map(([name, ok], i) => { const show = at >= AG[6] + 6 + i * 7;
+      return { name, op: show ? 1 : 0.15, mark: show ? (ok ? '✓' : '✗') : '·', col: !show ? C.dim : ok ? C.green : C.red, deco: show && !ok ? 'line-through' : 'none' }; });
+    const stepDefs = [
+      { who:'Apertus', title:`Plans ${AGENT_META.n} calls at once`, note:'JSON tool protocol. The model batches its calls, and text tools are bound to the record so it never has to pass the text.', code: typed(PLAN_JSON, AG[0] + 2, 14) },
+      { who:'Code', title:'Repairs one argument', note:'Close but wrong argument names are mapped onto the schema; anything still wrong goes back to the model as an error.', code: at >= AG[1] + 4 ? AGENT_META.repair : '' },
+      { who:'Code', title:'Runs the tools in parallel', note:'All calls from one step run in a thread pool. Repeated calls are served from a cache.', tools: toolRows },
+      { who:'Apertus', title:'Sees the results, calls finish', note:'The model may call more tools (up to 6 steps or 14 calls in total). This time it has what it needs.', code: typed(AGENT_META.observe || '{"calls": [{"tool": "finish"}]}', AG[3] + 2, 6) },
+      { who:'Critic', title:'Checks the required tools', note:'If a required tool is missing, the code names it once and the model decides. Anything still missing runs anyway, with origin baseline.', code: at >= AG[4] + 3 ? AGENT_META.critic : '' },
+      { who:'Apertus', title:'Composes the metadata', note:'It writes the metadata using only the record and the tool results.', code: typed(COMPOSE_JSON, AG[5] + 2, 9) },
+      { who:'Validator', title:'Grounding check', note:'verify_in_source(): a person or place must literally occur in the record, otherwise it is rejected in export.', ents }
+    ];
+    const agentSteps = stepDefs.map((d, i) => {
+      const reached = at >= AG[i], active = i === cur && at < AGENT_END;
+      const wc = d.who === 'Apertus' ? C.gold : d.who === 'Validator' ? C.red : d.who === 'Critic' ? '#c98a6a' : C.green;
+      return { ...d, n: `step ${i + 1}/7`, whoCol: wc, jump: () => this.agentJump(AG[i]),
+        op: reached ? 1 : 0.3, bd: active ? C.red : C.line, bg: active ? '#1b1813' : 'transparent',
+        hasCode: 'code' in d, code: d.code || ' ', hasTools: !!d.tools, tools: d.tools || [], hasEnts: !!d.ents, ents: d.ents || [] };
+    });
+    const hlKeys = [['place','qty','date','sig','person'],['place'],['place','qty','date','sig'],[],[],['person','place'],['person','place']][cur];
+    const recSegs = REC.map(([tx, k]) => {
+      const on = k && hlKeys.includes(k);
+      const rej = cur === 6 && at >= AG[6] + 27 && false;
+      return { t: tx, bg: on ? (k === 'person' || k === 'place' ? 'rgba(111,165,143,0.32)' : 'rgba(201,164,92,0.34)') : 'transparent', col: on ? '#1a140c' : k ? '#4a3d26' : '#5d5240' };
+    });
+    const agentBtn = s.agentPlay ? '❚❚ Pause' : at >= AGENT_END ? '↻ Replay' : '▶ Play';
+
+    // simulator
+    const ALLQ = [...SIM, ...s.custom]; const q = ALLQ[s.simQ] || SIM[0], st2 = s.simT < 0 ? 0 : s.simT;
+    const decl = q.vk === 'no';
+    const B = [0, 22, 36, 58, 118, 140];
+    const simStages = ['rewrite','route','retrieve','answer','check'].map((label, i) => {
+      const p = cl((st2 - B[i]) / (B[i + 1] - B[i]));
+      const skip = decl && i === 2;
+      return { label: skip ? 'retrieve · skip' : label, w: pct(p), col: i % 2 === 0 && i !== 2 ? C.gold : C.green, txt: p > 0 ? C.ink : C.dim };
+    });
+    if (s.simBusy) simStages.forEach((x, i) => { x.w = i === 0 ? (0.15 + 0.7 * Math.abs(Math.sin(t / 6))).toFixed(4) : '0'; if (i === 0) { x.label = 'rewriting' + '.'.repeat(1 + Math.floor(t / 4) % 3); x.txt = C.ink; } else x.txt = C.dim; });
+    const simOp = { rw: st2 >= B[0] ? 1 : .25, rt: st2 >= B[1] ? 1 : .25, rv: st2 >= B[2] ? (decl ? .35 : 1) : .25, an: st2 >= B[3] ? 1 : .25, ck: st2 >= B[4] ? 1 : .25 };
+    const rwShown = s.simBusy ? 'Apertus is reading the question' + '.'.repeat(1 + Math.floor(t / 4) % 3) : (q.rw.slice(0, Math.floor(st2 * 5.5)) || ' ');
+    const routeRows = q.route.map(([k, v, ok], i) => { const show = st2 >= B[1] + 3 + i * 4;
+      return { k, v, op: show ? 1 : 0.2, m: show ? (ok ? '✓' : '✗') : '·', col: ok ? C.green : C.red }; });
+    const passages = q.pass.map(([sig, txt, sc], i) => { const p = ease((st2 - B[2] - i * 3) / 12);
+      return { n: i + 1, sig, txt, score: (sc * p).toFixed(2), w: pct(sc * p) }; });
+    const ansN = Math.floor(Math.max(0, st2 - B[3]) * (q.ans.length / 56));
+    const ansShown = q.ans.slice(0, ansN);
+    const caret = st2 >= B[3] && ansN < q.ans.length ? pulse : 0;
+    const checks = q.checks.map(([m, tx], i) => ({ m: st2 >= B[4] + 2 + i * 4 ? m : '·', t: tx, col: m === '∑' ? C.gold : C.green }));
+    const done = st2 >= 140;
+    const cur2 = { q: s.simBusy ? s.pending : q.q, poolNote: q.pool, source: q.source, verdict: done ? q.verdict : '…',
+      confLabel: done ? (decl ? 'not answered' : q.conf == null ? 'computed · numbers checked' : `confidence ${Math.round(q.conf * 100)}%`) : 'checking' };
+    const verdictCol = decl ? C.red : C.green;
+    const confW = done ? pct(decl || q.conf == null ? 1 : q.conf) : '0';
+    const kindCol = k => k === 'unanswerable' ? C.red : k.startsWith('aggregate') ? C.gold : C.green;
+    const simQs = ALLQ.map((x, i) => ({ lang: x.lang, kind: (x.custom ? 'yours · ' : '') + x.kind, q: x.q, kindCol: kindCol(x.kind),
+      pick: () => x.custom ? this.setState({ simQ: i, simT: 0 }) : this.chatSend(x.q), bd: i === s.simQ ? C.red : C.line, bg: i === s.simQ ? '#1b1813' : 'transparent' }));
+
+    // evidence
+    const e = i => ease((since - 4 - i * 3) / 22);
+    const bar = (v, i, before) => ({ w: pct(v * e(i)), wBefore: before != null ? pct(before * e(i)) : '0' });
+    // figures from /api/metrics (data/out/metrics.json as written); the built-in ones only when it cannot be reached
+    const MX = s.metrics || {}, Lk = MX.linking, Ex = MX.export, Un = (MX.qa_answer_check || {}).unanswerable, Cf = MX.qa_confidence,
+      En = (MX.apertus_enrichment || {})['apertus_enrichment.apertus-v1-5-70b.jsonl'];
+    const bigStats = [
+      Lk ? { v: (Lk.link_rate * 100 * e(0)).toFixed(1) + '%', l:'consultation refs linked', s: Lk.linked_to_olr + ' / ' + Lk.archive_refs_with_signature + ' · exact signature', col: C.ink }
+         : { v: (99.9 * e(0)).toFixed(1) + '%', l:'consultation refs linked', s:'857 / 858 · exact signature', col: C.ink },
+      Ex ? { v: fmt(Ex.schema_invalid), l:'schema errors', s: Ex.records.toLocaleString('en') + ' unified records', col: C.ink }
+         : { v: fmt(0), l:'schema errors', s:'2,819 unified records', col: C.ink },
+      Un ? { v: Un.declined + '/' + Un.questions, l:'unanswerables declined', s: (Un.answered_anyway || []).length + ' answered anyway', col: C.red }
+         : { v: '–', l:'unanswerables declined', s:'see /api/metrics', col: C.red },
+      Cf ? { v: (Cf.auc * e(1)).toFixed(3), l:'confidence AUC', s:'calibration error ' + (Cf.expected_calibration_error * 100).toFixed(1) + '%', col: C.gold }
+         : { v: '–', l:'confidence AUC', s:'see /api/metrics', col: C.gold },
+      En ? { v: (En.teacher_surname_recall_vs_db * 100 * e(2)).toFixed(1) + '%', l:'teacher surname recall', s:'Apertus 70B · ' + En.teacher_names_scored.toLocaleString('en') + ' scored', col: C.ink }
+         : { v: (97.4 * e(2)).toFixed(1) + '%', l:'teacher surname recall', s:'Apertus 70B · 1,064 scored', col: C.ink }
+    ];
+    const RQ = ((MX.qa_retrieval || {}).results) || null, h1 = (m, d) => RQ && RQ[m] && RQ[m].all ? RQ[m].all.hit_at_1 : d;
+    const r0 = h1('off', .245), r1 = h1('apertus', .642), r2 = h1('dynamic', .924), p1 = v => (v * 100).toFixed(1) + '%';
+    const charts = [
+      { title:'Q&A retrieval, right top source', scope:'380 questions with gold passages · hit@1', note:'Dynamic rewriting: Apertus picks the dataset, sections, places and years from the real questionnaire, and code validates them. About 1.27 s per question.',
+        rows:[{ l:'Rules only', v: p1(r0), col: C.dim, ...bar(r0,0) }, { l:'Apertus · fixed intents', v: p1(r1), col: C.gold, ...bar(r1,1) }, { l:'Apertus · dynamic rewrite', v: p1(r2), col: C.red, ...bar(r2,2) }] },
+      { title:'Language parity, before → after', scope:'Stapfer sheets: 1,737 de · 510 fr · extracted share', note:'Bilingual extraction reads number words, both writing orders and section context. No de/fr gap is above 10 points.',
+        rows:[{ l:'fr · pupil counts', v:'43% → 94%', col: C.green, ...bar(.94,0,.43) }, { l:'fr · money amounts', v:'36% → 88%', col: C.green, ...bar(.88,1,.36) }, { l:'de · pupil counts', v:'77% → 97%', col: C.green, ...bar(.97,2,.77) }] },
+      { title:'Tool agent v3 → v4', scope:'Same 80 records (60 Stapfer, 20 consultations)', note:'v4 adds the loop, parallel calls, argument repair and one feedback round. All 3 tool errors were self-corrected.',
+        rows:[{ l:'Required tools chosen by Apertus', v:'65.4% → 79.3%', col: C.gold, ...bar(.793,0,.654) }, { l:'Steps with parallel calls', v:'97.7%', col: C.gold, ...bar(.977,1) }, { l:'Hallucination proxy (lower is better)', v:'11.4% → 9.2%', col: C.red, ...bar(.092,2,.114) }] },
+      { title:'Tool-calling benchmark (BFCL-style)', scope:'64 cases on the 8 tools · exact match', note:'The gateway\u2019s native tools API returns one call per turn, so parallel scores 0% there. The JSON protocol fixes that.',
+        rows:[{ l:'70B · JSON protocol', v:'81%', col: C.red, ...bar(.812,0) }, { l:'70B · native API', v:'50%', col: C.dim, ...bar(.5,1) }, { l:'8B · JSON protocol', v:'59%', col: C.gold, ...bar(.594,2) }] }
+    ];
+
+    const cc = since / 16, io = x => x < .5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2;
+    const curtA = cc >= 1 ? '-200%' : (100 - 200 * io(cl(cc))).toFixed(2) + '%';
+    const curtB = cc >= 1.2 ? '-200%' : (100 - 200 * io(cl((cc - 0.12) / 1))).toFixed(2) + '%';
+    const PW = window.innerWidth, PHh = 760;
+    const particles = s.tab !== 0 ? [] : PART.map((p, i) => {
+      const y = ((p.ph + t * p.sp * 10) % 130) - 15;
+      return { t: p.t, x: ((p.x + Math.sin(t / 40 + i) * 2 - (M.x - .5) * 8 * p.d) * PW / 100).toFixed(1) + 'px',
+        y: ((110 - y - (M.y - .5) * 6 * p.d) * PHh / 100).toFixed(1) + 'px', op: (0.07 + 0.16 * p.d * Math.sin(Math.PI * cl(y / 110))).toFixed(3),
+        fs: Math.round(14 + p.d * 22) + 'px', ff: p.serif ? "'Instrument Serif',serif" : "'IBM Plex Mono',monospace",
+        col: i % 5 === 0 ? C.red : C.ink, rot: (Math.sin(t / 60 + i) * 6).toFixed(1) + 'deg' };
+    });
+    const heroWords = HERO.map((w, i) => { const p = ease((since - 6 - i * 2) / 10);
+      return { w, op: p.toFixed(3), y: ((1 - p) * 110).toFixed(1) + '%', r: ((1 - p) * 6).toFixed(1) + 'deg', f: p >= 1 ? 'none' : 'blur(' + ((1 - p) * 8).toFixed(1) + 'px)',
+        col: i === 6 ? C.red : C.ink, fst: i === 6 ? 'italic' : 'normal' }; });
+    const marquee = [...MARQ, ...MARQ];
+    const runIdx = pt < 0 ? 0 : STAGES.reduce((a, st, i) => a + cl((pt - STARTS[i]) / st.dur), 0);
+    const ast = agentSteps.map((x, i) => ({ ...x,
+      glow: i === cur && at < AGENT_END ? '0 0 24px rgba(226,85,58,0.3)' : 'none',
+      dx: i === cur && at < AGENT_END ? '6px' : '0px' }));
+    const sp = ease((st2 - 140) / 7);
+    // flowchart
+    const edgeAct = {}, edgeDone = {}, fPk = [], fTags = [];
+    const FW = this.flowW || 840, FHp = FW * 0.6;
+    if (s.tab === 2) PK.forEach(([e, a, b, col, tag, ghost]) => {
+      if (at >= b) edgeDone[e] = 1;
+      if (at < a || at >= b) return;
+      edgeAct[e] = col;
+      let u = (at - a) / (b - a), op = 1;
+      if (ghost) { op = 1 - u; u = u * 0.45; }
+      const P = FE[e].p;
+      for (let k = 0; k < 5; k++) { const uu = u - k * 0.05; if (uu < 0) break; const [x, y] = bp(P, uu);
+        fPk.push({ x: (x / 1000 * FW).toFixed(1) + 'px', y: (y / 600 * FHp).toFixed(1) + 'px', s: [11,8,6,5,4][k] + 'px', c: col, o: (op * [1,.55,.35,.2,.1][k]).toFixed(2), g: k === 0 ? '0 0 14px ' + col + ', 0 0 4px ' + col : 'none' }); }
+      if (tag) { const [x, y] = bp(P, u); fTags.push({ t: tag, x: (x / 1000 * FW).toFixed(1) + 'px', y: (y / 600 * FHp - 12).toFixed(1) + 'px', c: col }); }
+    });
+    const fEdges = s.tab !== 2 ? [] : Object.keys(FE).map(k => { const act = edgeAct[k], dn = edgeDone[k];
+      return { d: FE[k].d, stroke: act || (dn ? '#5a5142' : k === 'loop' ? '#3a342a' : '#2a251d'), sw: act ? 2.4 : dn ? 1.5 : 1,
+        dash: act ? '6 6' : k === 'loop' ? '4 6' : 'none', off: act ? (-(t * 3) % 120).toFixed(1) : '0' }; });
+    const spin = ['◐','◓','◑','◒'][Math.floor(t / 2) % 4], dots = '.'.repeat(1 + Math.floor(t / 3) % 3);
+    const exported = ENTS.filter(([n, ok], i) => ok && at >= 169 + i * 7).length;
+    const ringP = (t % 18) / 18;
+    const fNodes = s.tab !== 2 ? [] : FN.map(n => {
+      const [a, b] = n.win, col = WC[n.who], act = at >= a && at < b, dn = at >= b;
+      const tp = n.tool ? cl((at - a) / TOOLS[n.ti].len) : 0;
+      let sub = n.sub;
+      if (n.tool) sub = tp >= 1 ? n.sub : 'running' + dots;
+      else if (n.id === 'export') sub = at >= a ? exported + ' grounded fields' : n.sub;
+      else if (n.id === 'bin') sub = at >= 190 ? '✗ ' + ((ENTS.find(e => !e[1]) || ['—'])[0]) : 'empty';
+      else if (act && n.who === 'apertus') sub = 'thinking' + dots;
+      const burst = n.id === 'bin' && at >= 190 && at < 204 ? (at - 190) / 14 : null;
+      const ring = burst != null ? burst : ringP;
+      return { label: n.label, sub, who: n.who, col, jump: () => this.agentJump(AG[n.step]),
+        mark: n.id === 'bin' && at >= 190 ? '✗' : dn ? '✓' : act ? spin : '○',
+        x: (n.x / 10) + '%', y: (n.y / 6).toFixed(2) + '%', w: n.w + '%',
+        bd: act ? col : dn ? '#4a4336' : '#2a251d', bg: act ? '#1d1913' : dn ? '#16130f' : '#120f0b', op: act || dn ? 1 : 0.45,
+        glow: act ? '0 0 0 1px ' + col + ', 0 0 30px ' + col + '55' : 'none', sc: act && !n.tool && !n.mini ? 1.04 : 1,
+        dx: (n.id === 'repair' && at >= 28 && at < 36 ? Math.sin(t * 2.6) * 5 : 0).toFixed(1) + 'px',
+        ringS: (1 + ring * (burst != null ? 0.9 : 0.35)).toFixed(3), ringO: (act && !n.tool && !n.mini) || burst != null ? ((1 - ring) * 0.9).toFixed(2) : '0',
+        bar: pct(tp), barD: n.tool ? 'block' : 'none', whoD: n.tool || n.mini ? 'none' : 'flex', subD: n.tool && !act && tp < 1 ? 'none' : 'block', pad: n.tool || n.mini ? '5px 9px' : '7px 10px',
+        lf: n.tool ? "'IBM Plex Mono',monospace" : "'Instrument Serif',serif", lfs: n.tool ? '11px' : n.mini ? '13px' : '21px' };
+    });
+    const fLabels = [
+      { t: edgeAct.loop ? 'more calls? → no, finish' : 'loop · ≤ 6 steps · ≤ 14 calls', x: '37%', y: '9%', c: edgeAct.loop ? C.gold : C.dim },
+      { t: '∥ parallel', x: '47%', y: '30%', c: edgeAct.rt0 || edgeAct.to2 ? C.green : C.dim },
+      { t: 'feedback ≤ 1', x: '87%', y: '86%', c: C.dim },
+      { t: 'grounded', x: '29.5%', y: '70.5%', c: edgeAct.ve ? C.green : C.dim },
+      { t: 'ungrounded', x: '50%', y: '86%', c: edgeAct.vb ? C.red : C.dim }
+    ];
+    const callsN = TOOLS.filter(tl => at >= 36 + tl.d).length + (at >= 86 ? 1 : 0);
+    const agentStats = [
+      { v: at < 84 ? '1' : '2', m: '/ 6', l: 'loop steps', c: C.ink, bg: 'transparent' },
+      { v: String(callsN), m: '/ 14', l: 'tool calls', c: C.green, bg: 'transparent' },
+      { v: at >= 30 ? '1' : '0', m: '', l: 'arg repairs', c: C.gold, bg: 'transparent' },
+      { v: at >= 190 ? '1' : '0', m: '', l: 'rejected', c: C.red, bg: at >= 190 && at < 200 ? 'rgba(226,85,58,0.18)' : 'transparent' }
+    ];
+    const agentPills = PILLS.map((l, i) => { const a = AG[i], b = AG[i + 1] ?? AGENT_END;
+      return { l, n: String(i + 1).padStart(2, '0'), w: pct((at - a) / (b - a)), c: i === cur && at < AGENT_END ? C.red : C.mute, fg: at >= a ? C.ink : C.dim, jump: () => this.agentJump(a) }; });
+    const insp = ast[cur];
+    // rush
+    const R = s.rush, RR = RUSH[R.rec];
+    const shA = Math.max(0, 1 - (t - R.shakeT) / 10) * 9;
+    const powerOn = R.st === 'play' && t - R.powerT < 60;
+    const RW = this.rushW || 700;
+    const rTokens = s.tab !== 5 ? [] : R.tk.map(k => { const a = t - k.t0;
+      let bd = '#4a4336', bg = '#1b1813', fg = C.ink, sc = 1, o = 1, deco = 'none', glow = '0 6px 18px rgba(0,0,0,0.45)';
+      if (k.st === 'fall' && powerOn && k.fake) { bd = C.red; bg = 'rgba(226,85,58,0.2)'; glow = '0 0 18px rgba(226,85,58,0.55)'; }
+      if (k.st === 'hit') { bd = C.gold; fg = C.gold; sc = 1 + a * 0.06; o = 1 - a / 14; deco = 'line-through'; }
+      if (k.st === 'wrong') { bd = C.red; fg = C.red; bg = 'rgba(226,85,58,0.22)'; o = 1 - a / 14; }
+      if (k.st === 'ok') { bd = C.green; fg = C.green; o = 1 - a / 14; sc = 1 - a * 0.03; }
+      if (k.st === 'leak') { bd = C.red; fg = C.red; bg = 'rgba(226,85,58,0.35)'; o = 1 - a / 14; sc = 1 + a * 0.05; }
+      if (k.st === 'clear') { o = 1 - a / 10; sc = 1 - a * 0.06; }
+      const rot = k.st === 'fall' ? Math.sin((t + k.wob * 10) / 9) * 3 : k.st === 'hit' ? a * 5 : 0;
+      return { txt: k.text, kind: k.kind, kc: KIND_COL[k.kind] || C.mute, x: k.x.toFixed(2) + '%', y: k.y.toFixed(1) + 'px', bd, bg, fg, deco, glow,
+        o: Math.max(0, o).toFixed(2), tf: 'translate3d(' + (k.x / 100 * RW).toFixed(1) + 'px,' + k.y.toFixed(1) + 'px,0) translate(-50%,0) scale(' + Math.max(0.1, sc).toFixed(3) + ') rotate(' + rot.toFixed(1) + 'deg)', hit: () => this.rushHit(k.id) }; });
+    const rPops = R.pops.map(p => { const a = t - p.t0; return { t: p.t, c: p.c, x: (p.x / 100 * RW).toFixed(1) + 'px', y: (p.y - a * 1.6).toFixed(0) + 'px', o: Math.max(0, 1 - a / 26).toFixed(2) }; });
+    const mult = Math.min(5, 1 + Math.floor(R.combo / 3));
+    const banA = R.banner ? t - R.banner.t0 : 99;
+    const rank = R.score < 1500 ? 'Copyist' : R.score < 4000 ? 'Registrar' : R.score < 8000 ? 'Archivist' : 'Federal Archivist';
+    const acc = R.caught + R.wrong + R.leaks ? Math.round(R.caught / (R.caught + R.wrong + R.leaks) * 100) : 0;
+    const pReady = R.st === 'play' && R.power > 0 && !powerOn;
+    const rush = { tokens: rTokens, pops: rPops, src: RR.src, recName: RR.name, isIdle: R.st === 'idle', isOver: R.st === 'over',
+      shake: 'translate3d(' + (Math.sin(t * 3.1) * shA).toFixed(1) + 'px,' + (Math.cos(t * 2.3) * shA * 0.6).toFixed(1) + 'px,0)',
+      dangerO: R.st === 'play' && R.lives === 1 ? (0.55 + 0.45 * Math.sin(t / 3)).toFixed(2) : '0',
+      powO: powerOn ? 1 : 0, powW: powerOn ? (1 - (t - R.powerT) / 60).toFixed(3) : '0',
+      banT: R.banner ? R.banner.text : '', banO: banA < 40 ? (banA < 30 ? ease(banA / 5) : 1 - (banA - 30) / 10).toFixed(2) : '0', banS: (0.8 + 0.2 * ease(banA / 6)).toFixed(3),
+      score: fmt(R.score), scoreSc: (1 + 0.12 * Math.max(0, 1 - (t - R.scT) / 6)).toFixed(3), best: fmt(Math.max(s.rushBest, R.st === 'over' ? R.score : 0)),
+      mult, multSc: (1 + 0.3 * Math.max(0, 1 - (t - R.comboT) / 6)).toFixed(3), combo: R.combo, comboW: mult >= 5 ? '1' : pct((R.combo % 3) / 3),
+      seals: [0, 1, 2].map(i => ({ c: i < R.lives ? C.red : '#221e18', f: i < R.lives ? '#12100c' : '#4a4336', s: i === R.lives && t - R.lifeT < 8 ? (1 + 0.5 * (1 - (t - R.lifeT) / 8)).toFixed(2) : '1' })),
+      lvl: R.lvl, speed: (1 + (R.lvl - 1) * 0.25).toFixed(2), pips: [0,1,2,3,4,5].map(i => ({ c: i < R.recCaught ? C.gold : '#2e2a22' })),
+      pBg: powerOn ? 'rgba(111,165,143,0.18)' : pReady ? '#1b1813' : 'transparent', pBd: powerOn || pReady ? C.green : C.line,
+      pLabel: powerOn ? 'active · fakes revealed' : R.power + ' charge' + (R.power === 1 ? '' : 's') + ' · Space · +1 per cleared record',
+      stats: [{ v: R.caught, l: 'caught', c: C.gold }, { v: R.passed, l: 'exported', c: C.green }, { v: R.wrong, l: 'wrong rejects', c: C.red }, { v: R.leaks, l: 'leaks', c: C.red }],
+      overO: R.st === 'over' ? ease((t - R.overT) / 8).toFixed(2) : '0', overScore: fmt(R.score), rank,
+      overLine: R.caught + ' caught · ' + R.passed + ' exported · accuracy ' + acc + '% · max combo ' + R.maxCombo,
+      bestLine: R.score >= s.rushBest && R.score > 0 ? '★ new personal best' : 'best ' + fmt(s.rushBest) };
+    const lvl = Math.min(5, Math.floor(s.xp / 400));
+    const xpAge = t - s.xpT;
+    const confetti = s.burst && t - s.burst.t0 < 46 ? CONF.map(c => { const dt = t - s.burst.t0;
+      return { x: (s.burst.x + c.vx * dt).toFixed(1) + 'px', y: (s.burst.y + c.vy * dt + 0.45 * dt * dt).toFixed(1) + 'px', w: c.w + 'px', h: c.h + 'px', c: c.c, o: (1 - dt / 46).toFixed(2), r: (c.spin * dt).toFixed(0) + 'deg' }; }) : [];
+    const floats = s.floats.map(f => { const a = t - f.t0; return { text: f.text, x: f.x + 'px', y: (f.y - a * 2.2) + 'px', o: (1 - a / 40).toFixed(2), s: (1 + 0.4 * Math.max(0, 1 - a / 6)).toFixed(2) }; });
+    const toasts = s.toasts.map(o => { const a = t - o.t0; const inn = ease(a / 9);
+      return { title: o.title, sub: o.sub, x: ((1 - inn) * 120).toFixed(1) + '%', o: a > 95 ? (1 - (a - 95) / 15).toFixed(2) : inn.toFixed(2), r: ((1 - inn) * -180).toFixed(0) + 'deg' }; });
+    const badgeShelf = BADGES.map(([k, n, d]) => { const u = s.badges[k] != null, fa = u ? t - s.badges[k] : 99;
+      return { n, d, icon: u ? '✚' : '?', bd: u ? C.gold : C.line, bgc: u ? '#1b1813' : 'transparent', mc: u ? C.gold : 'transparent', mf: u ? '#12100c' : C.dim, md: u ? C.gold : '#4a4336',
+        tc: u ? C.ink : C.dim, sc: (1 + 0.08 * Math.max(0, 1 - fa / 12)).toFixed(3), rot: u ? (Math.max(0, 1 - fa / 14) * 360).toFixed(0) + 'deg' : '0deg' }; });
+    // geo
+    const G = GEO[s.gR], ansI = geoNear(G), gs = s.gGuess != null;
+    const gAge = t - s.gT0, lineP = ease(gAge / 14);
+    const cities = CITIES.map((c, i) => { const isA = gs && i === ansI, isG = gs && i === s.gGuess;
+      return { n: c[0], x: PX(c[2]).toFixed(2) + '%', y: PY(c[1]).toFixed(2) + '%', pick: e => this.geoGuess(i, e),
+        sz: isA || isG ? '14px' : '9px', c: isA ? C.green : isG ? C.red : C.ink,
+        glow: isA ? '0 0 18px ' + C.green : isG ? '0 0 14px ' + C.red : 'none', lc: isA ? C.green : isG ? C.red : C.dim }; });
+    const grid = [];
+    [46, 46.5, 47, 47.5].forEach(la => grid.push({ l: '0%', t: PY(la).toFixed(2) + '%', w: '100%', h: '1px' }));
+    [6, 7, 8, 9, 10].forEach(lo => grid.push({ l: PX(lo).toFixed(2) + '%', t: '0%', w: '1px', h: '100%' }));
+    const gx = gs ? PX(CITIES[s.gGuess][2]) : 0, gy = gs ? PY(CITIES[s.gGuess][1]) : 0, ax = PX(G.lon), ay = PY(G.lat);
+    const lastPts = s.gScores[s.gScores.length - 1];
+    const dist = gs ? Math.round(KM(CITIES[s.gGuess], GP(G))) : 0;
+    const total = s.gScores.reduce((a, b) => a + b, 0);
+    const geo = { round: s.gR + 1, lang: G.lang, hint: G.hint, showHint: s.gHint,
+      text: G.text.slice(0, Math.floor((t - s.gStart) * 4)) + ((t - s.gStart) * 4 < G.text.length ? '▌' : ''),
+      tilt: (Math.sin(t / 40) * 0.5 - 0.3).toFixed(2) + 'deg',
+      hasLine: gs, x1: gx, y1: gy, x2: gx + (ax - gx) * lineP, y2: gy + (ay - gy) * lineP,
+      ax: ax.toFixed(2) + '%', ay: ay.toFixed(2) + '%', ring: (1 + (gAge % 24) / 24 * 2.4).toFixed(2), ringOp: (1 - (gAge % 24) / 24).toFixed(2),
+      total: fmt(total),
+      result: s.gDone ? `Final: ${fmt(total)} points` : !gs ? '' : s.gGuess === ansI ? `Bullseye! It was ${G.c}${G.today && G.today !== G.c ? ' (today ' + G.today + ')' : ''}, ${dist} km from ${CITIES[ansI][0]}. +${lastPts}` : `It was ${G.c}${G.today && G.today !== G.c ? ' (today ' + G.today + ')' : ''}, ${dist} km away. +${lastPts}`,
+      resCol: s.gDone ? C.gold : gs && s.gGuess === ansI ? C.green : C.red,
+      nextLabel: s.gDone ? '↻ Play again' : s.gR === 4 ? 'Finish →' : 'Next sheet →', nextBg: gs || s.gDone ? C.red : '#4a4336', nextOp: gs || s.gDone ? 1 : 0.6 };
+    const geoPips = GEO.map((_, i) => ({ c: i < s.gScores.length ? (s.gScores[i] >= 800 ? C.green : s.gScores[i] > 300 ? C.gold : C.red) : i === s.gR ? '#4a4336' : C.line }));
+    // hal
+    const H = HAL[s.hR];
+    const hal = { round: s.hR + 1, kind: H.kind, src: H.src, total: s.hTotal,
+      ents: H.ents.map(([name, ok], i) => { const sel = !!s.hSel[i], ra = t - s.hRevT - i * 3, rv = s.hRev && ra >= 0;
+        let mark = sel ? '⚑' : '·', bd = sel ? C.red : '#4a4336', bg = sel ? 'rgba(226,85,58,0.14)' : 'transparent', fg = C.ink;
+        if (rv) { const good = sel === !ok; mark = !ok ? (sel ? '✓ caught' : '✗ missed') : (sel ? '✗ grounded' : '✓');
+          bd = good ? C.green : C.red; bg = good ? 'rgba(111,165,143,0.14)' : 'rgba(226,85,58,0.14)'; fg = good ? C.green : C.red; }
+        const pop = rv ? 1 + 0.15 * Math.max(0, 1 - ra / 6) : 1;
+        return { name, mark, bd, bg, fg, sc: pop.toFixed(3), rot: rv && ra < 6 ? ((1 - ra / 6) * (i % 2 ? 4 : -4)).toFixed(1) + 'deg' : '0deg',
+          toggle: () => { if (!s.hRev) this.setState(x => ({ hSel: { ...x.hSel, [i]: !x.hSel[i] } })); } }; }),
+      act: e => this.halAct(e), actLabel: s.hRev ? 'Next source →' : 'Validate ✓',
+      result: !s.hRes ? '' : s.hRes.perfect ? 'Perfect. You think like the validator.' : `${s.hRes.right} of ${s.hRes.n} correct. verify_in_source() caught the rest.`,
+      resCol: s.hRes && s.hRes.perfect ? C.green : C.gold };
+    const modes = MODES[s.track].map(([k, label, sub]) => { const on = s.mode === k;
+      return { label, sub, go: () => this.setMode(k), bd: on ? C.red : '#4a4336', bg: on ? C.red : 'transparent', fg: on ? '#12100c' : C.ink, sc: on ? '#12100c' : C.dim }; });
+    const tracks = [['casual','01','Casual','Quick and visual. No background needed.','3 games'],['research','02','Researcher','The validator\u2019s real checks: routing, grounding, calibration.','3 games']].map(([k, n, tt, d, tag]) => { const on = s.track === k;
+      return { n, t: tt, d, tag, go: () => this.setTrack(k), bd: on ? C.gold : C.line, bg: on ? '#1b1813' : 'transparent', ic: on ? C.gold : 'transparent', icf: on ? '#12100c' : C.mute, tagc: on ? C.gold : C.dim, rot: on ? '0deg' : '-90deg' }; });
+    const Dd = DEC[s.dR], dOp = decOpts(s.dR), dRev = s.dPick != null, dOk = dRev && s.dPick >= 0 && dOp[s.dPick] === Dd.c, dRa = t - s.dRevT;
+    const dec = { round: s.dR + 1, lang: Dd.lang, ctx: Dd.ctx,
+      letters: [...Dd.w].map((ch, i) => { const p = ease((t - s.dShowT - i * 1.5) / 6); return { ch, o: p.toFixed(2), y: ((1 - p) * 30).toFixed(0) + 'px' }; }),
+      tw: pct(1 - s.dTime / 160), tc: s.dTime > 112 ? C.red : '#7a5a1c',
+      tf: dRev && !dOk && dRa < 10 ? 'translateX(' + (Math.sin(t * 3) * 8 * (1 - dRa / 10)).toFixed(1) + 'px)' : dOk && dRa < 8 ? 'scale(' + (1 + 0.03 * (1 - dRa / 8)).toFixed(3) + ')' : 'none',
+      opts: dOp.map((o, i) => { const isC = o === Dd.c, isP = i === s.dPick; let bd = '#4a4336', bg = 'transparent', fg = C.ink, sc = 1;
+        if (dRev) { if (isC) { bd = C.green; bg = 'rgba(111,165,143,0.16)'; fg = C.green; sc = 1 + 0.06 * Math.max(0, 1 - dRa / 6); } else if (isP) { bd = C.red; bg = 'rgba(226,85,58,0.14)'; fg = C.red; } else fg = C.dim; }
+        return { k: 'ABCD'[i] + ' · key ' + (i + 1), t: o, bd, bg, fg, sc: sc.toFixed(3), pick: e => this.decPick(i, e) }; }),
+      result: s.dDone ? 'Final: ' + fmt(s.dScore) + ' points · ' + s.dRight + ' / 10' : !dRev ? '' : s.dPick < 0 ? 'Time\u2019s up. It means \u201c' + Dd.c + '\u201d.' : dOk ? 'Correct · +' + s.dLast : 'Not quite. It means \u201c' + Dd.c + '\u201d.',
+      resCol: s.dDone ? C.gold : dOk ? C.green : C.red, note: dRev ? Dd.n : 'Read the word in its context. Keys 1–4 also work.',
+      score: fmt(s.dScore), streak: s.dStreak, nextLabel: s.dDone ? '↻ Play again' : s.dR === 9 ? 'Finish →' : 'Next word →', nextOp: dRev || s.dDone ? 1 : 0.4,
+      pips: DEC.map((_, i) => ({ c: i < s.dHist.length ? (s.dHist[i] ? C.green : C.red) : i === s.dR ? '#4a4336' : C.line })) };
+    const Rq = ROUTE[s.rR], lastR = s.rHist[s.rHist.length - 1];
+    const route = { q: Rq.q, lang: Rq.lang, round: s.rR + 1, score: s.rScore,
+      fields: RF.map(([f, label, opts]) => ({ label, opts: opts.map(o => { const on = s.rSel[f] === o, g = Rq.g[f] === o;
+        let bd = on ? C.red : '#4a4336', bg = on ? 'rgba(226,85,58,0.14)' : 'transparent', fg = C.ink;
+        if (s.rRev) { if (g) { bd = C.green; bg = 'rgba(111,165,143,0.16)'; fg = C.green; } else if (on) fg = C.red; else fg = C.dim; }
+        return { t: o, bd, bg, fg, pick: () => { if (!this.state.rRev) this.setState(x => ({ rSel: { ...x.rSel, [f]: o } })); } }; }) })),
+      rows: RF.map(([f, label], i) => { const p = s.rRev ? ease((t - s.rRevT - i * 5) / 6) : 0, ok = s.rSel[f] === Rq.g[f];
+        return { f: label.split(' ')[0].toLowerCase(), you: s.rSel[f] || '—', gold: p > 0 ? Rq.g[f] : '· · ·', m: p >= 1 ? (ok ? '✓' : '✗') : '', mc: ok ? C.green : C.red,
+          bg: p >= 1 ? (ok ? 'rgba(111,165,143,0.08)' : 'rgba(226,85,58,0.08)') : 'transparent', x: ((1 - p) * 12).toFixed(1) + 'px' }; }),
+      json: s.rRev ? (Rq.json.slice(0, Math.max(0, Math.floor((t - s.rRevT - 15) * 6))) || ' ') : 'waiting for your route…',
+      note: s.rRev ? Rq.n : 'Pick a dataset, a section and a task, then send the route to the validator.',
+      act: () => this.routeAct(), actLabel: s.rDone ? '↻ Play again' : s.rRev ? (s.rR === 4 ? 'Finish →' : 'Next question →') : 'Send route ✓',
+      result: s.rDone ? 'Routing accuracy ' + s.rScore + ' / 15' : s.rWarnT && t - s.rWarnT < 30 && !s.rRev ? 'Pick one option in each row first.' : s.rRev ? (lastR === 3 ? 'Perfect route.' : lastR + ' of 3 fields right.') : '',
+      resCol: s.rRev && lastR === 3 ? C.green : C.gold,
+      pips: ROUTE.map((_, i) => ({ c: i < s.rHist.length ? (s.rHist[i] === 3 ? C.green : s.rHist[i] > 0 ? C.gold : C.red) : i === s.rR ? '#4a4336' : C.line })) };
+    const Cq = CAL[s.cR], lastC = s.cHist[s.cHist.length - 1];
+    const brier = s.cHist.length ? s.cHist.reduce((a, x) => a + (x.p - x.y) ** 2, 0) / s.cHist.length : null;
+    const eCol = e => e < 0.1 ? C.green : e < 0.3 ? C.gold : C.red;
+    const cal = { q: Cq.q, a: Cq.a, p: Cq.p, v: s.cV, round: s.cR + 1,
+      act: () => this.calAct(), actLabel: s.cDone ? '↻ Play again' : s.cRev ? (s.cR === 5 ? 'Finish →' : 'Next answer →') : 'Place bet ✓',
+      result: s.cDone ? 'Final Brier score: ' + brier.toFixed(3) + (brier < 0.25 ? '. You beat the coin flip.' : '. The coin flip wins this time.') : s.cRev ? 'It was ' + (Cq.ok ? 'correct' : 'wrong') + '. ' + Cq.why : '',
+      resCol: s.cDone ? C.gold : Cq.ok ? C.green : C.red,
+      brier: brier == null ? '—' : brier.toFixed(3), brierCol: brier == null ? C.dim : eCol(brier),
+      bet: s.cRev && lastC ? ((lastC.p - lastC.y) ** 2).toFixed(3) : '—',
+      dots: s.cHist.map((x, i) => { const a = t - x.t0; return { x: (4 + x.p * 92).toFixed(1) + '%', y: (x.y ? 16 + (i % 3) * 8 : 66 + (i % 3) * 8) + '%', s: (1 + 1.5 * Math.max(0, 1 - a / 8)).toFixed(2), c: eCol((x.p - x.y) ** 2) }; }),
+      pips: CAL.map((_, i) => ({ c: i < s.cHist.length ? eCol((s.cHist[i].p - s.cHist[i].y) ** 2) : i === s.cR ? '#4a4336' : C.line })),
+      vCol: s.cV >= 70 ? C.green : s.cV <= 30 ? C.red : C.gold };
+    return {
+      confetti, floats, toasts, badgeShelf, badgeCount: Object.keys(s.badges).length, cities, grid, geo, geoPips, hal, modes,
+      flowRef: this.flowRef, rushRef: this.rushRef,
+      tracks, dec, route, cal, isDec: s.mode === 'dec', isRoute: s.mode === 'route', isCal: s.mode === 'cal',
+      decNext: () => this.decNext(), calSet: e => { if (!this.state.cRev) this.setState({ cV: +e.target.value }); }, badgeTotal: BADGES.length,
+      heroTilt: 'perspective(1000px) rotateX(' + ((M.y - 0.4) * -8).toFixed(2) + 'deg) rotateY(' + ((M.x - 0.6) * 10).toFixed(2) + 'deg) rotate(-0.6deg)',
+      rush, isRush: s.mode === 'rush', rushStart: () => this.rushStart(), rushPower: () => this.rushPower(),
+      fNodes, fEdges, fPk, fTags, fLabels, agentStats, agentPills, insp, flowScan: ((t * 1.2) % 100).toFixed(2) + '%',
+      flowFlash: at >= 190 && at < 200 ? ((1 - (at - 190) / 10) * 0.16).toFixed(3) : '0',
+      isGeo: s.mode === 'geo', isHal: s.mode === 'hal', isT5: s.tab === 5,
+      geoHint: () => { if (s.gGuess == null) this.setState({ gHint: true }); }, geoNext: () => this.geoNext(),
+      goPlay: () => this.go(5), lvlNum: 'L' + (lvl + 1), lvlName: LEVELS[lvl], xpShown: fmt(s.xpShown),
+      lvlProg: lvl === 5 ? '1' : pct((s.xpShown % 400) / 400), xpScale: (1 + 0.12 * Math.max(0, 1 - xpAge / 8)).toFixed(3),
+      onMove: e => { this.mouse = { x: e.clientX / window.innerWidth, y: e.clientY / window.innerHeight, px: e.clientX, py: e.clientY }; },
+      spotT: `translate3d(${(M.px - 550).toFixed(0)}px,${(M.py - 550).toFixed(0)}px,0)`,
+      cur1: curtA, cur2: curtB, curNum: TABS[s.tab][0], curLabel: TABS[s.tab][1],
+      particles, heroWords, marquee, marqX: '-' + ((t * 0.06) % 50).toFixed(3) + '%',
+      orbT: `translate3d(${((0.3 + M.x * 0.4 + Math.sin(t / 50) * 0.06) * window.innerWidth - 310).toFixed(0)}px,${((0.3 + M.y * 0.3 + Math.cos(t / 60) * 0.06) * 720 - 310).toFixed(0)}px,0)`,
+      railH: (runIdx / 9 * 100).toFixed(2) + '%', railHs: (runIdx / 9).toFixed(4), railOp: pt >= 0 && pt < PIPE_END ? 1 : 0,
+      stampTxt: decl ? 'Declined' : q.kind.startsWith('aggregate') ? 'Computed ∑' : 'Verified', stampCol: decl ? C.red : C.green,
+      stampOp: sp.toFixed(3), stampSc: (2.4 - 1.4 * sp).toFixed(3),
+      sweepY: st2 < 140 ? ((st2 % 40) / 40 * 110 - 10).toFixed(1) + '%' : '-200%',
+      tabs, tabProgress: ((s.tab + 1) / 6).toFixed(4), enterOp: enter, enterY: ((1 - enter) * 14).toFixed(1) + 'px', pulse,
+      isT0: s.tab === 0, isT1: s.tab === 1, isT2: s.tab === 2, isT3: s.tab === 3, isT4: s.tab === 4,
+      goHome: () => this.go(0), goT1: () => this.go(1), goT3: () => this.go(3),
+      nextTab: () => this.go((s.tab + 1) % 6), nextLabel: s.tab === 5 ? '↺ Back to start' : 'Next: ' + TABS[s.tab + 1][1] + ' →',
+      morphTokens, morphAnn, scanTop, datasets, roles, roleDot, explore,
+      stages, sel, logLines, pipeBtn, robust, runPipe: () => { if (pt < 0 || pt >= PIPE_END) this.setState({ pipeT: 0 }); },
+      recSegs, recTag: AGENT_META.live ? 'real trace · ' + AGENT_META.model + ' · ' + AGENT_META.seconds + ' s' : 'illustrative sheet', agentSteps: ast, agentBtn, agentProg: pct(at / AGENT_END),
+      agentToggle: () => this.setState(x => x.agentT >= AGENT_END ? { agentT: 0, agentPlay: true } : { agentPlay: !x.agentPlay }),
+      agentNext: () => { const n = AG.find(v => v > at); this.agentJump(n ?? AGENT_END); },
+      agentPrev: () => { const p = [...AG].reverse().find(v => v < AG[cur]) ?? 0; this.agentJump(p); },
+      simQs, cur: cur2, simStages, simOp, rwShown, routeRows, passages, ansShown, caret, checks, verdictCol, confW,
+      simRun: () => this.setState({ simT: 0 }),
+      chatText: s.chatText, chatChange: e => this.setState({ chatText: e.target.value }),
+      chatKey: e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); this.chatSend(); } },
+      chatSend: () => this.chatSend(), chatBtn: s.simBusy ? '…' : 'Send ↵',
+      chatBtnBg: s.chatText.trim() && !s.simBusy ? C.red : '#4a4336',
+      chatBd: s.simBusy ? C.gold : s.chatText ? C.red : '#2e2a22',
+      chatGlow: s.simBusy ? '0 0 24px rgba(201,164,92,0.25)' : 'none',
+      chatChips: CHIPS.map(c => ({ t: c, go: () => this.chatSend(c) })),
+      chatStatus: s.simBusy ? 'apertus-70b · thinking' + '.'.repeat(1 + Math.floor(t / 4) % 3) : 'Enter to send · Shift+Enter for a new line',
+      chatStatusCol: s.simBusy ? C.gold : C.dim,
+      bigStats, charts
+    };
+  }
+}
+</script>
+</body>
+</html>

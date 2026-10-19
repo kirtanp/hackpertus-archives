@@ -1,67 +1,71 @@
 {
- "scope": "496 answers (323 with dynamic Apertus rewriting, 173 rules-only) to the retrieval-eval and unanswerable questions; label = a cited source is a gold source",
- "base_rate_correct": 0.905,
- "auc": 0.903,
- "brier": 0.063,
+ "scope": "487 answers (317 with dynamic Apertus rewriting, 170 rules-only) to the retrieval-eval and unanswerable questions; label = a cited source is a gold source",
+ "base_rate_correct": 0.903,
+ "auc": 0.909,
+ "brier": 0.062,
  "expected_calibration_error": 0.018,
  "reliability": [
   {
    "confidence": "0–20%",
-   "answers": 6,
-   "mean_confidence": 0.099,
-   "share_correct": 0.167
+   "answers": 5,
+   "mean_confidence": 0.11,
+   "share_correct": 0.2
   },
   {
    "confidence": "20–40%",
-   "answers": 13,
-   "mean_confidence": 0.295,
-   "share_correct": 0.462
+   "answers": 18,
+   "mean_confidence": 0.283,
+   "share_correct": 0.389
   },
   {
    "confidence": "40–60%",
-   "answers": 20,
-   "mean_confidence": 0.535,
-   "share_correct": 0.65
+   "answers": 11,
+   "mean_confidence": 0.526,
+   "share_correct": 0.727
   },
   {
    "confidence": "60–80%",
-   "answers": 38,
-   "mean_confidence": 0.713,
-   "share_correct": 0.684
+   "answers": 44,
+   "mean_confidence": 0.714,
+   "share_correct": 0.636
   },
   {
    "confidence": "80–100%",
-   "answers": 419,
-   "mean_confidence": 0.969,
-   "share_correct": 0.962
+   "answers": 409,
+   "mean_confidence": 0.97,
+   "share_correct": 0.968
   }
  ],
  "weights": {
-  "top_score": 0.3004,
-  "margin": 0.4867,
-  "has_place": -0.3165,
-  "intent_agree": -0.5127,
-  "no_intent": 0.0065,
-  "apertus_answer": 0.6811,
-  "n_cited": 0.2655,
-  "cites_top": 0.2997,
-  "number_ok": 0.0204,
-  "consultation": 0.5565,
-  "log_pool": -1.3229
+  "top_score": 0.1221,
+  "margin": 0.3725,
+  "has_place": -0.4525,
+  "intent_agree": -0.3699,
+  "no_intent": 0.0486,
+  "apertus_answer": 0.9906,
+  "n_cited": 0.2607,
+  "cites_top": 0.4465,
+  "number_ok": -0.0166,
+  "consultation": 0.5814,
+  "log_pool": -1.5214,
+  "tok_mean_prob": 0.2432,
+  "tok_min_prob": 0.1537,
+  "tok_min_number_prob": 0.1776,
+  "tok_min_citation_prob": 0.3778
  },
- "method": "logistic regression on 11 signals available at answer time; 5-fold cross-validated predictions for the calibration numbers",
+ "method": "logistic regression on 15 signals available at answer time; 5-fold cross-validated predictions for the calibration numbers",
  "caveat": "calibrated on templated test questions; real questions may differ, so treat the percentage as an estimate",
- "model_chosen": "signals",
+ "model_chosen": "signals+logprobs",
  "comparison": {
   "signals_only": {
-   "auc": 0.903,
-   "brier": 0.063,
-   "expected_calibration_error": 0.018
+   "auc": 0.897,
+   "brier": 0.065,
+   "expected_calibration_error": 0.016
   },
   "signals_plus_token_logprobs": {
-   "auc": 0.906,
-   "brier": 0.061,
-   "expected_calibration_error": 0.012
+   "auc": 0.909,
+   "brier": 0.062,
+   "expected_calibration_error": 0.018
   }
  }
 }
