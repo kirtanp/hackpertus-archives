@@ -1456,6 +1456,7 @@ let ONB = {"dataset": "test-consultations-apertus", "file": "consultations.csv",
 const ONB_T = { acquire: [0, 10], profile: [10, 24], map: [24, 64], transform: [64, 76], privacy: [76, 90], enrich: [90, 106], validate: [106, 122], publish: [122, 132] };
 const ONB_END = 140;
 const SPEEDS = [1, 4, 10];
+const SPEED_BASE = 0.3; // 1× is a reading pace: pipeline ≈ 22 s, agent loop ≈ 33 s, onboarding ≈ 23 s
 const ONB_WHO = { acquire: 'code', profile: 'code', map: 'apertus', transform: 'code', privacy: 'code', enrich: 'apertus', validate: 'validator', publish: 'data' };
 const ONB_DESC = {
   acquire: 'Read the file; encoding and delimiter detected; hashed.',
@@ -1578,10 +1579,10 @@ class Component extends DCLogic {
   step(dt) {
     this.setState(s => {
       const n = { tick: s.tick + dt };
-      if (s.pipeT >= 0 && s.pipeT < PIPE_END) n.pipeT = Math.min(PIPE_END, s.pipeT + dt * s.spd.pipe);
-      if (s.agentPlay) { if (s.agentT < AGENT_END) n.agentT = Math.min(AGENT_END, s.agentT + dt * s.spd.agent); else n.agentPlay = false; }
+      if (s.pipeT >= 0 && s.pipeT < PIPE_END) n.pipeT = Math.min(PIPE_END, s.pipeT + dt * s.spd.pipe * SPEED_BASE);
+      if (s.agentPlay) { if (s.agentT < AGENT_END) n.agentT = Math.min(AGENT_END, s.agentT + dt * s.spd.agent * SPEED_BASE); else n.agentPlay = false; }
       if (s.simT >= 0 && s.simT < SIM_END) n.simT = Math.min(SIM_END, s.simT + dt);
-      if (s.onbT >= 0 && s.onbT < ONB_END) n.onbT = Math.min(ONB_END, s.onbT + dt * s.spd.onb);
+      if (s.onbT >= 0 && s.onbT < ONB_END) n.onbT = Math.min(ONB_END, s.onbT + dt * s.spd.onb * SPEED_BASE);
       if (s.xpShown !== s.xp) n.xpShown = Math.abs(s.xp - s.xpShown) < 2 ? s.xp : s.xpShown + (s.xp - s.xpShown) * Math.min(1, 0.18 * dt);
       if (s.toasts.length && s.tick - s.toasts[0].t0 > 110) n.toasts = s.toasts.slice(1);
       if (s.floats.length && s.tick - s.floats[0].t0 > 40) n.floats = s.floats.slice(1);
