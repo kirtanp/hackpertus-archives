@@ -89,7 +89,7 @@ One record of `data/out/records.jsonl`, e.g. `/api/record/stapfer:transkription:
 none of the numbers is an overall accuracy.
 
 ## `GET /api/site` and the presentation site (`/site`)
-The six-tab site in `static/site/` (served at `/site`; `/` stays the demo page) loads its examples from this endpoint
+The six-tab site in `static/site/` (served at `/site`; `/` redirects there) loads its examples from this endpoint
 (`src/archai/site.py`), built once after the index: `pipeline` (the run manifest), `morph` (one real answer, raw edition
 markup to clean text), `agent` (one Apertus agent-v4 trace: plan, tool calls, composed metadata, grounding check),
 `dec`, `route`, `cal`, `geo`, `hal`, `rush` (game rounds from real answers, traces, `qa.route` and `qa.check_numbers`),

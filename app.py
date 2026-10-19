@@ -16,7 +16,7 @@ if __name__ == "__main__" and (ROOT / ".env").exists():  # `uv run app.py` reads
 
 from fastapi import FastAPI, HTTPException
 from fastapi.concurrency import run_in_threadpool
-from fastapi.responses import FileResponse
+from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from archai import qa, llm, stats
@@ -184,17 +184,17 @@ def corpus_stats(query: str = "all", section: str | None = None, page: int | Non
 
 
 @app.get("/")
-def index():
-    return FileResponse(ROOT / "static" / "index.html")
+def index():  # a redirect, not the page itself: the site loads ./support.js relative to /site/
+    return RedirectResponse("/site/")
 
 
-# the ArchAI presentation site (5 tabs); its Q&A simulator calls /api/ask and its evidence tab /api/metrics
+# the ArchAI presentation site (6 tabs); its Q&A simulator calls /api/ask and its evidence tab /api/metrics
 app.mount("/site", StaticFiles(directory=ROOT / "static" / "site", html=True), name="site")
 
 
 if __name__ == "__main__":  # uv run app.py  ->  http://127.0.0.1:8791 (PORT=9000 uv run app.py for another port)
     import uvicorn
     port = int(os.environ.get("PORT", "8791"))
-    print(f"\n  ArchAI demo:        http://127.0.0.1:{port}\n  Presentation site:  http://127.0.0.1:{port}/site\n"
-          f"  Apertus: {'on' if llm.KEY not in ('', 'none') else 'off (no key in .env: cited passages only)'}\n", flush=True)
+    print(f"\n  ArchAI:   http://127.0.0.1:{port}\n"
+          f"  Apertus:  {'on' if llm.KEY not in ('', 'none') else 'off (no key in .env: cited passages only)'}\n", flush=True)
     uvicorn.run(app, host=os.environ.get("HOST", "127.0.0.1"), port=port)

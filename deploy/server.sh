@@ -42,7 +42,7 @@ curl -s "http://127.0.0.1:$port/api/health"; echo
 REMOTE
 
 echo "→ verify the served files"
-for f in static/index.html static/site/index.html app.py; do
+for f in static/site/index.html static/site/support.js app.py; do
   here=$(shasum -a 256 < "$f" | cut -d' ' -f1)
   there=$(ssh "$HOST" "docker exec $NAME sha256sum $f" | cut -d' ' -f1)
   [ "$here" = "$there" ] && echo "  ok  $f" || { echo "  MISMATCH  $f"; exit 1; }

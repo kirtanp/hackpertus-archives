@@ -31,7 +31,7 @@ git clone https://github.com/kirtanp/hackpertus-archives.git
 cd hackpertus-archives
 uv run app.py
 ```
-**3. Open http://127.0.0.1:8791** in your browser. The presentation site is at **http://127.0.0.1:8791/site**.
+**3. Open http://127.0.0.1:8791** in your browser.
 
 The first start takes about a minute: uv downloads Python 3.12 and the libraries. After that, the app builds its
 search index in about 20 seconds; until then, questions answer "Index is still loading". Stop it with **Ctrl+C**,
@@ -44,7 +44,7 @@ git clone https://github.com/kirtanp/hackpertus-archives.git
 cd hackpertus-archives
 docker compose up --build
 ```
-Open **http://localhost:8791** (and **/site**). Stop with **Ctrl+C**.
+Open **http://localhost:8791**. Stop with **Ctrl+C**.
 
 ### Optional: answers written by Apertus
 Without a key, ArchAI answers with the cited passages themselves. For generated, cited answers from the Swiss
@@ -124,7 +124,7 @@ The site also carries the [architecture diagrams](docs/src/content/docs/diagrams
 
 ## Repository layout
 ```
-app.py, static/index.html     web demo (FastAPI + one HTML page, Leaflet)
+app.py, static/site/          web app (FastAPI + the presentation site, served at /site; / redirects there)
 src/archai/                   pipeline: ingest, stapfer_clean, link, enrich, agent, export, evaluate, bern_eval,
                               qa (retrieval + answers), qa_eval (accuracy), onboard (new datasets), tools, llm,
                               stats (corpus aggregates in DuckDB, /api/stats), statssql (the Superset datasource)
