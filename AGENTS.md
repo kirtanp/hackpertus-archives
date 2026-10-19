@@ -42,7 +42,7 @@ This file is the project's committed home for project-intrinsic agent knowledge:
 
 ## Presentation site (`static/site/`, `/site`)
 
-- A separate page from `static/index.html` (`/`, owned by other UI work: leave it alone). It is a dc-runtime page (`support.js`, `{{ }}` bindings, a `text/x-dc` Component); its data constants are only fallbacks, replaced in place from `GET /api/site` (`src/archai/site.py`). Keep the array lengths the layout expects (5 tools, 4 entities, 5 geo rounds), and never show an invented passage under a real signature: take examples from `data/out` through `site.py`.
+- A separate page from `static/index.html` (`/`, owned by other UI work: leave it alone). It is a dc-runtime page (`support.js`, `{{ }}` bindings, a `text/x-dc` Component); its data constants are only fallbacks, replaced in place from `GET /api/site` (`src/archai/site.py`). Keep the array lengths the layout expects (5 tools, 4 entities, 5 geo rounds), and never show an invented passage under a real signature: take examples from `data/out` through `site.py`. Outside figures on the Impact tab (06) each carry their source URL in `SRC`; add none without one.
 
 ## Maintaining this file
 

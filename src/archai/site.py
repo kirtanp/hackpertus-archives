@@ -7,6 +7,7 @@ import json
 import random
 import re
 import threading
+from pathlib import Path
 
 import pandas as pd
 
@@ -341,6 +342,45 @@ def sim_answers(idx, use_llm=True):
     return None
 
 
+# ---------------------------------------------------------------- 06 Impact: a real onboarding run, replayed
+ONBOARD = "test-consultations-apertus"
+ONB_ROLES = ["id", "title", "text", "dates", "organisations", "url", "signature"]
+
+
+def onboard(dataset=ONBOARD):
+    """The onboarding run the Impact tab replays (archai.onboard, data/onboard/<id>/): the file, the stage timings, which
+    column Apertus proposed for which role, what validation kept or rejected and why, and the comparison with the
+    hand-built records."""
+    d = Path("data/onboard") / dataset
+    if not (d / "report.json").exists():
+        return None
+    j = lambda n: json.load(open(d / n, encoding="utf-8"))  # noqa: E731
+    rep, man, mp, cmp_, src = j("report.json"), j("manifest.json"), j("mapping.json"), j("comparison.json"), j("source.json")
+    prop = j("mapping_proposal_apertus.json") if (d / "mapping_proposal_apertus.json").exists() else mp
+    as_set = lambda v: set(v if isinstance(v, list) else [v] if v else [])  # noqa: E731
+    cols = {}
+    for role in ONB_ROLES:
+        for c in as_set(mp.get(role)):
+            cols.setdefault(c, {"col": c, "roles": [], "rejected": []})["roles"].append(role)
+        for c in as_set(prop.get(role)) - as_set(mp.get(role)):
+            why = next((n.split(" dropped ", 1)[1][1:-1] for n in mp.get("validation_notes") or []
+                        if n.startswith(f"{role}: '{c}'") and " dropped " in n), "dropped by validation")
+            cols.setdefault(c, {"col": c, "roles": [], "rejected": []})["rejected"].append({"role": role, "why": why})
+    prev, stages = 0.0, []
+    for st in man["stages"]:  # the manifest records when each stage finished
+        stages.append({**st, "took": round(st["seconds"] - prev, 2)}); prev = st["seconds"]
+    rec = json.loads(open(d / "records.jsonl", encoding="utf-8").readline())
+    return {"dataset": dataset, "file": src.get("file"), "rows": rep["records"], "columns": next((s["columns"] for s in stages if "columns" in s), None),
+            "sha256": src.get("sha256"), "encoding": src.get("encoding"), "source_url": rep["source_url"], "stages": stages,
+            "chips": list(cols.values()), "roles": {r: sorted(c for c in as_set(mp.get(r))) for r in ONB_ROLES},
+            "notes": mp.get("validation_notes") or [], "model": (rep.get("apertus_mapping") or {}).get("model"),
+            "enriched": rep.get("enriched"), "invalid": rep.get("schema_invalid"), "coverage": rep.get("coverage"),
+            "comparison": {k: cmp_[k] for k in ("matched_records", "title_exact", "reference_dates_found", "lead_organisation_found")},
+            "record": {"title": rec["title"], "kind": rec["kind"], "dates": [x["iso"] for x in rec["dates"]][:3],
+                       "organisations": [x["name"] for x in rec["organisations"]][:2]},
+            "published": bool(rep.get("published_to_qa")), "privacy_flags": sum((rep.get("records_with_privacy_flags") or {}).values()), "seconds": rep.get("seconds")}
+
+
 _CACHE = {}
 
 
@@ -352,5 +392,5 @@ def build(idx, records, game_round, metrics):
     ents = entity_rounds(records)
     _CACHE["site"] = {"pipeline": pipeline(), "morph": morph(answers), "agent": agent(records), "dec": dec(answers, docs),
                       "route": route_game(idx, metrics), "cal": cal_game(idx, records), "hal": ents[:3], "rush": ents,
-                      "geo": geo_rounds(game_round, records, docs)}
+                      "geo": geo_rounds(game_round, records, docs), "onboard": onboard()}
     return _CACHE["site"]
