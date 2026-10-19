@@ -114,6 +114,7 @@ This README keeps the orientation, and each section below is a page in the site:
 - [Rebuild from the raw data](docs/src/content/docs/reference/rebuild.mdx)
 - [Outputs (data/out/)](docs/src/content/docs/reference/outputs.mdx)
 - [Measured results](docs/src/content/docs/reference/measured-results.mdx)
+- [Query timing](docs/src/content/docs/reference/query-timing.mdx)
 - [Onboarding a new dataset](docs/src/content/docs/reference/onboarding.mdx)
 - [Editing decisions (provenance)](docs/src/content/docs/reference/editing-decisions.mdx)
 - [Tool agent (src/archai/agent.py, agent-v4)](docs/src/content/docs/reference/tool-agent.mdx)

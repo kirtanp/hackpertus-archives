@@ -1,0 +1,19 @@
+question_id,question,dataset,style,intent,route_dataset,answer_source,llm_calls,llm_seconds,seconds
+1,Hatte der Lehrer in Bourg-Saint-Pierre Frau und Kinder?,stapfer,new_section,,stapfer,apertus,2,12.9,13.2
+2,Was verdiente der Schulmeister in Aran?,stapfer,rules,salary,stapfer,extractive,2,12.9,13.4
+3,Which other schools were near Bourg-Saint-Pierre?,stapfer,new_section,,stapfer,no_direct_answer,2,16.0,18.0
+4,Wurde in Tolochenaz auch im Winter Schule gehalten?,stapfer,rules,schedule,stapfer,apertus,2,27.8,29.1
+5,Dans quel local se tenait l'école de Aran?,stapfer,para,schoolhouse,stapfer,apertus,2,34.5,35.2
+6,À quelle saison l'école était-elle ouverte à Oberhäusern?,stapfer,para,schedule,stapfer,apertus,2,25.5,26.0
+7,In welchem Raum fand der Unterricht in Oberhäusern statt?,stapfer,para,schoolhouse,stapfer,aggregate,3,50.2,51.0
+8,À quelle saison l'école était-elle ouverte à Tolochenaz?,stapfer,para,schedule,stapfer,apertus,2,35.2,36.4
+9,Wie gross war die Klasse in Tolochenaz?,stapfer,para,pupils,stapfer,no_direct_answer,2,33.1,33.8
+10,How many kids went to class in Penthaz?,stapfer,para,pupils,stapfer,apertus,5,133.4,135.2
+11,Qui a nommé le régent de Aran ?,stapfer,new_section,,stapfer,apertus,2,45.3,46.7
+12,Wurde in Oberhäusern auch im Winter Schule gehalten?,stapfer,rules,schedule,stapfer,apertus,2,36.6,40.3
+13,Was there a consultation about violence by spectators at sports events?,consultation,para,,consultation,apertus,2,41.9,42.5
+14,Which consultation in 1984 dealt with data protection?,consultation,year,,consultation,apertus,2,60.0,60.4
+15,Which consultation concerned the popular initiative to abolish animal experiments?,consultation,para,,consultation,not_found,2,47.0,47.4
+16,Which consultation set the legal blood alcohol limit for drivers?,consultation,para,,consultation,apertus,2,51.7,52.5
+17,Quelle consultation portait sur la réforme de l'assurance maladie?,consultation,para,,consultation,apertus,2,25.5,26.1
+18,Wann wurde über die inländische Zuckerproduktion vernehmlasst?,consultation,para,,,apertus,4,40.2,40.5

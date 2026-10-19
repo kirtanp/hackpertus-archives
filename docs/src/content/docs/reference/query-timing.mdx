@@ -1,0 +1,72 @@
+---
+title: "How long a question takes to answer"
+description: "Per-question wall-clock latency of the deployed Q&A path, measured on a fixed sample of the repository's own question set, with the numbers and the caveats."
+---
+
+![How long the Q&A path takes per question: one row per question, shortest first, with a summary box for the whole set](/query-timing/query-timing.png)
+*Wall-clock time for one answer, shortest question first; the box row at the top summarises the whole sample. Source and counts are in the chart caption.*
+
+The demo answers a question with a fixed pipeline, not one model call.
+Apertus rewrites the question into a validated search request (`rewrite="dynamic"`), the routes pick the dataset (the 1799 Stapfer school survey or the federal consultations), code or the data engine produces the cited facts, and a number check has the last word.
+This page measures that whole path, end to end, one question at a time.
+
+## What was measured
+
+One timing is one call of `archai.qa.answer(idx, q, 6, True, "dynamic")` on a warm `qa.Index()`, timed around the call.
+The question set is the repository's own, not a new one: a fixed, seeded sample of `archai.qa_eval.all_cases`, the 380 templated questions the retrieval evaluation uses.
+The sample is 12 Stapfer questions and 6 consultation questions (seed 11), which keeps one run finite while still touching both datasets and several question types.
+Each question is measured once, sequentially (no parallel workers), so the numbers are comparable to each other.
+
+Two columns are recorded per question: `seconds` is the wall-clock time of the whole call, and `llm_seconds` is the part spent inside `archai.llm` model calls.
+The difference is the retrieval, the deterministic validation and the number checks.
+
+## The measured numbers
+
+| Question | Dataset | Seconds | Of which model calls | Answer source |
+|---|---|---:|---:|---|
+| Hatte der Lehrer in Bourg-Saint-Pierre Frau und Kinder? | Stapfer | 13.2 | 12.9 | `apertus` |
+| Was verdiente der Schulmeister in Aran? | Stapfer | 13.4 | 12.9 | `extractive` |
+| Which other schools were near Bourg-Saint-Pierre? | Stapfer | 18.0 | 16.0 | `no_direct_answer` |
+| À quelle saison l'école était-elle ouverte à Oberhäusern? | Stapfer | 26.0 | 25.5 | `apertus` |
+| Quelle consultation portait sur la réforme de l'assurance maladie? | Consultation | 26.1 | 25.5 | `apertus` |
+| Wurde in Tolochenaz auch im Winter Schule gehalten? | Stapfer | 29.1 | 27.8 | `apertus` |
+| Wie gross war die Klasse in Tolochenaz? | Stapfer | 33.8 | 33.1 | `no_direct_answer` |
+| Dans quel local se tenait l'école de Aran? | Stapfer | 35.2 | 34.5 | `apertus` |
+| À quelle saison l'école était-elle ouverte à Tolochenaz? | Stapfer | 36.4 | 35.2 | `apertus` |
+| Wurde in Oberhäusern auch im Winter Schule gehalten? | Stapfer | 40.3 | 36.6 | `apertus` |
+| Wann wurde über die inländische Zuckerproduktion vernehmlasst? | Consultation | 40.5 | 40.2 | `apertus` |
+| Was there a consultation about violence by spectators at sports events? | Consultation | 42.5 | 41.9 | `apertus` |
+| Qui a nommé le régent de Aran ? | Stapfer | 46.7 | 45.3 | `apertus` |
+| Which consultation concerned the popular initiative to abolish animal experiments? | Consultation | 47.4 | 47.0 | `not_found` |
+| In welchem Raum fand der Unterricht in Oberhäusern statt? | Stapfer | 51.0 | 50.2 | `aggregate` |
+| Which consultation set the legal blood alcohol limit for drivers? | Consultation | 52.5 | 51.7 | `apertus` |
+| Which consultation in 1984 dealt with data protection? | Consultation | 60.4 | 60.0 | `apertus` |
+| How many kids went to class in Penthaz? | Stapfer | 135.2 | 133.4 | `apertus` |
+
+Across the 18 questions: minimum 13.2 s, median 38.3 s, maximum 135.2 s, total 747.7 s, of which 729.7 s were spent inside model calls.
+The answer sources were `apertus` 13, `no_direct_answer` 2, `extractive` 1, `aggregate` 1, `not_found` 1 (measured 2026-10-19 13:26, load average 16.39 at the start).
+
+## How to reproduce
+
+`docs/assets/query-timing/` holds everything: the harness `measure_query_timing.py`, the raw data `measurements.csv` (one row per question), the run facts `measurements.meta.json`, the plotting script `plot_query_timing.R` and the rendered image.
+
+The harness needs an OpenAI-compatible Apertus endpoint (`APERTUS_BASE_URL`, `APERTUS_API_KEY`, `APERTUS_MODEL`), as every evaluation in this repository does.
+
+```bash
+# measure, from the repository root (writes measurements.csv + measurements.meta.json next to the harness)
+APERTUS_BASE_URL=http://127.0.0.1:8081/v1 APERTUS_MODEL=apertus-v1.5-8b-text-q4_k_m \
+  PYTHONPATH=src uv run --all-groups python docs/assets/query-timing/measure_query_timing.py
+
+# redraw the chart from the committed data alone (no network, no Python)
+Rscript docs/assets/query-timing/plot_query_timing.R
+```
+
+The R script reads only `measurements.csv` and `measurements.meta.json`, and writes the image twice: the committed copy next to the data, and the copy the site serves from `docs/public/query-timing/`.
+
+## Caveats
+
+- **This is one machine and one model, not the demo's.** The run used `apertus-v1.5-8b-mlx-4bit`, a 4-bit 8B model on a local oMLX endpoint (Apple M2, 8 cores, 16 GB). The deployed demo documents `apertus-v1-5-70b` on the hosted gateway, so these seconds are not the gateway's seconds.
+- **The endpoint was local.** A hosted endpoint adds network latency; a local one adds whatever the laptop is doing. The load average at the start and end of the run is in `measurements.meta.json`.
+- **One measurement per question.** Apertus reads and labels the records it is given, and its reading varies between runs (that is why `archai.data_eval` repeats each question three times). The spread here is across questions, not across runs.
+- **Latency is a property of the question type.** The data questions ("how many …", "list the …") make the engine plan, read and verify every contributing record, so they cost more model calls than a lookup answer. The chart and the table show where a question landed: `answer_source` is `apertus` (the model wrote a grounded, cited answer), `aggregate` (code computed the number), `extractive` or `no_direct_answer` (the model's answer was not accepted and the cited passages or the fixed decline text were shown instead).
+- **This is a timing, not a quality score.** Some 8B answers were rejected by the number check; the path still finished, and the time it took is what is plotted.
