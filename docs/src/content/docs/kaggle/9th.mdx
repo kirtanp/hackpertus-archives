@@ -1,4 +1,8 @@
-# [9th] Place Solution for the Deep Past Challenge Competition
+---
+title: "[9th] Place Solution for the Deep Past Challenge Competition"
+description: "A write-up from the Kaggle Deep Past Initiative Machine Translation competition, place 9th."
+---
+
 https://www.kaggle.com/competitions/deep-past-initiative-machine-translation/discussion/685928
 
 Thank you to Kaggle and the Deep Past Initiative team for hosting this competition. Translating 4,000-year-old merchant letters from Old Assyrian cuneiform was a unique challenge — part NLP, part archaeology, part data engineering. Special thanks to @deeppast for the active engagement throughout, the dataset updates, and the supplementary resources that made this possible.
@@ -117,7 +121,7 @@ The workflow was an iterative loop: sample a random batch of pairs, send them to
 | `kb` | `KÙ.BABBAR` | Abbreviation expansion |
 | `u t u` | `UTU` | Spaced-out OCR recovery |
 | `GIN` | `GÍN` | Missing diacritic |
-| **Determinative recovery** (semantic classifiers prefixed to names, e.g. {d} = divine) | | |
+| **Determinative recovery** (semantic classifiers prefixed to names, e.g. \{d\} = divine) | | |
 | `lúSIPA` | `{lú}SIPA` | Prefix → curly bracket |
 | `itiGU₄` | `{iti}GU₄` | Prefix → curly bracket |
 | `(d)Aššur` | `{d}aššur` | Paren → curly, lowercase after det |
@@ -318,7 +322,7 @@ Two levels of gap damage were generated, matching the real competition distribut
 **Entity-swap augmentation** (~298K pairs generated, ~40K used) — Names, commodities, and numbers in existing pairs were programmatically swapped with alternatives from the OA onomasticon and lexicon. The swap function finds Akkadian name tokens in the source (using a pre-built index from the name translation memory), locates the corresponding English name in the target, and replaces both simultaneously:
 
 ```python
-# Find Akkadian name in source → look up English equivalent → swap both
+## Find Akkadian name in source → look up English equivalent → swap both
 for akk_token in src_tokens:
     if akk_token in name_src_index:
         eng_name = name_src_index[akk_token]
@@ -497,4 +501,3 @@ Sampling at temperature 0.7 with MBR-8 gained +2.95 GeoMean on 200 local samples
 - **Gemini:** Google, [Gemini 2.0 Flash / Flash Lite](https://ai.google.dev/gemini-api/docs/models) — used for PDF extraction, Vision OCR, sentence splitting, and gap augmentation
 - **Claude Code** with Claude Opus 4.6 (Anthropic) — used for data cleaning script development and quality judging
 - **Key publication sources for extracted data:** Larsen 2002 (PIHANS 96), AKT volumes 1-13, Dercksen 2004/2008 (PIHANS 98/111), Michel 2003 (PIHANS 97), Prague ICK 4, secondary_sources.csv, eSAD
-

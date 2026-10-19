@@ -1,0 +1,36 @@
+---
+title: "Architecture"
+description: "The pipeline stages, the deterministic tools and the robustness measures; the two rendered architecture diagrams."
+---
+
+```
+raw SQL/CSV ──► ingest (streaming SQL parser) ──► clean (markup → text + annotations, raw kept)
+            ──► link (consultation refs → OLR units + archive path)
+            ──► Apertus agent: plan tools ─► deterministic tools ─► compose ─► validate (grounding)
+            ──► export records.jsonl/csv (one schema, provenance on every record) ──► metrics.json
+            ──► Q&A: Apertus query rewrite (validated) + rule router → hybrid TF-IDF → Apertus answer with [n] citations
+                 → citation + number check (extractive fallback)
+    data questions (count/sum/average/list over records) ──► archai.dataq: Apertus plans → code validates and selects
+                 → Apertus reads and labels every figure with its quote → code verifies, applies the counting policy and
+                 computes → Apertus phrases → number check (no key: qa.aggregate_pupils, rules school counts)
+any new table ──► onboard: profile → Apertus column mapping (validated) → transform → privacy screen → validate
+```
+Deterministic tools (`src/archai/tools.py`): `clean_markup`, `normalize_dates` (1799 month names: Hornung, Merz, …; French dates),
+`lookup_place` (historical name → gazetteer id, today's municipality, WGS84 from LV03), `parse_signature`,
+`lookup_archive_unit` (OLR), `extract_quantities` (pupils; fl, kr, Batzen, livres, sous…), `verify_in_source`.
+
+Robustness: idempotent/resumable stages, run manifest with output hashes, retries + JSON repair + schema checks,
+circuit breaker → deterministic-only output if Apertus is unreachable, schema-invalid records quarantined, unit tests.
+
+## Diagrams
+The flow above is also available as two rendered diagrams, one per audience.
+
+![Technical architecture: pipeline stages, answer path, API endpoints and data stores](/architecture/architecture-technical.png)
+*Technical - an engineering map of the batch pipeline and its stages, the answer path, the HTTP surface and the Superset datasource.*
+
+![Overview: from historic surveys to a cited answer and dashboards](/architecture/architecture-overview.png)
+*Overview - a plain-language story from historic archive to cited answer and dashboard, with no module names, filenames, HTTP paths or table names.*
+
+Mermaid sources: [`docs/public/architecture/architecture-technical.mmd`](/architecture/architecture-technical.mmd) and [`docs/public/architecture/architecture-overview.mmd`](/architecture/architecture-overview.mmd), re-rendered with `mmdr -i docs/public/architecture/architecture-technical.mmd -o docs/public/architecture/architecture-technical.png -e png`.
+
+Each diagram also has its own page: [Technical architecture](/diagrams/technical/) and [Overview](/diagrams/overview/).

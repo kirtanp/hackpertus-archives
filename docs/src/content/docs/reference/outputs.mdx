@@ -1,0 +1,15 @@
+---
+title: "Outputs (data/out/)"
+description: "What `data/out/` holds: unified records, intermediate tables, agent traces, metrics, the run manifest and the derived Superset database."
+---
+
+- `records.jsonl` / `records.csv` – unified records: `text`, `dates`, `places` (ids + coordinates), `persons`, `quantities`,
+  `archive_units`, `provenance` (signature, facsimile file, viewer URL, source dataset), `quality`, `enrichment` (model, prompt version, rejected entities)
+- `stapfer_answers.parquet`, `stapfer_documents.jsonl`, `consultations.jsonl` – intermediate tables
+- `agent_traces.jsonl` – every plan, tool call, result and validation
+- `metrics.json` – every block states its scope; model numbers are sample measurements, not overall accuracy
+- `run_manifest.json` – stages, status, runtime, output hashes, model endpoint
+- `stapfer_stats.duckdb` – **derived, not committed** (gitignored, `just statssql`): the corpus statistics as SQL
+  tables for Apache Superset, built from `stapfer_answers.parquet`, which stays the committed corpus
+
+See [Ethics, privacy and bias](/reference/ethics/) (privacy, bias, limits) and [what we took from the Kaggle winners](/kaggle/ideas/) (what we reused from the Akkadian competition winners).

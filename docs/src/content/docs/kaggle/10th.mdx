@@ -1,7 +1,11 @@
-# 10th Place Solution — Seq2Seq + CPT + Pseudo-Labeling
+---
+title: "10th Place Solution — Seq2Seq + CPT + Pseudo-Labeling"
+description: "A write-up from the Kaggle Deep Past Initiative Machine Translation competition, place 10th."
+---
+
 https://www.kaggle.com/competitions/deep-past-initiative-machine-translation/discussion/684211
 
-# Overview
+## Overview
 Our final solution is an ensemble of three sequence-to-sequence models — ByT5-Large, ByT5-XL, and MADLAD-400-3B-MT — all initialised from continual pretraining (CPT) checkpoints and further improved with pseudo-labeled data on `published_texts.csv`.
 
 The overall pipeline consists of three stages:
@@ -13,7 +17,7 @@ The final submission ensembles predictions from all three retrained models + MBR
 
 ---
 
-# External Data
+## External Data
 To supplement the official training data, we incorporated two external resources from Kaggle:
 - Old Assyrian grammar references and linguistic materials
 - Scanned PDFs of Kültepe tablets, primary archaeological sources for Old Assyrian cuneiform
@@ -22,7 +26,7 @@ Source: https://www.kaggle.com/competitions/deep-past-initiative-machine-transla
 
 ---
 
-# Data Preprocessing
+## Data Preprocessing
 Scanned tablet PDFs were processed with **GLM-OCR (0.9B)**, with each page handled independently to extract Akkadian/English text pairs.
 
 ## Post-OCR Processing
@@ -37,7 +41,7 @@ To ensure a reliable evaluation setup, we reserved one held-out fold exclusively
 
 ---
 
-# Model Candidates
+## Model Candidates
 We experimented with several strong sequence-to-sequence backbones:
 - ByT5 variants
 - mT5 variants
@@ -47,7 +51,7 @@ ByT5 was particularly well-suited to this task: its byte-level tokenisation hand
 
 ---
 
-# Stage 1 — Continual Pretraining (CPT)
+## Stage 1 — Continual Pretraining (CPT)
 Each model was first trained for 3 epochs of continual pretraining on document-level Akkadian text, combining:
 - Official training data
 - Cleaned external corpus data
@@ -56,7 +60,7 @@ This stage adapts the pretrained multilingual models to the Akkadian domain befo
 
 ---
 
-# Stage 2 — Supervised Fine-tuning (SFT)
+## Stage 2 — Supervised Fine-tuning (SFT)
 Starting from CPT checkpoints, each model was fine-tuned at the sentence level on parallel translation data, again combining:
 - Official training data
 - Cleaned external data
@@ -65,7 +69,7 @@ The CPT → SFT pipeline consistently outperformed direct fine-tuning, likely be
 
 ---
 
-# Stage 3 — Pseudo-Labeling on Published Texts
+## Stage 3 — Pseudo-Labeling on Published Texts
 We selected the best single model based on cross-validation and leaderboard performance, and used it to generate pseudo-labels for the `published_texts` corpus at the sentence level.
 
 Three final models were retrained on the combined dataset — official training data, cleaned external Assyrian data, and pseudo-labeled published texts:

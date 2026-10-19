@@ -1,7 +1,11 @@
-# [2nd Place] Data-Centric Akkadian NMT
+---
+title: "[2nd Place] Data-Centric Akkadian NMT"
+description: "A write-up from the Kaggle Deep Past Initiative Machine Translation competition, place 2nd."
+---
+
 https://www.kaggle.com/competitions/deep-past-initiative-machine-translation/discussion/684345
 
-# [2nd Place] Data-Centric Akkadian NMT: LLM-Assisted Sentence Alignment + Large-Scale Academic PDF Mining
+## [2nd Place] Data-Centric Akkadian NMT: LLM-Assisted Sentence Alignment + Large-Scale Academic PDF Mining
 
 **Score: 41.9 (Public) / 41.0 (Private) | Team: wukeneth | Model: google/byt5-large**
 
@@ -125,7 +129,7 @@ Key rules (all applied to source side):
 | Higher subscripts (₄₅₆...)        | → plain ASCII digits             |
 | Hamza variants (ʾ, ʿ, ʼ)          | → deleted                        |
 | ḫ / Ḫ                             | → h / H (competition convention) |
-| Determinatives (d), (ki), etc.    | → {d}, {ki} (cuneiform standard) |
+| Determinatives (d), (ki), etc.    | → \{d\}, \{ki\} (cuneiform standard) |
 | Other edge cases                  | additional rules in `text_normalization.py` |
 The script of data cleaning is attached in the links below.
 

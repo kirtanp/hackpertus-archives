@@ -1,0 +1,48 @@
+---
+title: "Overview"
+description: "ArchAI turns three open Swiss archive datasets into one AI-ready, provenance-preserving dataset and serves it through a cited Q&A demo."
+---
+
+Turns three open Swiss archive datasets into one **AI-ready, provenance-preserving** dataset and serves it through a
+**cited Q&A demo**. Deterministic code does the reliable work; Apertus plans, enriches and answers, and a deterministic
+validator has the final word on everything it produces.
+
+| Dataset | Source | What we use |
+|---|---|---|
+| Stapfer-Enquête 1799 | [opendata.swiss](https://opendata.swiss/de/dataset/stapfer-enquete-schule-in-der-schweiz-1799) | 2,250 transcribed sheets, 92,524 answers, teachers/schools/places |
+| Federal Consultations 1960–1991 | [opendata.swiss](https://opendata.swiss/de/dataset/federal-consultations-1960-1991) | 569 consultations, 858 archive references |
+| Archive Database (OLR) | [opendata.swiss](https://opendata.swiss/de/dataset/swiss-archives-archive-database-of-the-swiss-federal-archives) | 4.5 M archive units + hierarchy, streamed from the 3.6 GB dump |
+
+## Quick start
+Everything the demo needs ships in `data/out/` (no raw dumps, no API key required).
+Needs [`uv`](https://docs.astral.sh/uv/) and [`just`](https://just.systems/); the recipes are in `Justfile`.
+```bash
+git clone <this repo> && cd <repo>
+just setup            # Python 3.12 venv + locked dependencies (uv, pyproject.toml + uv.lock)
+just run              # http://127.0.0.1:8791
+just test             # unit tests, no network
+```
+or with Docker: `docker compose up --build` → http://localhost:8791.
+
+**Apertus (optional).** `cp .env.example .env` and set `APERTUS_API_KEY` (any OpenAI-compatible Apertus endpoint works;
+default gateway `https://gateway.keera.ch/api/v1`, model `apertus-v1-5-70b`). Without a key the demo answers
+extractively: the cited passages, no generated text. Never commit `.env`.
+
+**What the demo does**
+- Cited Q&A in German, French and English: Apertus rewrites the question → validated route → hybrid search → Apertus
+  answer with `[n]` citations to archive signature, page and question number → deterministic citation and number checks.
+  A question that asks for a number of pupils ("Wie viele Schülerinnen gab es total in Bern?") is instead summed by
+  `extract_quantities` over the retrieved sheets, per sex, with every contributing school and every exclusion listed
+  (`answer_source: aggregate`, see the [Web API](/reference/api/)).
+- Map of all 2,249 geocoded schools on today's swisstopo map with a slider to the 1850s Dufour map; filters (language,
+  confession, school type, pupils, name); cited schools highlighted.
+- "Guess the school": read a teacher's own 1799 answers (place names masked) and find the village on the map.
+- "Measured results": every number from `metrics.json`, in plain words, with its scope.
+
+## Documentation
+- [Architecture](/architecture/) - pipeline stages, deterministic tools, robustness
+- [Architecture diagrams](/diagrams/technical/) - the engineering map and the plain-language overview
+- [Web API](/reference/api/) and [record schema](/reference/schema/) - the served surface and the data shape
+- [Measured results](/reference/measured-results/) - every measured number with its scope
+- [Ethics, privacy and bias](/reference/ethics/) - legal basis, personal data, limits
+- [Onboarding a new dataset](/reference/onboarding/) - turning another open-data table into records

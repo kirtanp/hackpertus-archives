@@ -1,4 +1,7 @@
-# Ethics, privacy and bias assessment
+---
+title: "Ethics, privacy and bias assessment"
+description: "Legal basis, personal data, the onboarding privacy screen, the Apertus Charter, copyright, transparency and bias."
+---
 
 ## Data and legal basis
 - All three sources are Open Government Data published on opendata.swiss by the Swiss Federal Archives (BAR) and the
@@ -50,7 +53,7 @@ Rule in the code: model-generated person names are **only** added to a record if
 - `run_manifest.json` records stages, runtimes, output hashes and the model endpoint; `agent_traces.jsonl` records every model plan, tool call and validation.
 
 ## Bias
-- **Coverage bias:** the 1799 survey over-represents German-speaking, Reformed regions (language detected: ~77% de, ~23% fr, <1% it) and only schools that answered. Statistics derived from it describe respondents, not all of Switzerland.
+- **Coverage bias:** the 1799 survey over-represents German-speaking, Reformed regions (language detected: ~77% de, ~23% fr, &lt;1% it) and only schools that answered. Statistics derived from it describe respondents, not all of Switzerland.
 - **Model bias:** Apertus is multilingual but our sample shows it renames or normalises historical spellings and occasionally invents place/person names; English summaries flatten French/Italian nuance. We therefore treat model text as *descriptive enrichment*, never as the authoritative value.
 - **Historical language:** terms in 1799 sources reflect their time (confession, gender roles). We do not modernise or censor the source text; generated summaries are instructed to stay factual.
 - **Retrieval bias:** TF-IDF favours German (larger share); the router, character n-grams and Apertus query rewriting (keywords in German and French) mitigate this; consultation retrieval stays weaker (57% of paraphrased test questions find the right consultation among 6 sources).
