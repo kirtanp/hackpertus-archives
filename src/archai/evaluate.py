@@ -222,6 +222,8 @@ def main(with_runtime=False):
         rep["qa_confidence"] = json.load(open(OUT / "confidence_eval.json"))
     if (OUT / "qa_answer_check.json").exists():
         rep["qa_answer_check"] = json.load(open(OUT / "qa_answer_check.json"))
+    if (OUT / "data_eval.json").exists():  # written by archai.data_eval (needs Apertus)
+        rep["data_questions"] = {k: v for k, v in json.load(open(OUT / "data_eval.json")).items() if k != "questions"}
     if with_runtime:
         rep["runtime_seconds_8cpu"] = runtime()
     json.dump(rep, open(OUT / "metrics.json", "w"), indent=1, ensure_ascii=False, default=str)

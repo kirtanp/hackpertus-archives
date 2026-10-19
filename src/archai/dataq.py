@@ -42,7 +42,10 @@ COND = (">", ">=", "<", "<=", "=", "yes", "no")
 VALUE_TYPES = ("number", "money", "yes_no", "text")
 GROUPS = {"stapfer": ("place", "district", "school_type", "confession", "language", "teacher_gender", "value"),
           "consultation": ("year", "department", "type", "value")}
-_NONE = re.compile(r"\b(?:keine?|keins|kein|aucune?|point|nul(?:le)?|none)\b")
+_NONE = re.compile(r"\b(?:keine?|keins|kein|nichts|aucune?|point|nul(?:le)?|rien|none)\b")
+# a figure from the past, said in its own answer: "sonst von 100 bis 130", "Nahe bey 300 Kinder bis zur Revolution"
+_PAST = re.compile(r"\bsonst\b|vormals|ehemals|ehmals|ehedem|fruher|bis zur revolution|vor der revolution|"
+                   r"autrefois|anciennement|jadis|ci.devant|auparavant|avant la revolution")
 _DATA = {}
 
 
@@ -414,6 +417,19 @@ def _unit_in(unit, quote):
     return next((w for w in words if near and _norm(w) == near[0]), None) if len(nu) >= 4 else None
 
 
+def _sex_before(t, n):
+    """In a quote naming both sexes ("knaben 17. magdlein 60."), the sex of the word nearest before the number n. A
+    number after another number ("Mägdchen 85 175") is no longer that word's: it is the sheet's total ("all")."""
+    m = re.search(rf"(?<!\d){n}(?!\d)", t)
+    if not m:
+        return None
+    marks = [(x.end(), "boys") for x in _MALE_SEX.finditer(t[:m.start()])] + [(x.end(), "girls") for x in _FEMALE_SEX.finditer(t[:m.start()])]
+    if not marks:
+        return None
+    end, sex = max(marks)
+    return "all" if re.search(r"\d", t[end:m.start()]) else sex
+
+
 def _two_figures(quote, lo, hi):
     """Whether lo and hi are two figures of the quote with a sex word between them ("Kaben 90 Mägdchen 85")."""
     t = _ascii(re.sub(rf"(?:{NUMW_RUN})\s*\[=(\d+)\]", r"\1", annotate(plain(quote)), flags=re.I))
@@ -442,6 +458,11 @@ def verify_figure(p, kind, text, ctx=()):
         lo = int(p.get("min")); hi = int(p.get("max") if p.get("max") is not None else lo)
     except (TypeError, ValueError):
         return None, f"not a number in {quote!r}"
+    if quote and _norm(quote) not in _norm(text) and kind == "money":  # "200 kr." for "kr. 200.": the sheet's order
+        sw = re.fullmatch(r"(\d+)\s+([^\W\d_]+)", _norm(quote)) or re.fullmatch(r"([^\W\d_]+)\s+(\d+)", _norm(quote))
+        if sw and re.search(rf"(?<!\w){sw.group(2)} {sw.group(1)}(?!\w)", _norm(text)):
+            m_ = re.search(rf"{re.escape(sw.group(2))}\W+{sw.group(1)}\b\.?", text, re.I)
+            quote = m_.group(0) if m_ else quote
     if not quote or _norm(quote) not in _norm(text):
         return None, f"the quote {quote!r} is not in the sheet"
     have = {int(n) for n in _nums(quote) if n.isdigit()} | {int(n) for n in word_numbers(quote)}
@@ -465,13 +486,17 @@ def verify_figure(p, kind, text, ctx=()):
     m_, f_ = bool(_MALE_SEX.search(qa_)), bool(_FEMALE_SEX.search(qa_))
     if sex == "boys" and f_ and not m_ or sex == "girls" and m_ and not f_:
         return None, f"labelled {sex}, but the quote {quote!r} names the other sex"
+    if m_ and f_ and sex in ("boys", "girls", "all"):  # both named: the sex word nearest before the number is its sex
+        sex = _sex_before(qa_, lo) or sex
     if m_ != f_ and have - {0} <= {lo, hi} and sex in (None, "all", "boys", "girls"):
         # the quote names one sex only and holds only this figure: that is its sex ("Kaben 90 Mägdchen 85" holds two)
         sex = "boys" if m_ else "girls"
     season = p.get("season") if p.get("season") in ("winter", "summer") else None
     asked = p.get("asked") is not False
+    current = p.get("current") is not False
     where = _where(quote, ctx)
-    if where:
+    if where:  # past or present, from the figure's own answer, never from another sub-answer of the sheet
+        current = not any(_PAST.search(w[2] + " " + _norm(quote) + " " + w[3]) for w in where)
         qs = " ".join(w[1] for w in where)
         season = "winter" if _WINTER.search(qs) else "summer" if _SUMMER.search(qs) else season
         if any(_OTHER_GROUP.search(w[2] + " " + qa_) for w in where):
@@ -484,7 +509,7 @@ def verify_figure(p, kind, text, ctx=()):
         period = next((x for w in where if (x := _period(quote, w[2], lo))), None) or (p.get("period") if p.get("period") in (*_PERIOD, "once") else None)
         if any(_ASSISTANT.search(w[2][-40:] + " " + qa_) for w in where):  # "für einen Gehülfen kr. 50": not the teacher's own pay
             asked = False
-    return {"label": str(p.get("label") or "")[:40], "sex": sex, "season": season, "current": p.get("current") is not False,
+    return {"label": str(p.get("label") or "")[:40], "sex": sex, "season": season, "current": current,
             "asked": asked, "lo": lo, "hi": hi, "more": more, "unit": unit, "quote": quote, "period": period,
             "part": p.get("part") is True, "question": [w[0] for w in where]}, None
 
@@ -511,6 +536,7 @@ def resolve(figs, sex, single, complete=True):
         k = (f["sex"], f["lo"], f["hi"], f["more"], unit_key(f["unit"]), f.get("period"))
         if k not in seen:
             seen.add(k); uniq.append(f)
+    uniq += _other_sex(uniq)
     boys, girls = [f for f in uniq if f["sex"] == "boys"], [f for f in uniq if f["sex"] == "girls"]
     rest = [f for f in uniq if f["sex"] not in ("boys", "girls")]
     zero = {"label": "", "sex": None, "season": None, "current": True, "asked": True, "lo": 0, "hi": 0, "more": False, "unit": None,
@@ -530,6 +556,22 @@ def resolve(figs, sex, single, complete=True):
     else:
         chosen, ok = [], False
     return {"parts": chosen, "complete": bool(ok) and complete and bool(chosen)} if chosen else None, out
+
+
+def _other_sex(figs):
+    """A verified quote naming both sexes with one figure each ("Knaben 17. Mägdlein 60.") also settles the figure of
+    the sex Apertus did not return: code takes it from the same quote. Quotes with a range are left to the reader."""
+    have, out = {f["sex"] for f in figs}, []
+    for f in figs:
+        q = _ascii(plain(f["quote"] or ""))
+        if f["sex"] not in ("boys", "girls") or _RANGE.search(_norm(q)):
+            continue
+        for n in {int(x) for x in re.findall(r"\d+", q)} - {f["lo"], f["hi"]}:
+            s = _sex_before(q, n)
+            if s in ("boys", "girls") and s not in have:
+                have.add(s)
+                out.append(f | {"sex": s, "lo": n, "hi": n, "more": False, "label": f"{s} (same quote)"})
+    return out
 
 
 def _passages(idx, rid, sections):
@@ -1041,6 +1083,9 @@ def answer(idx, q, r, use_llm=True):
         readings = read(idx, plan, recs)
         if readings is None:
             return note("Apertus returned no usable reading")
+        if not any(totals(value_of(u, plan, readings)) or "yes" in (value_of(u, plan, readings) or {}) or
+                   "text" in (value_of(u, plan, readings) or {}) for u in units):
+            return note("no record has a usable value")  # the passage answer shows what the sheets do say
     text, A = render(q, plan, units, today, readings, idx)
     fails = check_numbers(text, A.sources, q, extra=A.extra)
     summary = phrase(q, text, A.sources, A.extra) if use_llm and not fails else None

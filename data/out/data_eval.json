@@ -3,8 +3,8 @@
  "caveat": "a small hand-made set around the cases the engine was built on; a pass needs the exact gold result",
  "model": "apertus-v1-5-70b",
  "runs": 48,
- "runs_passed": 43,
- "questions_passed_every_run": 14,
+ "runs_passed": 46,
+ "questions_passed_every_run": 15,
  "by_category": {
   "schools": {
    "runs": 6,
@@ -28,7 +28,7 @@
   },
   "pay": {
    "runs": 3,
-   "passed": 0
+   "passed": 3
   },
   "lookup": {
    "runs": 9,
@@ -111,9 +111,9 @@
    "passed": 3,
    "runs": 3,
    "details": [
-    "result [686, 726] more=True",
-    "result [686, 726] more=True",
-    "result [686, 726] more=True"
+    "result [782, 836] more=True",
+    "result [782, 836] more=True",
+    "result [782, 836] more=True"
    ]
   },
   "Wie viele Mädchen gingen 1799 in Bern zur Schule?": {
@@ -131,9 +131,9 @@
    "passed": 1,
    "runs": 3,
    "details": [
+    "result [268, 298] more=True",
     "result [353, 383] more=True",
-    "result [283, 303] more=False",
-    "result [283, 303] more=False"
+    "result [268, 298] more=True"
    ]
   },
   "Wie viele Knaben gingen 1799 in Bern zur Schule?": {
@@ -158,12 +158,12 @@
   },
   "What was the teacher's pay in the schools of Bern?": {
    "category": "pay",
-   "passed": 0,
+   "passed": 3,
    "runs": 3,
    "details": [
-    "missing ['Mittleres Stadtquartier'] assistants added []",
-    "missing ['Mittleres Stadtquartier'] assistants added []",
-    "missing ['Mittleres Stadtquartier', 'Stalden', 'Bollwerk', 'Mattenquartier (Knabenschule)'] assistants added []"
+    "missing [] assistants added []",
+    "missing [] assistants added []",
+    "missing [] assistants added []"
    ]
   },
   "Wie alt war der Lehrer in Hörndli?": {
@@ -197,5 +197,5 @@
    ]
   }
  },
- "seconds_median": 6.4
+ "seconds_median": 7.8
 }

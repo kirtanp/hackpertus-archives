@@ -22,7 +22,7 @@ docker:           ## build and run the container (same as docker compose up)
 	docker compose up --build
 
 eval:             ## retrieval + answer evaluation (needs APERTUS_API_KEY); interop last: croissant.json hashes metrics.json
-	set -a; [ -f .env ] && . ./.env; set +a; $(BIN)/python -m archai.qa_eval && $(BIN)/python -m archai.qa_eval --confidence && $(BIN)/python -m archai.evaluate > /dev/null && $(BIN)/python -m archai.interop
+	set -a; [ -f .env ] && . ./.env; set +a; $(BIN)/python -m archai.qa_eval && $(BIN)/python -m archai.qa_eval --confidence && $(BIN)/python -m archai.data_eval && $(BIN)/python -m archai.evaluate > /dev/null && $(BIN)/python -m archai.interop
 
 check:            ## lint + all tests incl. JSON Schema / Croissant / JSON-LD validation
 	$(BIN)/pip install -q -r requirements-dev.txt && $(BIN)/ruff check . && $(BIN)/python -m pytest -q tests
