@@ -26,8 +26,6 @@ fontScale: 1
 
 <div class="deck-center deck-question">
 
-<div class="deck-eyebrow">Challenge</div>
-
 <h2 class="deck-question__text">How can we make archives easily searchable?</h2>
 
 </div>
