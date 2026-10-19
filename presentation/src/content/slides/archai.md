@@ -24,9 +24,13 @@ fontScale: 1
 
 ---
 
-<h2 class="deck-heading">Challenge</h2>
+<div class="deck-center deck-question">
 
-<p class="deck-lead">How can we make archives easily searchable?</p>
+<div class="deck-eyebrow">Challenge</div>
+
+<h2 class="deck-question__text">How can we make archives easily searchable?</h2>
+
+</div>
 
 Note:
 Introduce — spoken budget ~1:30 (the sketch writes "1:30 mins"; it may mean 30 minutes — the captain can correct this

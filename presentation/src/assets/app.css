@@ -108,6 +108,23 @@ body {
   margin: auto 0;
 }
 
+/* The challenge slide: one question, centred both ways and set large in the
+   display face, with its section name as the eyebrow above it. */
+.reveal .slides section > .deck-question {
+  margin: auto;
+  text-align: center;
+}
+
+.reveal .deck-question__text {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 3em;
+  line-height: 1.04;
+  max-width: 12em;
+  margin: 0 auto;
+  text-wrap: balance;
+}
+
 /* ---- deck content ------------------------------------------------------ */
 
 .reveal .deck-eyebrow {
