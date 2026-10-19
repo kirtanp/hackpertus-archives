@@ -1,3 +1,9 @@
+/* Declared first so it is the first cascade layer: for `!important`
+   declarations the layer order is reversed, and this is what lets the deck's
+   print rule below win over Tailwind's preflight `[hidden] { display: none
+   !important }`, which lives in the `base` layer. */
+@layer deck-print;
+
 /* Latin subsets only: the deck is English, German and French, and the
    single-file build inlines every font file as a data URI. */
 @import "@fontsource/instrument-serif/latin-400.css";
@@ -51,6 +57,10 @@
   --r-selection-background-color: #12100c;
   --r-selection-color: #ffffff;
   --deck-font-scale: 1;
+
+  /* the slide's own box: the top padding clears the header mark. Reveal's
+     ?print-pdf layout zeroes it, so the print layer restores this variable. */
+  --deck-slide-padding: 3.4rem 2.4rem 2.2rem;
 }
 
 html,
@@ -71,7 +81,7 @@ body {
   height: 100%;
   box-sizing: border-box;
   /* top padding clears the slide header mark on every slide */
-  padding: 3.4rem 2.4rem 2.2rem;
+  padding: var(--deck-slide-padding);
   text-align: left;
 }
 
@@ -195,59 +205,45 @@ body {
   border-bottom: none;
 }
 
-/* ---- the introduction slide: statement + evidence --------------------- */
+/* ---- the product slide: the demo link --------------------------------- */
 
+/* Two short lines: the labelled link and the local address of the running
+   app. The link keeps the deck's accent cut for text, which reads as a link on
+   white and stays above 4.5:1. */
+.reveal .deck-demo {
+  font-size: 0.66em;
+  line-height: 1.4;
+  margin: 0 0 0.6em;
+}
 
-/* Two regions: the slide's own text with the search overview beneath it on the
-   left, the transcription detail on the right. The text never shrinks; the
-   images take the room that is left. */
-.reveal .slides section > .deck-split {
+.reveal .deck-demo a {
+  color: var(--color-brand);
+  text-decoration: underline;
+  text-underline-offset: 0.16em;
+}
+
+.reveal .deck-demo--address {
+  font-family: var(--font-mono);
+  font-size: 0.54em;
+  color: var(--color-dim);
+  margin: 0;
+}
+
+/* ---- picture slides: the source material, nothing else ----------------- */
+
+/* A slide whose only content is an image (or an image under its title): the
+   image takes the whole box that is left, at its own aspect ratio, framed so
+   its own light background does not float on the white slide. */
+.reveal .slides section > .deck-shot-full {
   flex: 1 1 auto;
   min-height: 0;
-  display: grid;
-  grid-template-columns: minmax(0, 1.9fr) minmax(0, 1fr);
-  gap: 1.2rem;
-}
-
-.reveal .deck-split > * {
+  margin-top: 0.5em;
   display: flex;
-  flex-direction: column;
-  min-width: 0;
-  min-height: 0;
-}
-
-/* the slide after it: the same split, but the text needs a little more room */
-.reveal .slides section > .deck-split--text {
-  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
-}
-
-/* the slide's own text keeps its natural height and is never squeezed */
-.reveal .deck-split__main > *:not(.deck-shot-frame) {
-  flex-shrink: 0;
-}
-
-/* the search overview sits in whatever height is left under the text; the
-   frame carries the hairline, so the image never has to be distorted to fill
-   a wider box than its own ratio allows */
-.reveal .deck-split__main > .deck-shot-frame {
-  flex: 1 1 0;
-  min-height: 0;
-  margin-top: 0.9em;
-  display: flex;
-  align-items: flex-start;
-}
-
-.reveal .deck-split__aside {
-  justify-content: center;
   align-items: center;
+  justify-content: center;
 }
 
-.reveal .deck-shot-frame {
-  display: flex;
-  align-items: flex-start;
-}
-
-.reveal .deck-shot-frame > img,
+.reveal .deck-shot-full > img,
 .reveal .deck-shot {
   border: 1px solid var(--color-line);
   border-radius: 2px;
@@ -258,6 +254,30 @@ body {
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
+}
+
+@layer deck-print {
+  /* Reveal's `?print-pdf` export (one PDF page per slide) needs two things the
+     deck's own stylesheet decides, and both are print-only: `html.print-pdf` is
+     set by reveal for that export and never on screen.
+     1. Tailwind's preflight turns the `hidden` attribute reveal puts on every
+        print slide into `display: none !important` (in the `base` layer, whose
+        `!important` beats unlayered `!important` — hence this layer); so give
+        each slide the deck's own layout again.
+     2. The slides keep the screen layout's inline `top` offset, which puts a
+        tall slide outside its page box (the page clips its overflow); pin every
+        slide to its page origin. */
+  html.print-pdf .reveal .slides section {
+    display: flex !important;
+    flex-direction: column !important;
+    top: 0 !important;
+    left: 0 !important;
+    padding: var(--deck-slide-padding) !important;
+  }
+
+  html.print-pdf .reveal .slides section > * {
+    flex-shrink: 0;
+  }
 }
 
 /* ---- chrome ----------------------------------------------------------- */

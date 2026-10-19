@@ -1,6 +1,6 @@
 # ArchAI presentation
 
-A static slide deck about ArchAI: **eight slides**, Astro (static output) + reveal.js + Tailwind v4, no server, no data
+A static slide deck about ArchAI: **seven slides**, Astro (static output) + reveal.js + Tailwind v4, no server, no data
 fetched at view time, no analytics.
 
 Build pattern: the deck is an Astro content collection entry (`src/content/slides/archai.md`), one `SlideLayout.astro`
@@ -24,18 +24,40 @@ With [`just`](https://just.systems/): `just build`, `just html` (single files), 
   timings and the speaker notes are reveal presenter notes, not slide furniture.
 - The deck is self-contained: `single/archai.html` works offline from a file path.
 
+## PDF
+
+`presentation/archai-deck.pdf` is the deck as a PDF: one page per slide, in deck order, seven pages at the deck's 16:9
+aspect (750 KB). It is printed from the built deck rather than assembled from screenshots, so the text stays selectable
+and the pictures stay real. To regenerate it:
+
+```bash
+bun run build                                   # ./dist - the deck, not the single file
+python3 -m http.server 8600 --directory dist    # file:// blocks the deck's module script
+# print http://127.0.0.1:8600/slides/archai/?print-pdf with the local Chrome over CDP
+#   Page.printToPDF, paper = the .pdf-page box (px / 96), printBackground, margins 0, scale 1
+```
+
+Reveal's `?print-pdf` export needs two overrides in `src/assets/app.css`, both in the `deck-print` layer and both scoped
+to `html.print-pdf`, so the deck on screen is untouched. They cost real time to find, which is why they are here:
+
+- Tailwind's preflight hides every print slide with `[hidden] { display: none !important }`; because an `!important` in
+a cascade layer beats an unlayered one, the deck's own `!important` rule has to sit in a layer declared **before**
+Tailwind's (hence `@layer deck-print;` at the top of the file).
+- Reveal's print layout zeroes the slide padding and keeps the screen layout's `top` offset on each slide, which pushes a
+tall slide outside its `.pdf-page` box, where the page's `overflow: hidden` clips it — a picture-only slide then prints
+as a blank page. The layer restores the padding (from `--deck-slide-padding`) and pins every slide to its page origin.
+
 ## Slides
 
 | # | Section | Slide |
 |---|---|---|
 | 1 | — | Title |
 | 2 | Introduce | Challenge: the question the introduction answers |
-| 3 | Introduce | The problem, and what the product solves |
-| 4 | Introduce | The goal: archives that are easily digestible |
-| 5 | Product | Our product (title only) |
-| 6 | Business | Provenance |
-| 7 | Business | Pipelining, onboarding more datasets, a new customer base |
-| 8 | Business | Cost: a comparison of the three artifacts, and tokens and calls |
+| 3 | Introduce | The archive's own search for “Bern” — picture only |
+| 4 | Introduce | One source entry in detail — picture only |
+| 5 | Introduce | The goal: archives that are easily digestible — title and the handwritten original |
+| 6 | Product | Our product — the “Product demo” link and the local address |
+| 7 | Business | Cost: a comparison of the three artifacts, and tokens and calls |
 
 The outline is the content plan; slides stay at that density. Timings (`Introduce`, `Product`, `Business`) are presenter
 notes on the slide that opens the section.
@@ -58,7 +80,7 @@ content slides, and the slide padding (`3.4rem` top) keeps every title clear of 
 
 ## The illustration images
 
-The two introduction slides carry three images from the captain, all in `public/` (files referenced from inside a
+The introduction slides carry three images from the captain, all in `public/` (files referenced from inside a
 slide body live there, because the body is injected into the reveal textarea as a string and is never processed by
 Astro — imported assets only work in the layout):
 
@@ -82,7 +104,7 @@ each slide names the file: `README.md`, `data/out/metrics.json`, `qa_answer_chec
 ## Layout
 
 ```
-src/content/slides/archai.md   the deck: eight slides separated by ---, presenter notes after "Note:"
+src/content/slides/archai.md   the deck: seven slides separated by ---, presenter notes after "Note:"
 src/layouts/SlideLayout.astro  reveal.js wiring (markdown + notes plugin, palette, deck chrome)
 src/assets/app.css             ArchAI palette, typography, slide content classes
 src/pages/index.astro          small catalog page linking the deck
