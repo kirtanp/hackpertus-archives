@@ -1,5 +1,9 @@
 ---
 import "../assets/app.css";
+// The ArchAI mark: cropped from the captain's logo.webp and normalised so its
+// (opaque, cream) background is pure white and the mark sits on the white slide
+// without a panel. See presentation/README.md.
+import mark from "../assets/archai-mark.png";
 
 interface Props {
   title: string;
@@ -39,6 +43,7 @@ const deckBody = body;
     <link rel="stylesheet" href={`/reveal/dist/theme/${theme}.css`} />
   </head>
   <body style={`--deck-font-scale: ${fontScale};`}>
+    <img class="slide-mark" src={mark.src} width={Math.round((36 * mark.width) / mark.height)} height={36} alt="ArchAI" />
     <div class="reveal">
       <div class="slides">
         <section data-markdown data-separator="^---$">

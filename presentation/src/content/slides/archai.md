@@ -18,8 +18,7 @@ fontScale: 1
 
 <h1 class="deck-heading">ArchAI</h1>
 
-<p class="deck-lead">Deciphering Swiss archives with Apertus: three open Swiss archive datasets become one AI-ready,
-provenance-preserving dataset, served as a cited Q&amp;A demo.</p>
+<p class="deck-lead">Deciphering Swiss Archives with Apertus: Making Swiss archives answerable using Apertus model family</p>
 
 </div>
 
@@ -27,7 +26,7 @@ provenance-preserving dataset, served as a cited Q&amp;A demo.</p>
 
 <h2 class="deck-heading">Challenge</h2>
 
-<p class="deck-lead">How can we make archives more easily digestible?</p>
+<p class="deck-lead">How can we make archives easily searchable?</p>
 
 Note:
 Introduce — spoken budget ~1:30 (the sketch writes "1:30 mins"; it may mean 30 minutes — the captain can correct this
@@ -35,6 +34,9 @@ one line). This slide asks the question; the two after it carry the detail — f
 the product solves, then the goal and how it is organised.
 
 ---
+
+<div class="deck-split">
+  <div class="deck-split__main">
 
 <div class="deck-eyebrow">Introduce · The problem and the material</div>
 
@@ -47,9 +49,20 @@ the product solves, then the goal and how it is organised.
   <li>What the product solves: ask in plain language, and get the archive page the answer came from.</li>
 </ul>
 
+<div class="deck-shot-frame"><img class="deck-shot" src="/archive-search-bern.png" alt="A German archive search for Bern: a result table of school places and municipalities listing nine transcriptions with links to each fragment." /></div>
+
+  </div>
+  <div class="deck-split__aside">
+    <img class="deck-shot" src="/stapfer-questionnaire-answers.png" alt="A detail of one 1799 transcription: German questionnaire rows III.11.e to IV.14 with the teacher's answers beside them, the answer about 82 schoolchildren highlighted." />
+  </div>
+</div>
+
 <p class="deck-source">data/out/metrics.json → stapfer, linking, export · README.md</p>
 
 ---
+
+<div class="deck-split deck-split--text">
+  <div class="deck-split__main">
 
 <div class="deck-eyebrow">Introduce · The goal and how it is organised</div>
 
@@ -63,24 +76,17 @@ the product solves, then the goal and how it is organised.
 
 <p class="deck-cite">BAR B0 1000/1483, Nr. 1421, fol. 228-229v, S. 2, Frage III.12</p>
 
+  </div>
+  <div class="deck-split__aside">
+    <img class="deck-shot" src="/stapfer-original-scan.png" alt="A scan of the handwritten 1798 original in Kurrent script: the archival page this entry was transcribed from, showing the answer about 82 schoolchildren." />
+  </div>
+</div>
+
 <p class="deck-source">docs/reference/api.mdx (citation format) · data/out/qa_answer_check.json (number check) · README.md</p>
 
 ---
 
-<div class="deck-eyebrow">Product</div>
-
-<h2 class="deck-heading">The product</h2>
-
-<p class="deck-lead">The working thing itself.</p>
-
-<ul class="deck-list">
-  <li>Cited Q&amp;A in German, French and English: answer, citations, and a calibrated confidence. 92.4 % of the 380 eval questions put the right sheet first.</li>
-  <li>A map of 2,249 geocoded schools on today's swisstopo map, with a slider to the 1850s Dufour map.</li>
-  <li>“Guess the school”: read a teacher's own 1799 answers with the place names masked, then find the village.</li>
-  <li>Measured results: every figure from metrics.json in plain words, each with the scope it was measured on.</li>
-</ul>
-
-<p class="deck-source">README.md · data/out/qa_eval.json (92.4 % of 380 questions, dynamic rewriting) · 2,249 geocoded places in data/out/metrics.json</p>
+<h2 class="deck-heading">Our product</h2>
 
 Note:
 Product — spoken budget 3 min. This is the demo moment: open the app, ask one question, then show the map and
