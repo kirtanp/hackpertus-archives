@@ -1,6 +1,6 @@
 ---
 title: "ArchAI"
-description: "Seven slides: the challenge, the search and the source it leads to, the goal, the product with its demo link, and the cost in tokens."
+description: "Eight slides: the challenge, the search and the source it leads to, the goal, the product with its demo link, the cost in tokens, and the link to the live website."
 pubDate: 2026-10-19
 order: 1
 minutes: 7
@@ -107,3 +107,20 @@ Note:
 Business — spoken budget 2 min, all of it on this slide: the comparison of the three artifacts and the measured
 tokens. The earlier provenance and future-plans slides were removed at the captain's request; their figures are in
 data/out/metrics.json if a question comes up.
+
+---
+
+<div class="deck-center">
+
+<div class="deck-eyebrow">Try it</div>
+
+<h2 class="deck-heading">ArchAI, live</h2>
+
+<p class="deck-demo"><a href="http://100.120.107.76:8791/site/" target="_blank" rel="noopener noreferrer">Open the ArchAI website</a></p>
+
+<p class="deck-demo deck-demo--address">http://100.120.107.76:8791/site/</p>
+
+</div>
+
+Note:
+Close on the live site: click the link to open it in a new tab (reachable over the team's Tailscale network).

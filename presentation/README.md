@@ -1,6 +1,6 @@
 # ArchAI presentation
 
-A static slide deck about ArchAI: **seven slides**, Astro (static output) + reveal.js + Tailwind v4, no server, no data
+A static slide deck about ArchAI: **eight slides**, Astro (static output) + reveal.js + Tailwind v4, no server, no data
 fetched at view time, no analytics.
 
 Build pattern: the deck is an Astro content collection entry (`src/content/slides/archai.md`), one `SlideLayout.astro`
@@ -26,7 +26,7 @@ With [`just`](https://just.systems/): `just build`, `just html` (single files), 
 
 ## PDF
 
-`presentation/archai-deck.pdf` is the deck as a PDF: one page per slide, in deck order, seven pages at the deck's 16:9
+`presentation/archai-deck.pdf` is the deck as a PDF: one page per slide, in deck order, eight pages at the deck's 16:9
 aspect (750 KB). It is printed from the built deck rather than assembled from screenshots, so the text stays selectable
 and the pictures stay real. To regenerate it:
 
@@ -58,6 +58,7 @@ as a blank page. The layer restores the padding (from `--deck-slide-padding`) an
 | 5 | Introduce | The goal: archives that are easily digestible — title and the handwritten original |
 | 6 | Product | Our product — the “Product demo” link and the local address |
 | 7 | Business | Cost: a comparison of the three artifacts, and tokens and calls |
+| 8 | Try it | The live website: a link that opens `http://100.120.107.76:8791/site/` in a new tab (team Tailscale network) |
 
 The outline is the content plan; slides stay at that density. Timings (`Introduce`, `Product`, `Business`) are presenter
 notes on the slide that opens the section.
@@ -104,7 +105,7 @@ each slide names the file: `README.md`, `data/out/metrics.json`, `qa_answer_chec
 ## Layout
 
 ```
-src/content/slides/archai.md   the deck: seven slides separated by ---, presenter notes after "Note:"
+src/content/slides/archai.md   the deck: eight slides separated by ---, presenter notes after "Note:"
 src/layouts/SlideLayout.astro  reveal.js wiring (markdown + notes plugin, palette, deck chrome)
 src/assets/app.css             ArchAI palette, typography, slide content classes
 src/pages/index.astro          small catalog page linking the deck
