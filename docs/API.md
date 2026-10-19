@@ -88,7 +88,8 @@ none of the numbers is an overall accuracy.
 The six-tab site in `static/site/` (served at `/site`; `/` stays the demo page) loads its examples from this endpoint
 (`src/archai/site.py`), built once after the index: `pipeline` (the run manifest), `morph` (one real answer, raw edition
 markup to clean text), `agent` (one Apertus agent-v4 trace: plan, tool calls, composed metadata, grounding check),
-`dec`, `route`, `cal`, `geo`, `hal`, `rush` (game rounds from real answers, traces, `qa.route` and `qa.check_numbers`)
+`dec`, `route`, `cal`, `geo`, `hal`, `rush` (game rounds from real answers, traces, `qa.route` and `qa.check_numbers`),
+`onboard` (the recorded `archai.onboard` run in `data/onboard/` that the Impact tab replays)
 and `sim` (the simulator's example questions through the `/api/ask` path; `null` until they have run in the
 background). Its simulator posts free questions to `/api/ask`, and its evidence tab reads `/api/metrics`. The built-in
 examples in the page are only a fallback for when the server cannot be reached.
