@@ -10,20 +10,68 @@ validator has the final word on everything it produces.
 | Federal Consultations 1960–1991 | [opendata.swiss](https://opendata.swiss/de/dataset/federal-consultations-1960-1991) | 569 consultations, 858 archive references |
 | Archive Database (OLR) | [opendata.swiss](https://opendata.swiss/de/dataset/swiss-archives-archive-database-of-the-swiss-federal-archives) | 4.5 M archive units + hierarchy, streamed from the 3.6 GB dump |
 
-## Quick start
-Everything the demo needs ships in `data/out/` (no raw dumps, no API key required).
-Needs [`uv`](https://docs.astral.sh/uv/) and [`just`](https://just.systems/); the recipes are in `Justfile`.
-```bash
-git clone <this repo> && cd <repo>
-just setup            # Python 3.12 venv + locked dependencies (uv, pyproject.toml + uv.lock)
-just run              # http://127.0.0.1:8791
-just test             # unit tests, no network
-```
-or with Docker: `docker compose up --build` → http://localhost:8791.
+## Run it on your computer
 
-**Apertus (optional).** `cp .env.example .env` and set `APERTUS_API_KEY` (any OpenAI-compatible Apertus endpoint works;
-default gateway `https://gateway.keera.ch/api/v1`, model `apertus-v1-5-70b`). Without a key the demo answers
-extractively: the cited passages, no generated text. Never commit `.env`.
+Everything the demo needs is in this repository: no database, no downloads of raw data, no API key.
+You need **git** and one of: **uv** (easiest) or **Docker**.
+
+### Option A: uv (no Docker)
+**1. Install uv, once** (a small tool that installs Python and everything else for you):
+```bash
+# macOS / Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
+# Windows (PowerShell)
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+Then open a **new** terminal so the `uv` command is found.
+
+**2. Download and start ArchAI:**
+```bash
+git clone https://github.com/kirtanp/hackpertus-archives.git
+cd hackpertus-archives
+uv run app.py
+```
+**3. Open http://127.0.0.1:8791** in your browser. The presentation site is at **http://127.0.0.1:8791/site**.
+
+The first start takes about a minute: uv downloads Python 3.12 and the libraries. After that, the app builds its
+search index in about 20 seconds; until then, questions answer "Index is still loading". Stop it with **Ctrl+C**,
+start it again with `uv run app.py`.
+
+### Option B: Docker
+Install [Docker Desktop](https://www.docker.com/products/docker-desktop/) and start it, then:
+```bash
+git clone https://github.com/kirtanp/hackpertus-archives.git
+cd hackpertus-archives
+docker compose up --build
+```
+Open **http://localhost:8791** (and **/site**). Stop with **Ctrl+C**.
+
+### Optional: answers written by Apertus
+Without a key, ArchAI answers with the cited passages themselves. For generated, cited answers from the Swiss
+open model Apertus, copy the example settings and paste your key after `APERTUS_API_KEY=`:
+```bash
+cp .env.example .env      # Windows: copy .env.example .env
+```
+Then restart (`uv run app.py` or `docker compose up`). The start-up message says `Apertus: on`. Any
+OpenAI-compatible Apertus endpoint works (default gateway `https://gateway.keera.ch/api/v1`, model
+`apertus-v1-5-70b`). `.env` is ignored by git: never commit your key.
+
+### If something goes wrong
+| Problem | Fix |
+|---|---|
+| `uv: command not found` | Open a new terminal after installing uv. |
+| Port 8791 is already in use | `PORT=9000 uv run app.py` (Windows PowerShell: `$env:PORT=9000; uv run app.py`), then open :9000. |
+| "Index is still loading" | Wait about 20 seconds after the start and ask again. |
+| The page looks unstyled | It loads fonts and React from public CDNs: you need an internet connection. |
+
+### For developers
+With [`just`](https://just.systems/) installed (`brew install just`, `cargo install just` or `winget install Casey.Just`):
+```bash
+just setup            # .venv with every dependency group (Python 3.12, from uv.lock)
+just run              # the demo, reading .env
+just test             # unit tests, no network
+just check            # ruff + tests, what CI runs
+```
 
 **What the demo does**
 - Cited Q&A in German, French and English: Apertus rewrites the question → validated route → hybrid search → Apertus

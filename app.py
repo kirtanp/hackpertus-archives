@@ -2,11 +2,17 @@
 
 The qa.Index is built once, in a background thread at startup (1-2 min), so the page is reachable while it warms up."""
 import json, os, random, re, sys, threading, time
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 os.chdir(ROOT)  # qa.py reads data/out relative to the working directory
 sys.path.insert(0, str(ROOT / "src"))
+if __name__ == "__main__" and (ROOT / ".env").exists():  # `uv run app.py` reads .env, as `just run` and docker compose do
+    for line in (ROOT / ".env").read_text(encoding="utf-8").splitlines():
+        k, sep, v = line.partition("=")
+        if sep and k.strip() and not k.lstrip().startswith("#"):
+            os.environ.setdefault(k.strip(), v.strip())
 
 from fastapi import FastAPI, HTTPException
 from fastapi.concurrency import run_in_threadpool
@@ -48,12 +54,13 @@ def _load():
     print(f"[archai] index ready in {state['seconds']}s, {len(RECORDS)} records, error={state['error']}", flush=True)
 
 
-app = FastAPI(title="ArchAI – Deciphering Swiss archives with Apertus")
+@asynccontextmanager
+async def lifespan(_app):
+    threading.Thread(target=_load, daemon=True).start()  # the page is reachable while the index warms up
+    yield
 
 
-@app.on_event("startup")
-def startup():
-    threading.Thread(target=_load, daemon=True).start()
+app = FastAPI(title="ArchAI – Deciphering Swiss archives with Apertus", lifespan=lifespan)
 
 
 class Ask(BaseModel):
@@ -183,3 +190,11 @@ def index():
 
 # the ArchAI presentation site (5 tabs); its Q&A simulator calls /api/ask and its evidence tab /api/metrics
 app.mount("/site", StaticFiles(directory=ROOT / "static" / "site", html=True), name="site")
+
+
+if __name__ == "__main__":  # uv run app.py  ->  http://127.0.0.1:8791 (PORT=9000 uv run app.py for another port)
+    import uvicorn
+    port = int(os.environ.get("PORT", "8791"))
+    print(f"\n  ArchAI demo:        http://127.0.0.1:{port}\n  Presentation site:  http://127.0.0.1:{port}/site\n"
+          f"  Apertus: {'on' if llm.KEY not in ('', 'none') else 'off (no key in .env: cited passages only)'}\n", flush=True)
+    uvicorn.run(app, host=os.environ.get("HOST", "127.0.0.1"), port=port)
