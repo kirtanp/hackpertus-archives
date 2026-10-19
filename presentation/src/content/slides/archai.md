@@ -18,8 +18,7 @@ fontScale: 1
 
 <h1 class="deck-heading">ArchAI</h1>
 
-<p class="deck-lead">Deciphering Swiss archives with Apertus: three open Swiss archive datasets become one AI-ready,
-provenance-preserving dataset, served as a cited Q&amp;A demo.</p>
+<p class="deck-lead">Deciphering Swiss Archives with Apertus: Making Swiss archives answerable using Apertus model family</p>
 
 </div>
 
@@ -67,20 +66,7 @@ the product solves, then the goal and how it is organised.
 
 ---
 
-<div class="deck-eyebrow">Product</div>
-
-<h2 class="deck-heading">The product</h2>
-
-<p class="deck-lead">The working thing itself.</p>
-
-<ul class="deck-list">
-  <li>Cited Q&amp;A in German, French and English: answer, citations, and a calibrated confidence. 92.4 % of the 380 eval questions put the right sheet first.</li>
-  <li>A map of 2,249 geocoded schools on today's swisstopo map, with a slider to the 1850s Dufour map.</li>
-  <li>“Guess the school”: read a teacher's own 1799 answers with the place names masked, then find the village.</li>
-  <li>Measured results: every figure from metrics.json in plain words, each with the scope it was measured on.</li>
-</ul>
-
-<p class="deck-source">README.md · data/out/qa_eval.json (92.4 % of 380 questions, dynamic rewriting) · 2,249 geocoded places in data/out/metrics.json</p>
+<h2 class="deck-heading">Our product</h2>
 
 Note:
 Product — spoken budget 3 min. This is the demo moment: open the app, ask one question, then show the map and

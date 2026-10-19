@@ -32,7 +32,7 @@ With [`just`](https://just.systems/): `just build`, `just html` (single files), 
 | 2 | Introduce | Challenge: the question the introduction answers |
 | 3 | Introduce | The problem, and what the product solves |
 | 4 | Introduce | The goal: archives that are easily digestible |
-| 5 | Product | The product: the working thing itself |
+| 5 | Product | Our product (title only) |
 | 6 | Business | Provenance |
 | 7 | Business | Pipelining, onboarding more datasets, a new customer base |
 | 8 | Business | Cost: a comparison of the three artifacts, and tokens and calls |
@@ -59,7 +59,7 @@ content slides, and the slide padding (`3.4rem` top) keeps every title clear of 
 ## Figures
 
 Every number on a slide comes from this repository and keeps its stated scope; the small source line at the bottom of
-each slide names the file: `README.md`, `data/out/metrics.json`, `qa_eval.json`, `qa_answer_check.json`,
+each slide names the file: `README.md`, `data/out/metrics.json`, `qa_answer_check.json`,
 `apertus_enrichment.apertus-v1-5-70b.jsonl`, and the documentation site under `docs/`.
 
 ## Layout
