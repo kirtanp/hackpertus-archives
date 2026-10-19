@@ -1,6 +1,6 @@
 ---
 title: "ArchAI"
-description: "Nine slides: the challenge, the search and the source it leads to, the goal, the product, provenance, future plans and the cost in tokens."
+description: "Seven slides: the challenge, the search and the source it leads to, the goal, the product with its demo link, and the cost in tokens."
 pubDate: 2026-10-19
 order: 1
 minutes: 7
@@ -57,45 +57,13 @@ transcription that search leads to, and the handwritten original it was typed fr
 
 <h2 class="deck-heading">Our product</h2>
 
+<p class="deck-demo"><a href="https://github.com/kirtanp/hackpertus-archives/tree/main/static/site">Product demo</a></p>
+
+<p class="deck-demo deck-demo--address">http://localhost:8791/site</p>
+
 Note:
 Product — spoken budget 3 min. This is the demo moment: open the app, ask one question, then show the map and
 "guess the school".
-
----
-
-<div class="deck-eyebrow">Business · Provenance</div>
-
-<h2 class="deck-heading">Provenance</h2>
-
-<p class="deck-lead">Every record keeps where it came from: the source dataset and its licence, the source file with its
-SHA-256, the row number, the archive signature and the archive viewer URL.</p>
-
-<ul class="deck-list">
-  <li>100 % of the 2,250 transcriptions carry an archive signature; 2,248 also link their facsimile — linked on stapferenquete.ch, never copied.</li>
-  <li>857 of 858 archive references were matched into the archive database, by exact match.</li>
-  <li>0 of 2,819 exported records failed the schema; an invalid record is quarantined instead of exported.</li>
-  <li>Against the University of Bern export: 100 % of 12,047 question answers matched on TransID and question, 99.8 % of texts ≥ 0.95 similar.</li>
-</ul>
-
-<p class="deck-source">data/out/metrics.json → stapfer, linking, export, bern_reference · docs/reference/outputs.mdx</p>
-
-Note:
-Business — spoken budget 2 min, across this slide and the two after it. Provenance first: this is what makes the
-dataset defensible for an archive. Hold the two examples from the Introduce section in mind and show where each record's traceability lives.
-
----
-
-<div class="deck-eyebrow">Business · Next</div>
-
-<h2 class="deck-heading">Pipelining, onboarding more datasets, a new customer base</h2>
-
-<ul class="deck-list">
-  <li>Pipelining: idempotent, resumable stages and a run manifest with the hash of every output. The two Apertus stages are optional — without a key they are skipped and everything after them still runs.</li>
-  <li>Onboarding more datasets: any tabular open-data file goes through acquire → profile → map → transform → privacy → validate. Apertus proposes the column mapping and code validates it; onboarding the 569-row consultations table this way reproduced the hand-built records.</li>
-  <li>A new customer base: the same path makes another archive, library or research group searchable, without new pipeline code.</li>
-</ul>
-
-<p class="deck-source">README.md (robustness) · docs/reference/onboarding.mdx, docs/reference/measured-results.mdx</p>
 
 ---
 
@@ -134,3 +102,8 @@ dataset defensible for an archive. Hold the two examples from the Introduce sect
 </ul>
 
 <p class="deck-source">data/out/apertus_enrichment.apertus-v1-5-70b.jsonl (2,250 rows) · data/out/metrics.json · docs/reference/web-demo.mdx · docs/ (Starlight site)</p>
+
+Note:
+Business — spoken budget 2 min, all of it on this slide: the comparison of the three artifacts and the measured
+tokens. The earlier provenance and future-plans slides were removed at the captain's request; their figures are in
+data/out/metrics.json if a question comes up.

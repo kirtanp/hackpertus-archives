@@ -1,6 +1,6 @@
 # ArchAI presentation
 
-A static slide deck about ArchAI: **nine slides**, Astro (static output) + reveal.js + Tailwind v4, no server, no data
+A static slide deck about ArchAI: **seven slides**, Astro (static output) + reveal.js + Tailwind v4, no server, no data
 fetched at view time, no analytics.
 
 Build pattern: the deck is an Astro content collection entry (`src/content/slides/archai.md`), one `SlideLayout.astro`
@@ -26,7 +26,7 @@ With [`just`](https://just.systems/): `just build`, `just html` (single files), 
 
 ## PDF
 
-`presentation/archai-deck.pdf` is the deck as a PDF: one page per slide, in deck order, nine pages at the deck's 16:9
+`presentation/archai-deck.pdf` is the deck as a PDF: one page per slide, in deck order, seven pages at the deck's 16:9
 aspect (750 KB). It is printed from the built deck rather than assembled from screenshots, so the text stays selectable
 and the pictures stay real. To regenerate it:
 
@@ -56,10 +56,8 @@ as a blank page. The layer restores the padding (from `--deck-slide-padding`) an
 | 3 | Introduce | The archive's own search for “Bern” — picture only |
 | 4 | Introduce | One source entry in detail — picture only |
 | 5 | Introduce | The goal: archives that are easily digestible — title and the handwritten original |
-| 6 | Product | Our product (title only) |
-| 7 | Business | Provenance |
-| 8 | Business | Pipelining, onboarding more datasets, a new customer base |
-| 9 | Business | Cost: a comparison of the three artifacts, and tokens and calls |
+| 6 | Product | Our product — the “Product demo” link and the local address |
+| 7 | Business | Cost: a comparison of the three artifacts, and tokens and calls |
 
 The outline is the content plan; slides stay at that density. Timings (`Introduce`, `Product`, `Business`) are presenter
 notes on the slide that opens the section.
@@ -82,7 +80,7 @@ content slides, and the slide padding (`3.4rem` top) keeps every title clear of 
 
 ## The illustration images
 
-The two introduction slides carry three images from the captain, all in `public/` (files referenced from inside a
+The introduction slides carry three images from the captain, all in `public/` (files referenced from inside a
 slide body live there, because the body is injected into the reveal textarea as a string and is never processed by
 Astro — imported assets only work in the layout):
 
@@ -106,7 +104,7 @@ each slide names the file: `README.md`, `data/out/metrics.json`, `qa_answer_chec
 ## Layout
 
 ```
-src/content/slides/archai.md   the deck: nine slides separated by ---, presenter notes after "Note:"
+src/content/slides/archai.md   the deck: seven slides separated by ---, presenter notes after "Note:"
 src/layouts/SlideLayout.astro  reveal.js wiring (markdown + notes plugin, palette, deck chrome)
 src/assets/app.css             ArchAI palette, typography, slide content classes
 src/pages/index.astro          small catalog page linking the deck

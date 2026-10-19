@@ -205,6 +205,30 @@ body {
   border-bottom: none;
 }
 
+/* ---- the product slide: the demo link --------------------------------- */
+
+/* Two short lines: the labelled link and the local address of the running
+   app. The link keeps the deck's accent cut for text, which reads as a link on
+   white and stays above 4.5:1. */
+.reveal .deck-demo {
+  font-size: 0.66em;
+  line-height: 1.4;
+  margin: 0 0 0.6em;
+}
+
+.reveal .deck-demo a {
+  color: var(--color-brand);
+  text-decoration: underline;
+  text-underline-offset: 0.16em;
+}
+
+.reveal .deck-demo--address {
+  font-family: var(--font-mono);
+  font-size: 0.54em;
+  color: var(--color-dim);
+  margin: 0;
+}
+
 /* ---- picture slides: the source material, nothing else ----------------- */
 
 /* A slide whose only content is an image (or an image under its title): the
