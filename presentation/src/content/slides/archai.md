@@ -35,6 +35,9 @@ the product solves, then the goal and how it is organised.
 
 ---
 
+<div class="deck-split">
+  <div class="deck-split__main">
+
 <div class="deck-eyebrow">Introduce · The problem and the material</div>
 
 <h2 class="deck-heading">The problem, and what the product solves</h2>
@@ -46,9 +49,20 @@ the product solves, then the goal and how it is organised.
   <li>What the product solves: ask in plain language, and get the archive page the answer came from.</li>
 </ul>
 
+<div class="deck-shot-frame"><img class="deck-shot" src="/archive-search-bern.png" alt="A German archive search for Bern: a result table of school places and municipalities listing nine transcriptions with links to each fragment." /></div>
+
+  </div>
+  <div class="deck-split__aside">
+    <img class="deck-shot" src="/stapfer-questionnaire-answers.png" alt="A detail of one 1799 transcription: German questionnaire rows III.11.e to IV.14 with the teacher's answers beside them, the answer about 82 schoolchildren highlighted." />
+  </div>
+</div>
+
 <p class="deck-source">data/out/metrics.json → stapfer, linking, export · README.md</p>
 
 ---
+
+<div class="deck-split deck-split--text">
+  <div class="deck-split__main">
 
 <div class="deck-eyebrow">Introduce · The goal and how it is organised</div>
 
@@ -61,6 +75,12 @@ the product solves, then the goal and how it is organised.
 </ul>
 
 <p class="deck-cite">BAR B0 1000/1483, Nr. 1421, fol. 228-229v, S. 2, Frage III.12</p>
+
+  </div>
+  <div class="deck-split__aside">
+    <img class="deck-shot" src="/stapfer-original-scan.png" alt="A scan of the handwritten 1798 original in Kurrent script: the archival page this entry was transcribed from, showing the answer about 82 schoolchildren." />
+  </div>
+</div>
 
 <p class="deck-source">docs/reference/api.mdx (citation format) · data/out/qa_answer_check.json (number check) · README.md</p>
 

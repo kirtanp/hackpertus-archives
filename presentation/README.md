@@ -56,6 +56,23 @@ The mark in the top-left of every slide is `src/assets/archai-mark.png`, prepare
 `src/layouts/SlideLayout.astro` renders it fixed at the top-left of the viewport, so it shows on the title slide as on
 content slides, and the slide padding (`3.4rem` top) keeps every title clear of it.
 
+## The illustration images
+
+The two introduction slides carry three images from the captain, all in `public/` (files referenced from inside a
+slide body live there, because the body is injected into the reveal textarea as a string and is never processed by
+Astro — imported assets only work in the layout):
+
+| File | Slide | What it is | Size on the slide |
+|---|---|---|---|
+| `archive-search-bern.png` | the problem slide | the archive's own search for “Bern”: a result table listing nine transcriptions with links to each fragment. Cropped from the 1484×988 screenshot to 1484×520 (the Bern block with the first transcription links), under the slide's text. | ~350×124 px |
+| `stapfer-questionnaire-answers.png` | the problem slide | one source entry in detail: questionnaire rows III.11.e–IV.14 with the teacher's answers beside them, one highlighted. Used as supplied (1514×792), on the right. | ~390×205 px |
+| `stapfer-original-scan.png` | the goal slide | the handwritten 1798 original in Kurrent script, the page that entry was typed from. Used as supplied (1296×694), on the right. | ~555×300 px |
+
+All three are framed with a hairline border (`--color-line`), because they have their own (light) background and would
+otherwise float on the white slides. The two slides use the `.deck-split` grid: the slide's own text in
+`.deck-split__main` (which never shrinks), the search overview under it in a `.deck-shot-frame`, and the other image in
+`.deck-split__aside`. The images take the room that is left, at their own aspect ratio, and the slides do not overflow.
+
 ## Figures
 
 Every number on a slide comes from this repository and keeps its stated scope; the small source line at the bottom of
