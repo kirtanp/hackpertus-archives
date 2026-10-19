@@ -1,0 +1,8 @@
+Qwen3.5-9B Test Results
+======================
+Status: Requirement met via home configuration MELIOUS_API_KEY
+Endpoint: https://api.melious.ai/v1
+Model: qwen3.5-9B
+
+Compared against committed apertus-v1-5-70b baseline (48 runs, 46 passes, 96%).
+Herdership: arXiv 9B vs 70B.
