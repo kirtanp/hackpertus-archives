@@ -1,6 +1,6 @@
 ---
 title: "ArchAI"
-description: "Nine slides: the problem, the datasets, the goal, the product, provenance, future plans and the cost in tokens."
+description: "Eight slides: the challenge, the problem and the datasets, the goal, the product, provenance, future plans and the cost in tokens."
 pubDate: 2026-10-19
 order: 1
 minutes: 7
@@ -27,70 +27,53 @@ provenance-preserving dataset, served as a cited Q&amp;A demo.</p>
 
 <div class="deck-eyebrow">Introduce</div>
 
-<h2 class="deck-heading">The problem</h2>
+<h2 class="deck-heading">Challenge</h2>
 
-<p class="deck-lead">The archives are readable, but not answerable — and they are not centralised databases.</p>
+<p class="deck-lead">Readable, but not answerable — and not one central database. Here is what the introduction
+lays out.</p>
 
 <ul class="deck-list">
-  <li>2,250 handwritten 1799 school sheets in German, French and Italian, with 92,524 answers.</li>
-  <li>569 federal consultations from 1960–1991; their dossiers open only through a 4.5 M-unit archive database, a 3.6 GB dump.</li>
-  <li>A consultation holds 858 archive references — but only 329 consultations point at a dossier at all.</li>
+  <li>The problem and examples: 1799 handwritten sheets and 1960s consultation dossiers that nobody can ask a question about.</li>
+  <li>The datasets: three open Swiss sources that have to become a PDF transcript plus data.</li>
+  <li>The goal: archives that are easily digestible.</li>
+  <li>The result: not centralised databases, but something accessible to everyone and organised by an AI framework.</li>
 </ul>
-
-<p class="deck-source">data/out/metrics.json → stapfer, linking · README.md</p>
 
 Note:
 Introduce — spoken budget ~1:30 (the sketch writes "1:30 mins"; it may mean 30 minutes — the captain can correct this
-one line). Slides 2–5: the problem and examples, what our product solves, the datasets becoming a transcript plus
-data, the goal, and why an AI framework is what organises it.
+one line). This slide frames the challenge; the two after it carry the detail — first the problem, the material and
+what the product solves, then the goal and how it is organised.
 
 ---
 
-<div class="deck-eyebrow">Introduce · The material</div>
+<div class="deck-eyebrow">Introduce · The problem and the material</div>
 
-<h2 class="deck-heading">The datasets become a PDF transcript plus data</h2>
+<h2 class="deck-heading">The problem, and what the product solves</h2>
 
 <ul class="deck-list">
-  <li>Stapfer-Enquête 1799 — 2,250 transcribed sheets, 92,524 answers.</li>
-  <li>Federal Consultations 1960–1991 — 569 consultations, 858 archive references.</li>
-  <li>Archive database (OLR) — 4.5 M archive units and their hierarchy.</li>
+  <li>2,250 handwritten 1799 school sheets in German, French and Italian, with 92,524 answers; 569 federal consultations from 1960–1991, whose dossiers open only through a 4.5 M-unit archive database.</li>
+  <li>Not centralised databases: the sources stay where they are, and only 329 of the 569 consultations point at a dossier at all — 858 archive references between them.</li>
+  <li>The datasets become a PDF transcript plus data: the raw transcription is never overwritten, and beside it stand 2,819 records in one schema, each with its provenance.</li>
+  <li>What the product solves: ask in plain language, and get the archive page the answer came from.</li>
 </ul>
-
-<p class="deck-lead">Each transcription stays a transcript: the raw text is never overwritten, and the edition markup
-becomes text plus annotations. Beside it stands structured data — 2,819 records in one schema, each with its
-provenance.</p>
 
 <p class="deck-source">data/out/metrics.json → stapfer, linking, export · README.md</p>
 
 ---
 
-<div class="deck-eyebrow">Introduce · The goal</div>
+<div class="deck-eyebrow">Introduce · The goal and how it is organised</div>
 
-<h2 class="deck-heading">Archives that are easily digestible</h2>
-
-<ul class="deck-list">
-  <li>Ask in German, French or English, in plain language.</li>
-  <li>The answer names the archive signature, the sheet and the question it came from.</li>
-  <li>Every number is checked against the source it cites; totals are computed by code, never by the model.</li>
-</ul>
-
-<p class="deck-cite">BAR B0 1000/1483, Nr. 1421, fol. 228-229v, S. 2, Frage III.12</p>
-
-<p class="deck-source">docs/reference/api.mdx (citation format) · data/out/qa_answer_check.json (number check)</p>
-
----
-
-<div class="deck-eyebrow">Introduce · How</div>
-
-<h2 class="deck-heading">Not centralised databases — an AI framework organises them</h2>
+<h2 class="deck-heading">The goal: archives that are easily digestible</h2>
 
 <ul class="deck-list">
-  <li>The three datasets stay where they are, on opendata.swiss; ArchAI does not copy them into one database that would then have to be maintained.</li>
+  <li>Ask in German, French or English, in plain language; the answer names the archive signature, the sheet and the question it came from. Every number is checked against the source it cites, and totals are computed by code, never by the model.</li>
   <li>Accessible to everyone: no key, no database, no raw dump. <span class="deck-mono">uv run app.py</span> reads data/out/, and without an Apertus key the app still answers — with the cited passages themselves.</li>
   <li>An AI framework is what organises it: Apertus rewrites the question, enriches the records and writes the answer; deterministic code validates the route, the citations and every number.</li>
 </ul>
 
-<p class="deck-source">README.md · docs/reference/web-demo.mdx</p>
+<p class="deck-cite">BAR B0 1000/1483, Nr. 1421, fol. 228-229v, S. 2, Frage III.12</p>
+
+<p class="deck-source">docs/reference/api.mdx (citation format) · data/out/qa_answer_check.json (number check) · README.md</p>
 
 ---
 
@@ -110,7 +93,7 @@ provenance.</p>
 <p class="deck-source">README.md · data/out/qa_eval.json (92.4 % of 380 questions, dynamic rewriting) · 2,249 geocoded places in data/out/metrics.json</p>
 
 Note:
-Product — spoken budget 3 min. Slide 6 is the demo moment: open the app, ask one question, then show the map and
+Product — spoken budget 3 min. This is the demo moment: open the app, ask one question, then show the map and
 "guess the school".
 
 ---
@@ -132,8 +115,8 @@ SHA-256, the row number, the archive signature and the archive viewer URL.</p>
 <p class="deck-source">data/out/metrics.json → stapfer, linking, export, bern_reference · docs/reference/outputs.mdx</p>
 
 Note:
-Business — spoken budget 2 min (slides 7–9). Provenance first: this is what makes the dataset defensible for an
-archive. Hold the two examples from the Introduce section in mind and show where each record's traceability lives.
+Business — spoken budget 2 min, across this slide and the two after it. Provenance first: this is what makes the
+dataset defensible for an archive. Hold the two examples from the Introduce section in mind and show where each record's traceability lives.
 
 ---
 

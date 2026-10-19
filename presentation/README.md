@@ -1,6 +1,6 @@
 # ArchAI presentation
 
-A static slide deck about ArchAI: **nine slides**, Astro (static output) + reveal.js + Tailwind v4, no server, no data
+A static slide deck about ArchAI: **eight slides**, Astro (static output) + reveal.js + Tailwind v4, no server, no data
 fetched at view time, no analytics.
 
 Build pattern: the deck is an Astro content collection entry (`src/content/slides/archai.md`), one `SlideLayout.astro`
@@ -29,14 +29,13 @@ With [`just`](https://just.systems/): `just build`, `just html` (single files), 
 | # | Section | Slide |
 |---|---|---|
 | 1 | — | Title |
-| 2 | Introduce | The problem (and what the product solves) |
-| 3 | Introduce | The datasets become a PDF transcript plus data |
+| 2 | Introduce | Challenge: an overview of the introduction |
+| 3 | Introduce | The problem, and what the product solves |
 | 4 | Introduce | The goal: archives that are easily digestible |
-| 5 | Introduce | Not centralised databases — an AI framework organises them |
-| 6 | Product | The product: the working thing itself |
-| 7 | Business | Provenance |
-| 8 | Business | Pipelining, onboarding more datasets, a new customer base |
-| 9 | Business | Cost: a comparison of the three artifacts, and tokens and calls |
+| 5 | Product | The product: the working thing itself |
+| 6 | Business | Provenance |
+| 7 | Business | Pipelining, onboarding more datasets, a new customer base |
+| 8 | Business | Cost: a comparison of the three artifacts, and tokens and calls |
 
 The outline is the content plan; slides stay at that density. Timings (`Introduce`, `Product`, `Business`) are presenter
 notes on the slide that opens the section.
@@ -50,7 +49,7 @@ each slide names the file: `README.md`, `data/out/metrics.json`, `qa_eval.json`,
 ## Layout
 
 ```
-src/content/slides/archai.md   the deck: nine slides separated by ---, presenter notes after "Note:"
+src/content/slides/archai.md   the deck: eight slides separated by ---, presenter notes after "Note:"
 src/layouts/SlideLayout.astro  reveal.js wiring (markdown + notes plugin, palette, deck chrome)
 src/assets/app.css             ArchAI palette, typography, slide content classes
 src/pages/index.astro          small catalog page linking the deck
