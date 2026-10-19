@@ -2,6 +2,7 @@
 
 The qa.Index is built once, in a background thread at startup (1-2 min), so the page is reachable while it warms up."""
 import json, os, random, re, sys, threading, time
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
@@ -53,12 +54,13 @@ def _load():
     print(f"[archai] index ready in {state['seconds']}s, {len(RECORDS)} records, error={state['error']}", flush=True)
 
 
-app = FastAPI(title="ArchAI – Deciphering Swiss archives with Apertus")
+@asynccontextmanager
+async def lifespan(_app):
+    threading.Thread(target=_load, daemon=True).start()  # the page is reachable while the index warms up
+    yield
 
 
-@app.on_event("startup")
-def startup():
-    threading.Thread(target=_load, daemon=True).start()
+app = FastAPI(title="ArchAI – Deciphering Swiss archives with Apertus", lifespan=lifespan)
 
 
 class Ask(BaseModel):
