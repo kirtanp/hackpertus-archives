@@ -49,6 +49,7 @@ export default defineConfig({
             { label: 'Tool agent (agent-v4)', link: '/reference/tool-agent/' },
             { label: 'Web demo and deployment', link: '/reference/web-demo/' },
             { label: 'Statistics in SQL (Apache Superset)', link: '/reference/superset/' },
+            { label: 'qwen3.5-9B vs Baseline', link: '/model-comparison/qwen3-5-9b/' },
             { label: 'Ethics, privacy and bias', link: '/reference/ethics/' },
           ],
         },
