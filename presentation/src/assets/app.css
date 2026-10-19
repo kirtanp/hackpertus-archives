@@ -125,6 +125,18 @@ body {
   text-wrap: balance;
 }
 
+/* A centred slide that carries the demo link (the product slide): the link
+   under the large line, sized up to match it. */
+.reveal .deck-question .deck-demo {
+  font-size: 1.05em;
+  margin: 0.7em 0 0.3em;
+}
+
+.reveal .deck-question .deck-demo--address {
+  font-size: 0.6em;
+  margin: 0;
+}
+
 /* ---- deck content ------------------------------------------------------ */
 
 .reveal .deck-eyebrow {

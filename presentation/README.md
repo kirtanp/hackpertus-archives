@@ -56,7 +56,7 @@ as a blank page. The layer restores the padding (from `--deck-slide-padding`) an
 | 3 | Introduce | The archive's own search for “Bern” — picture only |
 | 4 | Introduce | One source entry in detail — picture only |
 | 5 | Introduce | The goal: archives that are easily digestible — title and the handwritten original |
-| 6 | Product | Our product — the “Product demo” link and the address beneath it |
+| 6 | Product | Our product — centred and large, the “Product demo” link and the address beneath it |
 | 7 | Try it | **ArchAI, live** — the link to the live website |
 
 The outline is the content plan; slides stay at that density. Timings (`Introduce`, `Product`, `Business`) are presenter
