@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" type="image/png" href="./favicon.png">
 <script src="./support.js"></script>
 </head>
 <body>
@@ -48,10 +49,7 @@ button{font:inherit}
 <div style="position:sticky;top:0;z-index:30;background:rgba(18,16,12,0.97);border-bottom:1px solid #2e2a22">
   <div style="max-width:1280px;margin:0 auto;padding:14px 32px;display:flex;align-items:center;gap:24px;flex-wrap:wrap">
     <div style="display:flex;align-items:center;gap:12px;cursor:pointer" onClick="{{ goHome }}">
-      <div style="width:26px;height:26px;background:#e2553a;position:relative;flex:none">
-        <div style="position:absolute;left:11px;top:5px;width:4px;height:16px;background:#eee4cc"></div>
-        <div style="position:absolute;left:5px;top:11px;width:16px;height:4px;background:#eee4cc"></div>
-      </div>
+      <img src="./logo.png" alt="ArchAI logo" width="40" height="40" style="display:block;flex:none;margin:-7px 0">
       <div style="font-family:'Instrument Serif',serif;font-size:24px;line-height:1">ArchAI</div>
       <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;color:#a89d86;text-transform:uppercase">Hackpertus · Archives</div>
     </div>
@@ -185,7 +183,7 @@ button{font:inherit}
       <h2 data-scramble="1" style="margin:0;font-family:'Instrument Serif',serif;font-weight:400;font-size:clamp(40px,5vw,72px);line-height:1">Nine stages. <em style="color:#e2553a">One command.</em></h2>
       <p style="margin:0;color:#c9bfa8;font-size:17px">Every stage can be re-run safely and resumed. If an optional Apertus stage fails, the deterministic dataset is still built. A run manifest records the status, runtime and output hash of every stage.</p>
     </div>
-    <button onClick="{{ runPipe }}" style="border:none;cursor:pointer;background:#e2553a;color:#12100c;padding:14px 22px;font-weight:600;border-radius:2px;font-family:'IBM Plex Mono',monospace;font-size:13px" style-hover="background:#eee4cc">{{ pipeBtn }}</button>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><div title="Playback speed" style="display:flex;border:1px solid #4a4336;border-radius:2px;overflow:hidden"><sc-for list="{{ pipeSpd }}" as="sp" hint-placeholder-count="3"><button onClick="{{ sp.set }}" aria-pressed="{{ sp.on }}" style="border:none;cursor:pointer;padding:12px 11px;font-family:'IBM Plex Mono',monospace;font-size:12px;transition:background .2s,color .2s;background:{{ sp.bg }};color:{{ sp.fg }}" style-hover="color:#eee4cc">{{ sp.l }}</button></sc-for></div><button onClick="{{ runPipe }}" style="border:none;cursor:pointer;background:#e2553a;color:#12100c;padding:14px 22px;font-weight:600;border-radius:2px;font-family:'IBM Plex Mono',monospace;font-size:13px" style-hover="background:#eee4cc">{{ pipeBtn }}</button></div>
   </div>
 
   <div style="background:#0d0b08;border:1px solid #2e2a22;padding:14px 18px;font-family:'IBM Plex Mono',monospace;font-size:13px;color:#a89d86;margin-bottom:28px;overflow-x:auto;white-space:nowrap"><span style="color:#6fa58f">$</span> PYTHONPATH=src python -m archai.pipeline <span style="color:#c9a45c">--llm-sample 60 --agent-sample 30</span></div>
@@ -264,6 +262,7 @@ button{font:inherit}
         </div>
       </sc-for>
       <div style="display:flex;gap:6px;align-items:center">
+        <div title="Playback speed" style="display:flex;border:1px solid #4a4336;border-radius:2px;overflow:hidden"><sc-for list="{{ agentSpd }}" as="sp" hint-placeholder-count="3"><button onClick="{{ sp.set }}" aria-pressed="{{ sp.on }}" style="border:none;cursor:pointer;padding:12px 11px;font-family:'IBM Plex Mono',monospace;font-size:12px;transition:background .2s,color .2s;background:{{ sp.bg }};color:{{ sp.fg }}" style-hover="color:#eee4cc">{{ sp.l }}</button></sc-for></div>
         <button onClick="{{ agentPrev }}" style="cursor:pointer;background:transparent;color:#eee4cc;border:1px solid #4a4336;padding:12px 14px;border-radius:2px;font-family:'IBM Plex Mono',monospace;font-size:13px" style-hover="border-color:#eee4cc">←</button>
         <button onClick="{{ agentToggle }}" style="border:none;cursor:pointer;background:#e2553a;color:#12100c;padding:12px 18px;font-weight:600;border-radius:2px;font-family:'IBM Plex Mono',monospace;font-size:13px;min-width:112px" style-hover="background:#eee4cc">{{ agentBtn }}</button>
         <button onClick="{{ agentNext }}" style="cursor:pointer;background:transparent;color:#eee4cc;border:1px solid #4a4336;padding:12px 14px;border-radius:2px;font-family:'IBM Plex Mono',monospace;font-size:13px" style-hover="border-color:#eee4cc">→</button>
@@ -592,7 +591,7 @@ button{font:inherit}
       <div style="font-family:'Instrument Serif',serif;font-size:clamp(32px,4vw,52px);line-height:1.02">A new dataset, <em style="color:#e2553a">AI-ready in {{ onbEnd.total }}.</em></div>
       <p style="margin:0;color:#c9bfa8;font-size:16px;text-wrap:pretty">Any open-data table goes in: CSV, JSON, Excel or Parquet. Apertus proposes what each column means; code checks every proposal against the data and rejects what does not hold. This replays the recorded run of <span style="font-family:'IBM Plex Mono',monospace;font-size:14px">archai.onboard</span> on the federal consultations file from opendata.swiss.</p>
     </div>
-    <button onClick="{{ onbReplay }}" style="border:none;cursor:pointer;background:#e2553a;color:#12100c;padding:14px 22px;font-weight:600;border-radius:2px;font-family:'IBM Plex Mono',monospace;font-size:13px" style-hover="background:#eee4cc">{{ onbBtn }}</button>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><div title="Playback speed" style="display:flex;border:1px solid #4a4336;border-radius:2px;overflow:hidden"><sc-for list="{{ onbSpd }}" as="sp" hint-placeholder-count="3"><button onClick="{{ sp.set }}" aria-pressed="{{ sp.on }}" style="border:none;cursor:pointer;padding:12px 11px;font-family:'IBM Plex Mono',monospace;font-size:12px;transition:background .2s,color .2s;background:{{ sp.bg }};color:{{ sp.fg }}" style-hover="color:#eee4cc">{{ sp.l }}</button></sc-for></div><button onClick="{{ onbReplay }}" style="border:none;cursor:pointer;background:#e2553a;color:#12100c;padding:14px 22px;font-weight:600;border-radius:2px;font-family:'IBM Plex Mono',monospace;font-size:13px" style-hover="background:#eee4cc">{{ onbBtn }}</button></div>
   </div>
 
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));gap:24px;align-items:start;margin-bottom:24px">
@@ -1456,6 +1455,7 @@ const IMPACT_RISKS = [
 let ONB = {"dataset": "test-consultations-apertus", "file": "consultations.csv", "rows": 569, "columns": 22, "sha256": "c6a4ccc5f4ee106d2da023fc3f07a04bb87fd4228b35b996af785eafdce4878c", "encoding": "utf-8-sig", "source_url": "https://opendata.swiss/de/dataset/federal-consultations-1960-1991", "stages": [{"stage": "acquire", "seconds": 0.01, "rows": 569, "sha256": "c6a4ccc5f4ee106d2da023fc3f07a04bb87fd4228b35b996af785eafdce4878c", "took": 0.01}, {"stage": "profile", "seconds": 0.03, "columns": 22, "took": 0.02}, {"stage": "map", "seconds": 4.46, "source": "apertus", "notes": 3, "took": 4.43}, {"stage": "transform", "seconds": 4.53, "records": 569, "took": 0.07}, {"stage": "privacy", "seconds": 4.57, "masked": false, "took": 0.04}, {"stage": "enrich", "seconds": 40.5, "requested": 20, "enriched": 20, "took": 35.93}, {"stage": "validate", "seconds": 40.52, "invalid": 0, "took": 0.02}], "chips": [{"col": "doc_id", "roles": ["id"], "rejected": [{"role": "title", "why": "not readable text (an id or code)"}]}, {"col": "title", "roles": ["title", "text"], "rejected": []}, {"col": "department_abbr", "roles": ["text", "organisations"], "rejected": []}, {"col": "office", "roles": ["text", "organisations"], "rejected": []}, {"col": "addressees", "roles": ["text"], "rejected": []}, {"col": "document_types", "roles": ["text"], "rejected": []}, {"col": "department", "roles": ["text", "organisations"], "rejected": []}, {"col": "year", "roles": ["dates"], "rejected": []}, {"col": "consultation_start_raw", "roles": ["dates"], "rejected": []}, {"col": "consultation_start", "roles": ["dates"], "rejected": []}, {"col": "consultation_end", "roles": ["dates"], "rejected": []}, {"col": "federal_council_protocol_ref", "roles": [], "rejected": [{"role": "dates", "why": "dropped by validation"}]}, {"col": "consultation_end_raw", "roles": [], "rejected": [{"role": "dates", "why": "dropped by validation"}]}, {"col": "provenance.source_dataset", "roles": ["url"], "rejected": []}, {"col": "federal_gazette_ref", "roles": [], "rejected": [{"role": "signature", "why": "values do not look like archive signatures"}]}], "roles": {"id": ["doc_id"], "title": ["title"], "text": ["addressees", "department", "department_abbr", "document_types", "office", "title"], "dates": ["consultation_end", "consultation_start", "consultation_start_raw", "year"], "organisations": ["department", "department_abbr", "office"], "url": ["provenance.source_dataset"], "signature": []}, "notes": ["title: 'doc_id' dropped (not readable text (an id or code))", "signature: 'federal_gazette_ref' dropped (values do not look like archive signatures)", "title: Apertus proposal empty after validation — heuristic used"], "model": "apertus-v1-5-70b", "enriched": 20, "invalid": 0, "published": false, "coverage": {"title": 1.0, "text": 1.0, "dates": 1.0, "places": 0.0, "places_geocoded": 0.0, "persons": 0.0, "archive_signature": 0.0}, "comparison": {"matched_records": 569, "title_exact": 1.0, "reference_dates_found": 1.0, "lead_organisation_found": 0.995}, "record": {"title": "Vorentwurf zu einem Bundesgesetz über das Filmwesen", "kind": "federal_consultation", "dates": ["1960"], "organisations": ["Eidgenössisches Departement des Innern", "EDI"]}, "privacy_flags": 0, "seconds": 40.5};
 const ONB_T = { acquire: [0, 10], profile: [10, 24], map: [24, 64], transform: [64, 76], privacy: [76, 90], enrich: [90, 106], validate: [106, 122], publish: [122, 132] };
 const ONB_END = 140;
+const SPEEDS = [1, 4, 10];
 const ONB_WHO = { acquire: 'code', profile: 'code', map: 'apertus', transform: 'code', privacy: 'code', enrich: 'apertus', validate: 'validator', publish: 'data' };
 const ONB_DESC = {
   acquire: 'Read the file; encoding and delimiter detected; hashed.',
@@ -1542,7 +1542,7 @@ class Component extends DCLogic {
     cR: 0, cV: 50, cRev: false, cRevT: 0, cHist: [], cDone: false,
     rush: rushInit(), rushBest: 0, mode: 'rush', custom: [], chatText: '', simBusy: false, pending: null, gR: 0, gGuess: null, gHint: false, gScores: [], gStart: 0, gT0: 0, gDone: false,
     hR: 0, hSel: {}, hRev: false, hRevT: 0, hTotal: 0, hRes: null,
-    mx: 0.5, my: 0.3, tab: 0, tick: 0, enterT: 0, pipeT: -1, sel: 3, agentT: 0, agentPlay: false, simQ: 0, simT: -1, onbT: -1, impReq: 2186, impMin: 45, impShare: 40, impCost: 90, pdfBusy: false };
+    mx: 0.5, my: 0.3, tab: 0, tick: 0, enterT: 0, pipeT: -1, sel: 3, agentT: 0, agentPlay: false, simQ: 0, simT: -1, onbT: -1, spd: { pipe: 1, agent: 1, onb: 1 }, impReq: 2186, impMin: 45, impShare: 40, impCost: 90, pdfBusy: false };
   componentDidMount() {
     fetch('/api/metrics').then(r => r.ok ? r.json() : null).then(j => j && j.metrics && this.setState({ metrics: j.metrics })).catch(() => {});
     let tries = 0, base = false;  // /api/site: real examples for every tab; the simulator's answers arrive once they have run
@@ -1578,10 +1578,10 @@ class Component extends DCLogic {
   step(dt) {
     this.setState(s => {
       const n = { tick: s.tick + dt };
-      if (s.pipeT >= 0 && s.pipeT < PIPE_END) n.pipeT = Math.min(PIPE_END, s.pipeT + dt);
-      if (s.agentPlay) { if (s.agentT < AGENT_END) n.agentT = Math.min(AGENT_END, s.agentT + dt); else n.agentPlay = false; }
+      if (s.pipeT >= 0 && s.pipeT < PIPE_END) n.pipeT = Math.min(PIPE_END, s.pipeT + dt * s.spd.pipe);
+      if (s.agentPlay) { if (s.agentT < AGENT_END) n.agentT = Math.min(AGENT_END, s.agentT + dt * s.spd.agent); else n.agentPlay = false; }
       if (s.simT >= 0 && s.simT < SIM_END) n.simT = Math.min(SIM_END, s.simT + dt);
-      if (s.onbT >= 0 && s.onbT < ONB_END) n.onbT = Math.min(ONB_END, s.onbT + dt);
+      if (s.onbT >= 0 && s.onbT < ONB_END) n.onbT = Math.min(ONB_END, s.onbT + dt * s.spd.onb);
       if (s.xpShown !== s.xp) n.xpShown = Math.abs(s.xp - s.xpShown) < 2 ? s.xp : s.xpShown + (s.xp - s.xpShown) * Math.min(1, 0.18 * dt);
       if (s.toasts.length && s.tick - s.toasts[0].t0 > 110) n.toasts = s.toasts.slice(1);
       if (s.floats.length && s.tick - s.floats[0].t0 > 40) n.floats = s.floats.slice(1);
@@ -1596,7 +1596,7 @@ class Component extends DCLogic {
       impStats: IMPACT_STATS.map(x => ({ ...x, ...src(x.k) })), impUsers: IMPACT_USERS, impCompare: IMPACT_COMPARE.map(([a, b, c]) => ({ a, b, c })),
       impModel: IMPACT_MODEL.map(x => ({ ...x, ...src(x.k) })), impRisks: IMPACT_RISKS.map(([t, r, g, k]) => ({ t, r, g, ...src(k) })),
       impSources: Object.values(SRC).map(([l, u]) => ({ l, u })),
-      onbReplay: () => this.setState({ onbT: 0 }), onbBtn: s.onbT >= ONB_END ? '↻ Replay onboarding' : s.onbT >= 0 ? 'Onboarding…' : '▶ Onboard the dataset'
+      onbReplay: () => this.setState({ onbT: 0 }), onbSpd: this.spdChips('onb'), onbBtn: s.onbT >= ONB_END ? '↻ Replay onboarding' : s.onbT >= 0 ? 'Onboarding…' : '▶ Onboard the dataset'
     };
     // estimator: the viewer's own assumptions
     const hours = s.impReq * s.impMin / 60 * s.impShare / 100;
@@ -1917,6 +1917,11 @@ class Component extends DCLogic {
       r.tk = tk; r.pops = pops;
       return { rush: r };
     });
+  }
+  spdChips(k) {
+    const cur = this.state.spd[k];
+    return SPEEDS.map(v => ({ l: v + '×', on: String(v === cur), bg: v === cur ? '#e2553a' : 'transparent', fg: v === cur ? '#12100c' : '#a89d86',
+      set: () => this.setState(x => ({ spd: { ...x.spd, [k]: v } })) }));
   }
   agentJump(t) { this.setState({ agentT: t, agentPlay: true }); }
 
@@ -2319,7 +2324,7 @@ class Component extends DCLogic {
       goHome: () => this.go(0), goT1: () => this.go(1), goT3: () => this.go(3),
       nextTab: () => this.go((s.tab + 1) % TABS.length), nextLabel: s.tab === TABS.length - 1 ? '↺ Back to start' : 'Next: ' + TABS[s.tab + 1][1] + ' →',
       morphTokens, morphAnn, scanTop, datasets, roles, roleDot, explore,
-      stages, sel, logLines, pipeBtn, robust, runPipe: () => { if (pt < 0 || pt >= PIPE_END) this.setState({ pipeT: 0 }); },
+      stages, sel, logLines, pipeBtn, pipeSpd: this.spdChips('pipe'), agentSpd: this.spdChips('agent'), robust, runPipe: () => { if (pt < 0 || pt >= PIPE_END) this.setState({ pipeT: 0 }); },
       recSegs, recTag: AGENT_META.live ? 'real trace · ' + AGENT_META.model + ' · ' + AGENT_META.seconds + ' s' : 'illustrative sheet', agentSteps: ast, agentBtn, agentProg: pct(at / AGENT_END),
       agentToggle: () => this.setState(x => x.agentT >= AGENT_END ? { agentT: 0, agentPlay: true } : { agentPlay: !x.agentPlay }),
       agentNext: () => { const n = AG.find(v => v > at); this.agentJump(n ?? AGENT_END); },
