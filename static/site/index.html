@@ -531,35 +531,53 @@ button{font:inherit}
 
 <sc-if value="{{ isT6 }}" hint-placeholder-val="{{ false }}">
 <div data-screen-label="06 Impact" style="max-width:1280px;margin:0 auto;padding:72px 32px 96px">
-  <div style="display:flex;flex-direction:column;gap:16px;max-width:820px;margin-bottom:44px">
+  <div style="display:flex;flex-direction:column;gap:16px;max-width:820px;margin-bottom:40px">
     <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#c9a45c">06 · Business impact</div>
     <h2 data-scramble="1" style="margin:0;font-family:'Instrument Serif',serif;font-weight:400;font-size:clamp(40px,5vw,72px);line-height:1">Kilometres of paper. <em style="color:#e2553a">Answers in seconds.</em></h2>
-    <p style="margin:0;color:#c9bfa8;font-size:17px;text-wrap:pretty">Archives hold the evidence a democracy runs on, but most of it can only be read by hand, in the reading room, in three languages. ArchAI turns an open archival dataset into answers with their sources attached, and refuses to answer what the records do not say. Every outside figure on this page links to where it was read.</p>
+    <p style="margin:0;color:#c9bfa8;font-size:17px;text-wrap:pretty">Most archives can only be read by hand. ArchAI turns them into cited answers. Every outside figure links to its source.</p>
   </div>
 
-  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr));gap:1px;background:#2e2a22;border:1px solid #2e2a22;margin-bottom:64px">
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:1px;background:#2e2a22;border:1px solid #2e2a22;margin-bottom:64px">
     <sc-for list="{{ impStats }}" as="is" hint-placeholder-count="5">
-      <div data-reveal="1" style="background:#16130f;padding:26px 22px;display:flex;flex-direction:column;gap:10px">
+      <div data-reveal="1" style="background:#16130f;padding:24px 22px 18px;display:flex;flex-direction:column;gap:8px;min-height:250px">
         <div style="font-family:'Instrument Serif',serif;font-size:50px;line-height:1;font-variant-numeric:tabular-nums;color:{{ is.col }}">{{ is.v }}</div>
-        <div style="font-size:14.5px;color:#eee4cc;text-wrap:pretty">{{ is.l }}</div>
-        <a href="{{ is.su }}" target="_blank" rel="noopener noreferrer" style="margin-top:auto;font-size:11px;color:#7d735f;font-family:'IBM Plex Mono',monospace;text-decoration:none;border-top:1px dashed #2e2a22;padding-top:8px" style-hover="color:#c9a45c">↗ {{ is.sl }}</a>
+        <div style="font-size:14px;color:#eee4cc">{{ is.l }}</div>
+        <div style="margin-top:auto;padding-top:10px;display:flex;flex-direction:column;gap:6px">
+          <sc-if value="{{ is.isTicks }}" hint-placeholder-val="{{ false }}"><div style="display:flex;align-items:flex-end;gap:1px;height:34px">
+            <sc-for list="{{ is.ticks }}" as="tk" hint-placeholder-count="0"><div style="flex:1;height:{{ tk.h }}px;background:{{ tk.c }}"></div></sc-for></div></sc-if>
+          <sc-if value="{{ is.isBars }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;gap:6px">
+            <sc-for list="{{ is.bars }}" as="br" hint-placeholder-count="0"><div style="display:grid;grid-template-columns:42px 1fr 52px;gap:8px;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#a89d86">
+              <span>{{ br.l }}</span><div style="height:16px;background:#0d0b08"><div style="height:16px;width:{{ br.w }};background:{{ br.c }}"></div></div><span style="color:#eee4cc;text-align:right">{{ br.t }}</span></div></sc-for></div></sc-if>
+          <sc-if value="{{ is.isWaffle }}" hint-placeholder-val="{{ false }}"><div style="display:grid;grid-template-columns:repeat(20,1fr);gap:2px">
+            <sc-for list="{{ is.cells }}" as="wc" hint-placeholder-count="0"><div style="aspect-ratio:1;background:{{ wc.c }}"></div></sc-for></div></sc-if>
+          <sc-if value="{{ is.isDots }}" hint-placeholder-val="{{ false }}"><div style="display:grid;grid-template-columns:repeat(20,1fr);gap:3px">
+            <sc-for list="{{ is.dots }}" as="dt" hint-placeholder-count="0"><div style="aspect-ratio:1;border-radius:50%;background:{{ dt.c }}"></div></sc-for></div></sc-if>
+          <div style="display:flex;gap:12px;flex-wrap:wrap"><sc-for list="{{ is.leg }}" as="lg" hint-placeholder-count="0"><span style="display:flex;align-items:center;gap:6px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#a89d86"><span style="width:9px;height:9px;background:{{ lg.c }}"></span>{{ lg.l }}</span></sc-for></div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#7d735f">{{ is.cap }}</div>
+          <a href="{{ is.su }}" target="_blank" rel="noopener noreferrer" style="font-size:11px;color:#7d735f;font-family:'IBM Plex Mono',monospace;text-decoration:none;border-top:1px dashed #2e2a22;padding-top:7px" style-hover="color:#c9a45c">↗ {{ is.sl }}</a>
+        </div>
       </div>
     </sc-for>
   </div>
 
-  <div style="display:flex;flex-direction:column;gap:20px;margin-bottom:64px">
-    <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#a89d86">Who it is for</div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:16px">
-      <sc-for list="{{ impUsers }}" as="u" hint-placeholder-count="6">
-        <div data-reveal="1" style="border:1px solid #2e2a22;background:linear-gradient(180deg,#16130f,#12100c);padding:22px;display:flex;flex-direction:column;gap:10px;transition:border-color .25s" style-hover="border-color:#c9a45c">
-          <div style="font-family:'Instrument Serif',serif;font-size:26px;line-height:1.05">{{ u.who }}</div>
-          <div style="font-size:13px;color:#c9a45c;font-family:'IBM Plex Mono',monospace">{{ u.job }}</div>
-          <div style="display:grid;grid-template-columns:62px 1fr;gap:6px 10px;font-size:14px;border-top:1px solid #2e2a22;padding-top:10px">
-            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#7d735f;padding-top:2px">TODAY</span><span style="color:#a89d86">{{ u.today }}</span>
-            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#6fa58f;padding-top:2px">ARCHAI</span><span style="color:#eee4cc">{{ u.with }}</span>
+  <div style="display:flex;flex-direction:column;gap:16px;margin-bottom:64px">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#a89d86">Who it is for · what they get</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#7d735f"><span style="color:#e2553a">●</span> core &nbsp; <span style="color:#c9a45c">●</span> useful</div>
+    </div>
+    <div style="border:1px solid #2e2a22;overflow-x:auto">
+      <div style="display:grid;grid-template-columns:minmax(190px,1.4fr) repeat(6,minmax(84px,1fr));min-width:720px">
+        <div style="padding:12px 16px;background:#0d0b08"></div>
+        <sc-for list="{{ impCaps }}" as="cap" hint-placeholder-count="6"><div style="padding:12px 8px;background:#0d0b08;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#a89d86;text-align:center;line-height:1.3">{{ cap }}</div></sc-for>
+        <sc-for list="{{ impUsers }}" as="u" hint-placeholder-count="6">
+          <div data-reveal="1" style="padding:12px 16px;border-top:1px solid #2e2a22;display:flex;flex-direction:column;gap:2px">
+            <span style="font-family:'Instrument Serif',serif;font-size:21px;line-height:1.05">{{ u.who }}</span>
+            <sc-if value="{{ u.hs }}" hint-placeholder-val="{{ false }}"><a href="{{ u.su }}" target="_blank" rel="noopener noreferrer" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#c9a45c;text-decoration:none" style-hover="color:#eee4cc">{{ u.sub }} ↗</a></sc-if>
+            <sc-if value="{{ u.ns }}" hint-placeholder-val="{{ false }}"><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#7d735f">{{ u.sub }}</span></sc-if>
           </div>
-        </div>
-      </sc-for>
+          <sc-for list="{{ u.cells }}" as="uc" hint-placeholder-count="6"><div style="border-top:1px solid #2e2a22;display:grid;place-items:center;background:{{ uc.bg }}"><div style="width:{{ uc.d }};height:{{ uc.d }};border-radius:50%;background:{{ uc.c }};box-shadow:{{ uc.glow }}"></div></div></sc-for>
+        </sc-for>
+      </div>
     </div>
   </div>
 
@@ -571,17 +589,18 @@ button{font:inherit}
       </div>
       <div onClick="{{ goT3 }}" style="cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:12px;color:#e2553a;border-bottom:1px solid #e2553a" style-hover="color:#eee4cc">Ask it in the simulator →</div>
     </div>
-    <div style="border:1px solid #2e2a22;overflow-x:auto">
-      <div style="display:grid;grid-template-columns:minmax(140px,0.7fr) minmax(220px,1fr) minmax(220px,1fr);min-width:620px">
-        <div style="padding:12px 18px;background:#0d0b08;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#7d735f;letter-spacing:0.08em">STEP</div>
-        <div style="padding:12px 18px;background:#0d0b08;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#a89d86;letter-spacing:0.08em">BY HAND</div>
-        <div style="padding:12px 18px;background:#0d0b08;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#6fa58f;letter-spacing:0.08em">WITH ARCHAI</div>
-        <sc-for list="{{ impCompare }}" as="cp" hint-placeholder-count="5">
-          <div style="padding:14px 18px;border-top:1px solid #2e2a22;font-family:'Instrument Serif',serif;font-size:20px">{{ cp.a }}</div>
-          <div style="padding:14px 18px;border-top:1px solid #2e2a22;color:#a89d86;font-size:14px">{{ cp.b }}</div>
-          <div style="padding:14px 18px;border-top:1px solid #2e2a22;color:#eee4cc;font-size:14px;background:rgba(111,165,143,.05)">{{ cp.c }}</div>
-        </sc-for>
-      </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,170px),1fr));gap:1px;background:#2e2a22;border:1px solid #2e2a22">
+      <sc-for list="{{ impCompare }}" as="cp" hint-placeholder-count="5">
+        <div data-reveal="1" style="background:#12100c;padding:18px 16px;display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;align-items:baseline;gap:8px"><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#e2553a">{{ cp.n }}</span><span style="font-family:'Instrument Serif',serif;font-size:24px">{{ cp.a }}</span></div>
+          <div style="display:flex;gap:8px;align-items:flex-start;font-size:13px;color:#a89d86;padding:8px 10px;background:#0d0b08;border-left:2px solid #4a4336"><span style="color:#7d735f">✗</span><span>{{ cp.b }}</span></div>
+          <div style="display:flex;gap:8px;align-items:flex-start;font-size:13px;color:#eee4cc;padding:8px 10px;background:rgba(111,165,143,.08);border-left:2px solid #6fa58f"><span style="color:#6fa58f">✓</span><span>{{ cp.c }}</span></div>
+        </div>
+      </sc-for>
+    </div>
+    <div style="display:flex;align-items:center;gap:22px;flex-wrap:wrap;border:1px solid rgba(111,165,143,.4);background:linear-gradient(90deg,rgba(111,165,143,.10),transparent);padding:18px 22px">
+      <span style="font-family:'Instrument Serif',serif;font-size:56px;line-height:1;color:#6fa58f;font-variant-numeric:tabular-nums">353–383</span>
+      <span style="display:flex;flex-direction:column;gap:4px"><span style="font-size:16px;color:#eee4cc">girls in winter, “and more”</span><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#a89d86">8 schools with a figure · 17 cited records · computed by code</span></span>
     </div>
   </div>
 
@@ -698,16 +717,24 @@ button{font:inherit}
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:28px;margin-bottom:72px">
     <div style="display:flex;flex-direction:column;gap:16px">
       <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#a89d86">How it can be offered</div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr));gap:1px;background:#2e2a22;border:1px solid #2e2a22">
+      <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:#2e2a22;border:1px solid #2e2a22">
         <sc-for list="{{ impModel }}" as="bm" hint-placeholder-count="4">
-          <div data-reveal="1" style="background:#12100c;padding:20px;display:flex;flex-direction:column;gap:8px">
-            <div style="font-family:'Instrument Serif',serif;font-size:23px">{{ bm.t }}</div>
-            <div style="font-size:13.5px;color:#a89d86;text-wrap:pretty">{{ bm.b }}</div>
-            <sc-if value="{{ bm.hs }}" hint-placeholder-val="{{ false }}"><a href="{{ bm.su }}" target="_blank" rel="noopener noreferrer" style="margin-top:auto;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#7d735f;text-decoration:none" style-hover="color:#c9a45c">↗ {{ bm.sl }}</a></sc-if>
+          <div data-reveal="1" style="background:#12100c;padding:18px;display:flex;gap:14px;align-items:flex-start">
+            <div style="flex:none;width:40px;height:40px;display:grid;place-items:center;border:1px solid {{ bm.c }};color:{{ bm.c }};font-size:19px">{{ bm.ic }}</div>
+            <div style="display:flex;flex-direction:column;gap:3px;min-width:0"><span style="font-family:'Instrument Serif',serif;font-size:21px;line-height:1.1">{{ bm.t }}</span><span style="font-size:13px;color:#a89d86">{{ bm.b }}</span>
+              <sc-if value="{{ bm.hs }}" hint-placeholder-val="{{ false }}"><a href="{{ bm.su }}" target="_blank" rel="noopener noreferrer" style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#7d735f;text-decoration:none" style-hover="color:#c9a45c">↗ {{ bm.sl }}</a></sc-if></div>
           </div>
         </sc-for>
       </div>
-      <div style="font-size:13px;color:#a89d86;text-wrap:pretty">Market context: analysts put intelligent document processing at USD 2.3-2.5 bn in 2024, with forecasts of USD 21-46 bn by 2033-34; the estimates differ widely (<a href="https://www.gminsights.com/industry-analysis/intelligent-document-processing-market" target="_blank" rel="noopener noreferrer" style="color:#c9a45c">GMI</a>, <a href="https://imarcgroup.com/intelligent-document-processing-market" target="_blank" rel="noopener noreferrer" style="color:#c9a45c">IMARC</a>). The federal archives' own strategy for 2026-2030 names automation and verifiable records “in an era of data rooms and AI” (<a href="https://www.bar.admin.ch/bar/en/home/about-us/the-federal-archives/strategy.html" target="_blank" rel="noopener noreferrer" style="color:#c9a45c">BAR</a>).</div>
+      <div data-reveal="1" style="border:1px solid #2e2a22;background:#16130f;padding:18px 20px;display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.1em;color:#c9a45c">MARKET · INTELLIGENT DOCUMENT PROCESSING</span><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#7d735f">USD bn · forecasts differ widely</span></div>
+        <div style="display:grid;grid-template-columns:62px 1fr;gap:10px 12px;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:#a89d86">
+          <span>2024</span><div style="height:20px;background:#0d0b08;position:relative"><div style="position:absolute;left:4.6%;width:max(6px,0.4%);top:0;bottom:0;background:#c9a45c"></div><span style="position:absolute;left:calc(5% + 12px);top:2px;color:#eee4cc">2.3–2.5</span></div>
+          <span>2033–34</span><div style="height:20px;background:#0d0b08;position:relative"><div style="position:absolute;left:42%;width:50%;top:0;bottom:0;background:linear-gradient(90deg,rgba(226,85,58,.55),#e2553a)"></div><span style="position:absolute;left:calc(42% + 8px);top:2px;color:#12100c;font-weight:600">21–46</span></div>
+          <span></span><div style="display:flex;justify-content:space-between;color:#7d735f;font-size:10px"><span>0</span><span>10</span><span>20</span><span>30</span><span>40</span><span>50</span></div>
+        </div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;display:flex;gap:14px;flex-wrap:wrap"><a href="https://www.gminsights.com/industry-analysis/intelligent-document-processing-market" target="_blank" rel="noopener noreferrer" style="color:#7d735f;text-decoration:none" style-hover="color:#c9a45c">↗ Global Market Insights</a><a href="https://imarcgroup.com/intelligent-document-processing-market" target="_blank" rel="noopener noreferrer" style="color:#7d735f;text-decoration:none" style-hover="color:#c9a45c">↗ IMARC</a><a href="https://www.bar.admin.ch/bar/en/home/about-us/the-federal-archives/strategy.html" target="_blank" rel="noopener noreferrer" style="color:#7d735f;text-decoration:none" style-hover="color:#c9a45c">↗ BAR strategy 2026–2030: automation, verifiable records</a></div>
+      </div>
     </div>
 
     <div style="border:1px solid #2e2a22;background:linear-gradient(180deg,#16130f,#12100c);padding:26px;display:flex;flex-direction:column;gap:16px">
@@ -735,14 +762,14 @@ button{font:inherit}
   </div>
 
   <div style="display:flex;flex-direction:column;gap:16px;margin-bottom:56px">
-    <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#a89d86">Risks, and the guardrail for each</div>
-    <div style="border:1px solid #2e2a22">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#a89d86">Risks → guardrails</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr));gap:1px;background:#2e2a22;border:1px solid #2e2a22">
       <sc-for list="{{ impRisks }}" as="rk" hint-placeholder-count="5">
-        <div data-reveal="1" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:8px 24px;padding:16px 20px;border-bottom:1px solid #2e2a22">
-          <div style="display:flex;flex-direction:column;gap:4px"><span style="font-family:'Instrument Serif',serif;font-size:22px;line-height:1.1">{{ rk.t }}</span>
-            <sc-if value="{{ rk.hs }}" hint-placeholder-val="{{ false }}"><a href="{{ rk.su }}" target="_blank" rel="noopener noreferrer" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#7d735f;text-decoration:none" style-hover="color:#c9a45c">↗ {{ rk.sl }}</a></sc-if></div>
-          <div style="font-size:14px;color:#a89d86;text-wrap:pretty"><span style="color:#e2553a;font-family:'IBM Plex Mono',monospace;font-size:11px">RISK · </span>{{ rk.r }}</div>
-          <div style="font-size:14px;color:#eee4cc;text-wrap:pretty"><span style="color:#6fa58f;font-family:'IBM Plex Mono',monospace;font-size:11px">GUARDRAIL · </span>{{ rk.g }}</div>
+        <div data-reveal="1" style="background:#12100c;padding:18px 16px;display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;gap:8px;align-items:center;color:#e2553a"><span style="width:22px;height:22px;flex:none;display:grid;place-items:center;border:1px solid #e2553a;border-radius:50%;font-size:12px">!</span><span style="font-family:'Instrument Serif',serif;font-size:21px;line-height:1.05;color:#eee4cc">{{ rk.t }}</span></div>
+          <div style="width:1px;height:14px;background:#4a4336;margin-left:11px"></div>
+          <div style="display:flex;gap:8px;align-items:flex-start"><span style="width:22px;height:22px;flex:none;display:grid;place-items:center;background:#6fa58f;color:#12100c;border-radius:50%;font-size:12px;font-weight:600">✓</span><span style="font-size:13.5px;color:#eee4cc;padding-top:2px">{{ rk.g }}</span></div>
+          <sc-if value="{{ rk.hs }}" hint-placeholder-val="{{ false }}"><a href="{{ rk.su }}" target="_blank" rel="noopener noreferrer" style="margin-top:auto;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#7d735f;text-decoration:none" style-hover="color:#c9a45c">↗ {{ rk.note }}</a></sc-if>
         </div>
       </sc-for>
     </div>
@@ -1418,39 +1445,40 @@ const SRC = {
   stapfer: ['Stapfer-Enquête edition, introduction (Uni Luxembourg)', 'https://orbilu.uni.lu/bitstream/10993/27813/1/Tro%cc%88hler_Einleitung.pdf']
 };
 const IMPACT_STATS = [
-  { v: '79,694 m', l: 'of analogue records on the shelves of the Swiss Federal Archives', k: 'bar', col: C.ink },
-  { v: '+31%', l: 'digital holdings in one year: 43.3 TB to 56.6 TB', k: 'bar', col: C.gold },
-  { v: '2,186', l: 'freedom-of-information requests to the federal administration in 2024, a record (+29%)', k: 'foia', col: C.green },
-  { v: '16%', l: 'of European heritage collections digitised on average; about 40% still wait', k: 'euro', col: C.red },
-  { v: '~1,600', l: 'court decisions worldwide involving AI-fabricated content, by mid-2026 (crowd-sourced count)', k: 'courts', col: C.red }
+  { v: '79,694 m', l: 'of paper on federal shelves', k: 'bar', col: C.ink, viz: 'ticks', cap: '≈ 80 km · one bar = 1 km' },
+  { v: '+31%', l: 'digital holdings in one year', k: 'bar', col: C.gold, viz: 'bars', bars: [['before', 43.3, '43.3 TB', '#4a4336'], ['after', 56.6, '56.6 TB', C.gold]], cap: 'terabytes held, one year apart' },
+  { v: '2,186', l: 'access requests in 2024, a record', k: 'foia', col: C.green, viz: 'bars', bars: [['2023', 2186 / 1.29, '', '#4a4336'], ['2024', 2186, '+29%', C.green]], cap: 'federal freedom-of-information requests' },
+  { v: '16%', l: 'of European heritage digitised', k: 'euro', col: C.red, viz: 'waffle', parts: [[16, C.red], [40, C.gold], [44, '#2e2a22']], cap: '', leg: [[C.red, '16% digitised'], [C.gold, '40% still waiting']] },
+  { v: '~1,600', l: 'court cases with AI-fabricated content', k: 'courts', col: C.red, viz: 'dots', n: 160, cap: 'one dot = 10 decisions · crowd-sourced, mid-2026' }
 ];
+const IMPACT_CAPS = ['Cited answers', 'Totals by code', 'Declines guesses', 'PDF evidence', 'DE · FR · EN', 'Learning games'];
 const IMPACT_USERS = [
-  { who: 'Archivists & reading rooms', job: 'Answer reference questions across the holdings.', today: 'Keyword search in finding aids, then dossiers read by hand.', with: 'A cited answer with the archive signature to order, in DE, FR or EN.' },
-  { who: 'Federal administration', job: '2,186 access requests in 2024, and rising.', today: 'Staff search records manually for every request.', with: 'The relevant records found and cited; what the records do not say is declined, not guessed.' },
-  { who: 'Historians & researchers', job: 'Count and compare across thousands of sheets.', today: 'Weeks of transcription reading and spreadsheets.', with: 'Totals computed by code, each contributing sheet and every exclusion listed.' },
-  { who: 'Journalists & fact-checkers', job: 'Verify a claim about the past, fast.', today: 'No source, or a source nobody can open.', with: 'Every sentence one click from its source; export the evidence as a PDF.' },
-  { who: 'Genealogists & the public', job: 'A USD 5-7 bn genealogy market (2024 estimates vary).', today: 'Old handwriting, three languages, no index.', with: 'Ask about your village in 1799 in your own language.' },
-  { who: 'Schools', job: 'Teach source criticism with real records.', today: 'Primary sources are hard to read and to find.', with: 'The games: route, ground and check like the validator.' }
+  { who: 'Archivists', sub: 'reading rooms', k: null, m: [2, 1, 1, 1, 2, 0] },
+  { who: 'Federal administration', sub: '2,186 requests in 2024', k: 'foia', m: [2, 0, 2, 2, 1, 0] },
+  { who: 'Historians', sub: 'count across sheets', k: null, m: [2, 2, 1, 1, 1, 0] },
+  { who: 'Journalists', sub: 'verify a claim fast', k: null, m: [2, 1, 2, 2, 1, 0] },
+  { who: 'Genealogists', sub: 'USD 5-7 bn market', k: 'gen', m: [2, 0, 1, 0, 2, 0] },
+  { who: 'Schools', sub: 'source criticism', k: null, m: [1, 0, 1, 0, 1, 2] }
 ];
 const IMPACT_COMPARE = [
-  ['Find the sources', 'Locate the Bern sheets among the 2,250 transcribed answer sheets', 'Routed and retrieved by code in under a second'],
-  ['Read them', 'Nine transcriptions in 18th-century German, by hand', 'Apertus reads; code verifies every quote against the sheet'],
-  ['Decide what counts', 'Catechism classes, past figures, winter or summer: by judgement', 'One counting policy in code; every exclusion listed with its reason'],
-  ['Add up', 'By hand, with no audit trail', 'Code does the arithmetic: 353 to 383 girls, “and more”'],
-  ['Trust it', 'Re-read everything to check', 'A number not in its cited source blocks the answer']
+  ['Find', '2,250 sheets, searched by hand', 'routed in under a second'],
+  ['Read', '9 transcriptions in old German', 'every quote verified'],
+  ['Decide', 'judgement calls, case by case', 'one policy, exclusions listed'],
+  ['Add up', 'no audit trail', 'code does the sum'],
+  ['Trust', 're-read everything', 'unsourced numbers blocked']
 ];
 const IMPACT_MODEL = [
-  { t: 'Open core', b: 'Pipeline, checks and evaluations are open source. Apertus is Apache-2.0 with open weights and open training data.', k: 'apertus' },
-  { t: 'Sovereign by design', b: 'Open weights mean the model can run on Swiss infrastructure, next to the records. Nothing has to leave the archive.', k: 'apertus' },
-  { t: 'Onboarding as a service', b: 'A new open dataset becomes answerable in minutes, with a mapping archivists review. See the real run below.', k: null },
-  { t: 'Reading-room API', b: 'One endpoint, /api/ask, for archive portals: every answer with its signature, link and checks.', k: null }
+  { ic: '◇', t: 'Open core', b: 'Open pipeline; Apache-2.0 model', k: 'apertus', c: C.gold },
+  { ic: '⌂', t: 'Sovereign', b: 'Runs on Swiss servers, next to the records', k: null, c: C.green },
+  { ic: '⇢', t: 'Onboarding service', b: 'A new dataset answerable in minutes', k: null, c: C.red },
+  { ic: '⌘', t: 'Reading-room API', b: '/api/ask: cited and checked', k: null, c: C.ink }
 ];
 const IMPACT_RISKS = [
-  ['Fabricated citations', 'Lawyers were sanctioned USD 5,000 for six invented court opinions (Mata v. Avianca, 2023).', 'Every [n] resolves to a real record; an answer that cites nothing is rejected.', 'mata'],
-  ['Wrong numbers', 'A model that calculates can be confidently off.', 'Code does all arithmetic; every digit must appear in the cited source.', null],
-  ['Questions the archive cannot answer', 'A fluent answer from nowhere.', 'Out-of-scope questions are declined.', null],
-  ['Personal data in a new dataset', 'Records inside the archival protection period.', 'Onboarding screens for e-mail, phone, AHV, IBAN, recent birth dates and protection periods; flag or mask.', null],
-  ['A model mislabels a column', 'An id taken for a title, a gazette reference for a signature.', 'Every mapping proposal is checked against the data; rejected parts fall back. It happened in the run below.', null]
+  ['Invented citations', 'Every [n] resolves to a real record', 'mata', 'USD 5,000 sanction, Mata v. Avianca'],
+  ['Wrong numbers', 'Code does all arithmetic', null, ''],
+  ['Answers from nowhere', 'Out of scope → declined', null, ''],
+  ['Personal data', 'Privacy screen: flag or mask', null, ''],
+  ['Mislabelled column', 'Every mapping checked; caught in the run above', null, '']
 ];
 let ONB = {"dataset": "test-consultations-apertus", "file": "consultations.csv", "rows": 569, "columns": 22, "sha256": "c6a4ccc5f4ee106d2da023fc3f07a04bb87fd4228b35b996af785eafdce4878c", "encoding": "utf-8-sig", "source_url": "https://opendata.swiss/de/dataset/federal-consultations-1960-1991", "stages": [{"stage": "acquire", "seconds": 0.01, "rows": 569, "sha256": "c6a4ccc5f4ee106d2da023fc3f07a04bb87fd4228b35b996af785eafdce4878c", "took": 0.01}, {"stage": "profile", "seconds": 0.03, "columns": 22, "took": 0.02}, {"stage": "map", "seconds": 4.46, "source": "apertus", "notes": 3, "took": 4.43}, {"stage": "transform", "seconds": 4.53, "records": 569, "took": 0.07}, {"stage": "privacy", "seconds": 4.57, "masked": false, "took": 0.04}, {"stage": "enrich", "seconds": 40.5, "requested": 20, "enriched": 20, "took": 35.93}, {"stage": "validate", "seconds": 40.52, "invalid": 0, "took": 0.02}], "chips": [{"col": "doc_id", "roles": ["id"], "rejected": [{"role": "title", "why": "not readable text (an id or code)"}]}, {"col": "title", "roles": ["title", "text"], "rejected": []}, {"col": "department_abbr", "roles": ["text", "organisations"], "rejected": []}, {"col": "office", "roles": ["text", "organisations"], "rejected": []}, {"col": "addressees", "roles": ["text"], "rejected": []}, {"col": "document_types", "roles": ["text"], "rejected": []}, {"col": "department", "roles": ["text", "organisations"], "rejected": []}, {"col": "year", "roles": ["dates"], "rejected": []}, {"col": "consultation_start_raw", "roles": ["dates"], "rejected": []}, {"col": "consultation_start", "roles": ["dates"], "rejected": []}, {"col": "consultation_end", "roles": ["dates"], "rejected": []}, {"col": "federal_council_protocol_ref", "roles": [], "rejected": [{"role": "dates", "why": "dropped by validation"}]}, {"col": "consultation_end_raw", "roles": [], "rejected": [{"role": "dates", "why": "dropped by validation"}]}, {"col": "provenance.source_dataset", "roles": ["url"], "rejected": []}, {"col": "federal_gazette_ref", "roles": [], "rejected": [{"role": "signature", "why": "values do not look like archive signatures"}]}], "roles": {"id": ["doc_id"], "title": ["title"], "text": ["addressees", "department", "department_abbr", "document_types", "office", "title"], "dates": ["consultation_end", "consultation_start", "consultation_start_raw", "year"], "organisations": ["department", "department_abbr", "office"], "url": ["provenance.source_dataset"], "signature": []}, "notes": ["title: 'doc_id' dropped (not readable text (an id or code))", "signature: 'federal_gazette_ref' dropped (values do not look like archive signatures)", "title: Apertus proposal empty after validation — heuristic used"], "model": "apertus-v1-5-70b", "enriched": 20, "invalid": 0, "published": false, "coverage": {"title": 1.0, "text": 1.0, "dates": 1.0, "places": 0.0, "places_geocoded": 0.0, "persons": 0.0, "archive_signature": 0.0}, "comparison": {"matched_records": 569, "title_exact": 1.0, "reference_dates_found": 1.0, "lead_organisation_found": 0.995}, "record": {"title": "Vorentwurf zu einem Bundesgesetz über das Filmwesen", "kind": "federal_consultation", "dates": ["1960"], "organisations": ["Eidgenössisches Departement des Innern", "EDI"]}, "privacy_flags": 0, "seconds": 40.5};
 const ONB_T = { acquire: [0, 10], profile: [10, 24], map: [24, 64], transform: [64, 76], privacy: [76, 90], enrich: [90, 106], validate: [106, 122], publish: [122, 132] };
@@ -1594,8 +1622,15 @@ class Component extends DCLogic {
   impactView(s) {
     const src = k => k && SRC[k] ? { sl: SRC[k][0], su: SRC[k][1], hs: true } : { sl: '', su: '#', hs: false };
     const base = {
-      impStats: IMPACT_STATS.map(x => ({ ...x, ...src(x.k) })), impUsers: IMPACT_USERS, impCompare: IMPACT_COMPARE.map(([a, b, c]) => ({ a, b, c })),
-      impModel: IMPACT_MODEL.map(x => ({ ...x, ...src(x.k) })), impRisks: IMPACT_RISKS.map(([t, r, g, k]) => ({ t, r, g, ...src(k) })),
+      impStats: IMPACT_STATS.map(x => ({ ...x, ...src(x.k), isTicks: x.viz === 'ticks', isBars: x.viz === 'bars', isWaffle: x.viz === 'waffle', isDots: x.viz === 'dots', leg: (x.leg || []).map(([c, l]) => ({ c, l })),
+        ticks: x.viz === 'ticks' ? Array.from({ length: 80 }, (_, i) => ({ h: 16 + (i * 37) % 17, c: i % 9 === 0 ? C.gold : i % 2 ? '#8a7f69' : '#5e5545' })) : [],
+        bars: x.viz === 'bars' ? x.bars.map(([l, v, t, c]) => ({ l, t, c, w: (v / Math.max(...x.bars.map(b => b[1])) * 100).toFixed(1) + '%' })) : [],
+        cells: x.viz === 'waffle' ? x.parts.flatMap(([n, c]) => Array.from({ length: n }, () => ({ c }))) : [],
+        dots: x.viz === 'dots' ? Array.from({ length: x.n }, (_, i) => ({ c: i % 23 === 0 ? '#f08a74' : C.red })) : [] })),
+      impCaps: IMPACT_CAPS,
+      impUsers: IMPACT_USERS.map(u => { const q = src(u.k); return { ...u, ...q, ns: !q.hs, cells: u.m.map(v => ({ d: v === 2 ? '14px' : v ? '10px' : '4px', c: v === 2 ? C.red : v ? C.gold : '#3a352b', glow: v === 2 ? '0 0 10px rgba(226,85,58,.45)' : 'none', bg: v === 2 ? 'rgba(226,85,58,.05)' : 'transparent' })) }; }),
+      impCompare: IMPACT_COMPARE.map(([a, b, c], i) => ({ a, b, c, n: String(i + 1).padStart(2, '0') })),
+      impModel: IMPACT_MODEL.map(x => ({ ...x, ...src(x.k) })), impRisks: IMPACT_RISKS.map(([t, g, k, note]) => ({ t, g, note, ...src(k) })),
       impSources: Object.values(SRC).map(([l, u]) => ({ l, u })),
       onbReplay: () => this.setState({ onbT: 0 }), onbSpd: this.spdChips('onb'), onbBtn: s.onbT >= ONB_END ? '↻ Replay onboarding' : s.onbT >= 0 ? 'Onboarding…' : '▶ Onboard the dataset'
     };
