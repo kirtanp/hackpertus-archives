@@ -99,7 +99,7 @@ Close on the live site: click the link to open it in a new tab (reachable over t
 <ul class="deck-credits">
   <li>Kirtan Padh - <a href="https://github.com/kirtanp">https://github.com/kirtanp</a></li>
   <li>Dhruv Mulay - <a href="https://github.com/Mulaydm10">https://github.com/Mulaydm10</a></li>
-  <li>Jorgo Ananiadis</li>
+  <li>Jorgo Ananiadis - <a href="https://github.com/JorgoA">https://github.com/JorgoA</a></li>
   <li>Pratik Waghmode</li>
   <li>Philipp Baumann - <a href="https://github.com/philipp-baumann">https://github.com/philipp-baumann</a></li>
 </ul>
