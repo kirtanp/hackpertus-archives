@@ -10,7 +10,7 @@ description: "How the demo is served and deployed: HTTP API, startup index, loca
 - Facsimiles are linked on stapferenquete.ch, never copied.
 
 ## Deploy
-The image is built with uv from the lock (`Dockerfile`: `python:3.12-slim`, `uv sync --locked --no-dev`, port 7860
+The image is built with uv from the lock (`Dockerfile`: `python:3.12.16-slim`, `uv sync --locked --no-dev`, port 7860
 inside the container). There is no `requirements.txt`: `pyproject.toml` + `uv.lock` are the dependencies. The
 Apertus key is never baked into the image; the container reads it from an env file at run time, and without one the
 app still answers, extractively and cited.

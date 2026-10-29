@@ -59,7 +59,7 @@ pythonpath = ["src"]
 # Measured line lengths on main: p50 45, p90 114, p99 152, max 256. 120 clears p90 without a reformat;
 # ruff's 88 default would leave hundreds of E501 findings and force one.
 line-length = 120
-# Runtime is Python 3.12: Dockerfile `FROM python:3.12-slim`, Makefile `PY ?= python3.12`, CI python-version "3.12".
+# Runtime is Python 3.12: Dockerfile `FROM python:3.12.16-slim`, Makefile `PY ?= python3.12`, CI python-version "3.12".
 target-version = "py312"
 
 [tool.ruff.lint]

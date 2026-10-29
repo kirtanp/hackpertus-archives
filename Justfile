@@ -11,7 +11,7 @@ set dotenv-load := true
 # installed as a package (pyproject.toml carries no [build-system] table), so nothing else puts it there.
 export PYTHONPATH := "src"
 
-# Interpreter for .venv. The runtime is Python 3.12 (Dockerfile `python:3.12-slim`, CI `python-version: "3.12"`),
+# Interpreter for .venv. The runtime is Python 3.12 (Dockerfile `python:3.12.16-slim`, CI `python-version: "3.12"`),
 # so the local environment is built with 3.12 too; override with `UV_PYTHON=3.13 just setup`.
 export UV_PYTHON := env("UV_PYTHON", "3.12")
 
