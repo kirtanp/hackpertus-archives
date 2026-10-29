@@ -1,8 +1,8 @@
-FROM python:3.12-slim
+FROM python:3.12.16-slim
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PORT=7860
 # uv installs the locked runtime dependencies into /app/.venv; the dev, lint and notebook groups stay out of the
 # image, and `uv sync --locked` fails the build rather than silently resolving something new.
-COPY --from=ghcr.io/astral-sh/uv:0.9.20 /uv /usr/local/bin/uv
+COPY --from=ghcr.io/astral-sh/uv:0.13.6 /uv /usr/local/bin/uv
 ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
 RUN useradd -m -u 1000 user
 WORKDIR /app
