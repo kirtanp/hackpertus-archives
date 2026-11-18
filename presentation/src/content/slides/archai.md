@@ -81,7 +81,7 @@ Product — spoken budget 3 min. This is the demo moment: open the app, ask one 
 
 <h2 class="deck-heading">ArchAI, live</h2>
 
-<p class="deck-demo"><a href="http://100.120.107.76:8791/site/" target="_blank" rel="noopener noreferrer">Open the ArchAI website</a></p>
+<p class="deck-demo"><a href="https://archai.info" target="_blank" rel="noopener noreferrer">Open the ArchAI website</a></p>
 
 <p class="deck-demo deck-demo--address">http://100.120.107.76:8791/site/</p>
 
