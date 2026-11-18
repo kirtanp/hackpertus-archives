@@ -11,16 +11,23 @@ file** (with the fonts inlined as data URIs) that opens straight from disk.
 
 ```bash
 bun install --frozen-lockfile
-bun run build          # ./dist       - the site, deck at /slides/archai/
+bun run build          # ./dist       - the site: deck at /, decks at /decks/, app at /demo/
 bun run build:single   # ./single     - one self-contained HTML file per page
+bun run stage          # ./dist-upload - ./dist copied as the folder to upload by SFTP
 ```
+
+`./dist` is the deployed artifact (uploaded by SFTP): `/` is the deck itself, `/decks/` the deck index (every deck
+keeps its own `/slides/<id>/` route too), and `/demo/` the app's static page copied verbatim from `../static/site`.
+`scripts/postbuild.mjs` makes the folder portable, because it is also opened straight from disk: it rewrites Astro's
+root-absolute URLs to page-relative ones (Chrome blocks `file://` module scripts outright, so the deck's bundled script
+is inlined) and copies the app in as `demo/`.
 
 With [`just`](https://just.systems/): `just build`, `just html` (single files), `just html-zip` (distributable zip).
 `bun run setup` copies `node_modules/reveal.js` into `public/reveal/` (gitignored); every build script runs it first.
 
 ## Present it
 
-- Open `dist/slides/archai/index.html` (or `single/archai.html`) and press `s` for reveal's speaker view; the section
+- Open `dist/index.html` (or `single/archai.html`) and press `s` for reveal's speaker view; the section
   timings and the speaker notes are reveal presenter notes, not slide furniture.
 - The deck is self-contained: `single/archai.html` works offline from a file path.
 
