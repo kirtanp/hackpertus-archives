@@ -26,6 +26,7 @@ docs/.astro/
 # `presentation/bun.lock` is committed and `public/reveal/` is copied from node_modules on every build
 presentation/node_modules/
 presentation/dist/
+presentation/dist-upload/
 presentation/dist-single/
 presentation/single/
 presentation/public/reveal/

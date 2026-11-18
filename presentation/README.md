@@ -13,6 +13,7 @@ file** (with the fonts inlined as data URIs) that opens straight from disk.
 bun install --frozen-lockfile
 bun run build          # ./dist       - the site: deck at /, decks at /decks/, app at /demo/
 bun run build:single   # ./single     - one self-contained HTML file per page
+bun run stage          # ./dist-upload - ./dist copied as the folder to upload by SFTP
 ```
 
 `./dist` is the deployed artifact (uploaded by SFTP): `/` is the deck itself, `/decks/` the deck index (every deck
