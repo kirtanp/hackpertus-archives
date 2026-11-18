@@ -6,7 +6,7 @@
   "scripts": {
     "setup": "rm -rf public/reveal && mkdir -p public && cp -rL node_modules/reveal.js public/reveal",
     "dev": "bun run setup && astro dev",
-    "build": "bun run setup && astro build",
+    "build": "bun run setup && astro build && bun scripts/postbuild.mjs",
     "preview": "bun run setup && astro preview",
     "build:single": "bun run setup && SINGLE_FILE=1 bunx astro build && bun scripts/single-file.mjs",
     "check": "astro check"

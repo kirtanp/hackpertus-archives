@@ -12,6 +12,7 @@
 import { execFileSync } from "node:child_process";
 import {
   existsSync,
+  cpSync,
   mkdirSync,
   readFileSync,
   readdirSync,
@@ -139,4 +140,9 @@ for (const file of files) {
   count++;
   console.log(`  ${rel}  ->  ${target}  (${(html.length / 1024 / 1024).toFixed(2)} MB)`);
 }
+// The deck links to the app as `demo/`; ship that page beside the single files
+// too, so the link resolves in the offline bundle as it does in ./dist.
+cpSync("../static/site", join(OUT, "demo"), { recursive: true });
+console.log(`  ../static/site  ->  ${join(OUT, "demo")}`);
+
 console.log(`\n${count} single-file page(s) written to ./${OUT}`);

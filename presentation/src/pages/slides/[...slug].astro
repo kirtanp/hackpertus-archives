@@ -1,21 +1,17 @@
 ---
-import type { CollectionEntry } from "astro:content";
-import { getCollection } from "astro:content";
 import SlideLayout from "../../layouts/SlideLayout.astro";
+import { deckBody, deckSlug, sortedDecks } from "../../lib/decks";
 
 export async function getStaticPaths() {
-  const slides = await getCollection("slides");
+  const slides = await sortedDecks();
   return slides.map((slide) => ({
-    params: { slug: slide.id.replace(/\.(md|mdx)$/, "") },
+    params: { slug: deckSlug(slide) },
     props: { slide },
   }));
 }
 
-const { slide } = Astro.props as { slide: CollectionEntry<"slides"> };
+const { slide } = Astro.props;
 const { data } = slide;
-// The deck body is raw markdown injected into the Reveal textarea; strip the
-// frontmatter defensively the way the Astro 5 content loader returns it.
-const body = (slide.body ?? "").replace(/^---[\s\S]*?---\n?/, "");
 ---
 
 <SlideLayout
@@ -25,6 +21,6 @@ const body = (slide.body ?? "").replace(/^---[\s\S]*?---\n?/, "");
   controls={data.controls}
   progress={data.progress}
   pubDate={data.pubDate}
-  body={body}
+  body={deckBody(slide)}
   fontScale={data.fontScale}
 />
